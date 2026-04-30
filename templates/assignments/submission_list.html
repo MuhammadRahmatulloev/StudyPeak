@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submissions — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Submissions</h1>
+            <p class="page-subtitle">{{ assignment.title }}</p>
+        </div>
+        <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <!-- Stats row -->
+    <div class="grid-4 mb-16">
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-blue">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <p class="stat-value">{{ submissions|length }}</p>
+                    <p class="stat-label text-muted text-sm">Total</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-green">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <p class="stat-value">
+                        {{ submissions|length }}
+                    </p>
+                    <p class="stat-label text-muted text-sm">Submitted</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-yellow">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+                <div>
+                    <p class="stat-value">
+                        {% with graded=0 %}
+                        {% for s in submissions %}{% if s.status == 'graded' %}{% endif %}{% endfor %}
+                        —
+                        {% endwith %}
+                    </p>
+                    <p class="stat-label text-muted text-sm">Graded</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-accent">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div>
+                    <p class="stat-value">—</p>
+                    <p class="stat-label text-muted text-sm">Avg Score</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if submissions %}
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Status</th>
+                        <th>Score</th>
+                        <th>Started</th>
+                        <th>Submitted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for submission in submissions %}
+                    <tr>
+                        <td>
+                            <div class="submission-student">
+                                <div class="submission-avatar">
+                                    {% if submission.student.profile.avatar %}
+                                        <img src="{{ submission.student.profile.avatar.url }}" alt="{{ submission.student.username }}">
+                                    {% else %}
+                                        <span>{{ submission.student.username|first|upper }}</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="submission-student-name">{{ submission.student.username }}</p>
+                                    <p class="text-sm text-muted">{{ submission.student.role|capfirst }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if submission.status == 'graded' %}
+                            <span class="badge badge-green">
+                                <i class="fa-solid fa-star"></i> Graded
+                            </span>
+                            {% elif submission.status == 'submitted' %}
+                            <span class="badge badge-blue">
+                                <i class="fa-solid fa-check"></i> Submitted
+                            </span>
+                            {% else %}
+                            <span class="badge badge-gray">
+                                <i class="fa-solid fa-clock"></i> Pending
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if submission.total_score %}
+                            <span class="badge
+                                {% if submission.total_score >= 80 %}badge-green
+                                {% elif submission.total_score >= 50 %}badge-blue
+                                {% elif submission.total_score >= 30 %}badge-yellow
+                                {% else %}badge-red{% endif %}">
+                                {{ submission.total_score }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted text-sm">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if submission.started_at %}
+                            <span class="text-sm text-muted">{{ submission.started_at|date:"M d, H:i" }}</span>
+                            {% else %}
+                            <span class="text-muted text-sm">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if submission.submitted_at %}
+                            <span class="text-sm text-muted">{{ submission.submitted_at|date:"M d, H:i" }}</span>
+                            {% else %}
+                            <span class="text-muted text-sm">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'submission_detail' submission.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-eye"></i> Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-inbox"></i>
+            <p>No submissions yet</p>
+            <p class="text-muted text-sm">Students haven't submitted this assignment yet</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

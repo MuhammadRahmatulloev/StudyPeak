@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messages — StudyPeak{% endblock %}
+{% block nav_chat %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Messages</h1>
+            <p class="page-subtitle">Your direct conversations</p>
+        </div>
+        <a href="{% url 'friend_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-user-group"></i> Friends
+        </a>
+    </div>
+
+    {% if conversations %}
+    <div class="conversation-list">
+        {% for conv in conversations %}
+        {% for participant in conv.participants.all %}
+        {% if participant != user %}
+        <a href="{% url 'conversation_detail' conv.id %}" class="conversation-item card">
+            <div class="conv-avatar">
+                {% if participant.profile.avatar %}
+                    <img src="{{ participant.profile.avatar.url }}" alt="{{ participant.username }}">
+                {% else %}
+                    <span>{{ participant.username|first|upper }}</span>
+                {% endif %}
+                <span class="conv-status-dot conv-status-{{ participant.profile.status|default:'offline' }}"></span>
+            </div>
+            <div class="conv-info">
+                <div class="conv-top">
+                    <span class="conv-name">{{ participant.username }}</span>
+                    {% with last=conv.messages.last %}
+                    {% if last %}
+                    <span class="conv-time text-sm text-muted">{{ last.created_at|timesince }} ago</span>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="conv-bottom">
+                    {% with last=conv.messages.last %}
+                    {% if last and not last.is_deleted %}
+                    <p class="conv-preview text-muted text-sm">
+                        {% if last.sender == user %}You: {% endif %}
+                        {{ last.content|truncatechars:50 }}
+                    </p>
+                    {% else %}
+                    <p class="conv-preview text-muted text-sm">No messages yet</p>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+            <i class="fa-solid fa-chevron-right conv-arrow text-muted"></i>
+        </a>
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-comment-slash"></i>
+            <p>No conversations yet</p>
+            <a href="{% url 'friend_list' %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-user-group"></i> Find friends to message
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

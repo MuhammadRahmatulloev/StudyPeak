@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Course — StudyPeak{% endblock %}
+{% block nav_crm %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/crm.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Edit Course</h1>
+            <p class="page-subtitle">{{ course.name }}</p>
+        </div>
+        <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Course Name <span class="text-danger">*</span></label>
+                <input
+                    type="text"
+                    name="name"
+                    class="form-input"
+                    value="{{ course.name }}"
+                    placeholder="Course name"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea
+                    name="description"
+                    class="form-input form-textarea"
+                    rows="4"
+                    placeholder="Describe this course..."
+                >{{ course.description|default:'' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-check">
+                    <input
+                        type="checkbox"
+                        name="is_active"
+                        class="form-checkbox"
+                        {% if course.is_active %}checked{% endif %}
+                    >
+                    <span class="form-check-label">
+                        <strong>Active</strong> — students can see and enroll
+                    </span>
+                </label>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+                <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Danger Zone -->
+    {% if user.is_teacher and course.teacher == user or user.is_admin_role %}
+    <div class="card mt-16 danger-zone">
+        <div class="card-title text-danger">
+            <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+        </div>
+        <div class="flex-between">
+            <div>
+                <p class="text-sm"><strong>Delete this course</strong></p>
+                <p class="text-sm text-muted">All periods, grades and attendance will be deleted permanently.</p>
+            </div>
+            <form method="post" action="{% url 'course_delete' course.id %}">
+                {% csrf_token %}
+                <button
+                    class="btn btn-danger"
+                    onclick="return confirm('Delete course {{ course.name }}? This cannot be undone.')"
+                >
+                    <i class="fa-solid fa-trash"></i> Delete Course
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

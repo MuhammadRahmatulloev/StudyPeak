@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home — StudyPeak{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="home-grid">
+
+        <!-- LEFT COLUMN -->
+        <div class="home-left">
+
+            <!-- Welcome banner -->
+            <div class="welcome-banner card">
+                <div class="welcome-banner-inner">
+                    <div class="welcome-info">
+                        <p class="welcome-label">Good to see you back</p>
+                        <h1 class="welcome-name">{{ user.first_name|default:user.username }} 👋</h1>
+                        <p class="welcome-role badge {% if user.is_teacher %}badge-blue{% elif user.is_student %}badge-green{% else %}badge-yellow{% endif %}">
+                            {{ user.role|capfirst }}
+                        </p>
+                    </div>
+                    <div class="welcome-stats">
+                        {% if profile %}
+                        <div class="welcome-stat-item">
+                            <span class="welcome-stat-value">{{ profile.coins }}</span>
+                            <span class="welcome-stat-label">Coins</span>
+                        </div>
+                        {% endif %}
+                        {% if user.is_student %}
+                        <div class="welcome-stat-item">
+                            <span class="welcome-stat-value">{{ enrollments|length }}</span>
+                            <span class="welcome-stat-label">Courses</span>
+                        </div>
+                        {% endif %}
+                        <div class="welcome-stat-item">
+                            <span class="welcome-stat-value">{{ assignments|length }}</span>
+                            <span class="welcome-stat-label">Tasks</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group invitations -->
+            {% if invitations %}
+            <div class="card mt-16">
+                <div class="card-title">
+                    <i class="fa-solid fa-envelope-open-text"></i> Pending Invitations
+                </div>
+                <div class="invitation-list">
+                    {% for inv in invitations %}
+                    <div class="invitation-item">
+                        <div class="invitation-info">
+                            <span class="invitation-group">{{ inv.group.name }}</span>
+                            <span class="text-muted text-sm">from {{ inv.sender.username }}</span>
+                        </div>
+                        <div class="invitation-actions">
+                            <form method="post" action="{% url 'accept_group_invitation' inv.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-success btn-sm">Accept</button>
+                            </form>
+                            <form method="post" action="{% url 'reject_group_invitation' inv.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-danger btn-sm">Decline</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Assignments -->
+            <div class="card mt-16">
+                <div class="flex-between mb-16">
+                    <div class="card-title" style="margin-bottom:0">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        {% if user.is_student %}Recent Assignments{% else %}Your Assignments{% endif %}
+                    </div>
+                    <a href="{% url 'assignment_list' %}" class="btn btn-secondary btn-sm">View all</a>
+                </div>
+
+                {% if assignments %}
+                <div class="assignment-list">
+                    {% for assignment in assignments %}
+                    <a href="{% url 'assignment_detail' assignment.id %}" class="assignment-item">
+                        <div class="assignment-left">
+                            <span class="assignment-type-icon
+                                {% if assignment.type == 'quiz' %}icon-quiz
+                                {% elif assignment.type == 'test' %}icon-test
+                                {% else %}icon-hw{% endif %}">
+                                {% if assignment.type == 'quiz' %}
+                                    <i class="fa-solid fa-stopwatch"></i>
+                                {% elif assignment.type == 'test' %}
+                                    <i class="fa-solid fa-file-pen"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-book"></i>
+                                {% endif %}
+                            </span>
+                            <div>
+                                <p class="assignment-title">{{ assignment.title }}</p>
+                                <p class="assignment-meta text-sm text-muted">
+                                    {{ assignment.subject.title }} · {{ assignment.group.name }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="assignment-right">
+                            <span class="badge
+                                {% if assignment.type == 'quiz' %}badge-yellow
+                                {% elif assignment.type == 'test' %}badge-blue
+                                {% else %}badge-gray{% endif %}">
+                                {{ assignment.type|upper }}
+                            </span>
+                            {% if assignment.deadline %}
+                            <span class="text-sm text-muted">{{ assignment.deadline|date:"M d" }}</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <p>No assignments yet</p>
+                    {% if user.is_teacher %}
+                    <a href="{% url 'assignment_create' %}" class="btn btn-primary btn-sm">Create assignment</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- My groups -->
+            <div class="card mt-16">
+                <div class="flex-between mb-16">
+                    <div class="card-title" style="margin-bottom:0">
+                        <i class="fa-solid fa-comments"></i> My Groups
+                    </div>
+                    <a href="{% url 'group_list' %}" class="btn btn-secondary btn-sm">View all</a>
+                </div>
+
+                {% if groups %}
+                <div class="group-list">
+                    {% for group in groups %}
+                    <a href="{% url 'group_detail' group.id %}" class="group-item">
+                        <div class="group-avatar">
+                            {% if group.avatar %}
+                                <img src="{{ group.avatar.url }}" alt="{{ group.name }}">
+                            {% else %}
+                                <span>{{ group.name|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="group-info">
+                            <p class="group-name">{{ group.name }}</p>
+                            <p class="text-sm text-muted">{{ group.memberships.count }} members</p>
+                        </div>
+                        {% if group.is_study_group %}
+                        <span class="badge badge-blue">Study</span>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-comments"></i>
+                    <p>You are not in any groups yet</p>
+                    <a href="{% url 'group_create' %}" class="btn btn-primary btn-sm">Create group</a>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="home-right">
+
+            <!-- Notifications -->
+            {% if notifications %}
+            <div class="card">
+                <div class="flex-between mb-16">
+                    <div class="card-title" style="margin-bottom:0">
+                        <i class="fa-solid fa-bell"></i> Notifications
+                        <span class="badge badge-red" style="margin-left:6px">{{ notifications|length }}</span>
+                    </div>
+                    <form method="post" action="{% url 'notification_read_all' %}">
+                        {% csrf_token %}
+                        <button class="btn btn-secondary btn-sm">Mark all read</button>
+                    </form>
+                </div>
+                <div class="notification-list">
+                    {% for notif in notifications %}
+                    <div class="notification-item {% if not notif.is_read %}notif-unread{% endif %}">
+                        <div class="notif-dot"></div>
+                        <div class="notif-content">
+                            <p class="notif-message">{{ notif.message }}</p>
+                            <p class="text-sm text-muted">{{ notif.created_at|timesince }} ago</p>
+                        </div>
+                        <form method="post" action="{% url 'notification_read' notif.id %}">
+                            {% csrf_token %}
+                            <button class="notif-close"><i class="fa-solid fa-xmark"></i></button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick links -->
+            <div class="card mt-16">
+                <div class="card-title">
+                    <i class="fa-solid fa-bolt"></i> Quick Access
+                </div>
+                <div class="quick-links">
+                    <a href="{% url 'subject_list' %}" class="quick-link-item">
+                        <span class="quick-link-icon"><i class="fa-solid fa-book-open"></i></span>
+                        <span>Materials</span>
+                    </a>
+                    <a href="{% url 'assignment_list' %}" class="quick-link-item">
+                        <span class="quick-link-icon"><i class="fa-solid fa-pen-to-square"></i></span>
+                        <span>Assignments</span>
+                    </a>
+                    <a href="{% url 'course_list' %}" class="quick-link-item">
+                        <span class="quick-link-icon"><i class="fa-solid fa-graduation-cap"></i></span>
+                        <span>Courses</span>
+                    </a>
+                    <a href="{% url 'group_list' %}" class="quick-link-item">
+                        <span class="quick-link-icon"><i class="fa-solid fa-comments"></i></span>
+                        <span>Chat</span>
+                    </a>
+                    <a href="{% url 'dashboard' %}" class="quick-link-item">
+                        <span class="quick-link-icon"><i class="fa-solid fa-chart-line"></i></span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{% url 'product_list' %}" class="quick-link-item">
+                        <span class="quick-link-icon"><i class="fa-solid fa-store"></i></span>
+                        <span>Shop</span>
+                    </a>
+                    <a href="{% url 'friend_list' %}" class="quick-link-item">
+                        <span class="quick-link-icon"><i class="fa-solid fa-user-group"></i></span>
+                        <span>Friends</span>
+                    </a>
+                    <a href="{% url 'profile' %}" class="quick-link-item">
+                        <span class="quick-link-icon"><i class="fa-solid fa-user"></i></span>
+                        <span>Profile</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Enrolled courses (students only) -->
+            {% if user.is_student and enrollments %}
+            <div class="card mt-16">
+                <div class="flex-between mb-16">
+                    <div class="card-title" style="margin-bottom:0">
+                        <i class="fa-solid fa-graduation-cap"></i> My Courses
+                    </div>
+                    <a href="{% url 'course_list' %}" class="btn btn-secondary btn-sm">All</a>
+                </div>
+                <div class="course-list">
+                    {% for enrollment in enrollments %}
+                    <a href="{% url 'course_detail' enrollment.course.id %}" class="course-item">
+                        <div class="course-dot"></div>
+                        <div>
+                            <p class="course-name">{{ enrollment.course.name }}</p>
+                            <p class="text-sm text-muted">{{ enrollment.course.teacher.username }}</p>
+                        </div>
+                        <span class="badge badge-green">Active</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- News feed -->
+            {% if posts %}
+            <div class="card mt-16">
+                <div class="flex-between mb-16">
+                    <div class="card-title" style="margin-bottom:0">
+                        <i class="fa-solid fa-newspaper"></i> News
+                    </div>
+                    <a href="{% url 'newsfeed_list' %}" class="btn btn-secondary btn-sm">All news</a>
+                </div>
+                <div class="news-list">
+                    {% for post in posts|slice:":4" %}
+                    <a href="{% url 'newsfeed_detail' post.id %}" class="news-item">
+                        {% if post.image %}
+                        <div class="news-img">
+                            <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                        </div>
+                        {% endif %}
+                        <div class="news-body">
+                            <span class="badge
+                                {% if post.type == 'ad' %}badge-yellow
+                                {% elif post.type == 'image' %}badge-blue
+                                {% else %}badge-gray{% endif %} mb-8">
+                                {{ post.type|upper }}
+                            </span>
+                            <p class="news-title">{{ post.title }}</p>
+                            <p class="text-sm text-muted">{{ post.content|truncatechars:80 }}</p>
+                            <p class="text-sm text-muted mt-8">{{ post.created_at|timesince }} ago</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

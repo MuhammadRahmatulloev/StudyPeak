@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Post — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Edit Post</h1>
+            <p class="page-subtitle">{{ post.title }}</p>
+        </div>
+        <a href="{% url 'newsfeed_detail' post.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Post Type</label>
+                <div class="newsfeed-type-selector">
+                    {% for value, label in type_choices %}
+                    <label class="newsfeed-type-option">
+                        <input type="radio" name="type" value="{{ value }}"
+                            {% if post.type == value %}checked{% endif %} hidden>
+                        <span class="newsfeed-type-icon">
+                            {% if value == 'text' %}<i class="fa-solid fa-align-left"></i>
+                            {% elif value == 'image' %}<i class="fa-solid fa-image"></i>
+                            {% else %}<i class="fa-solid fa-bullhorn"></i>
+                            {% endif %}
+                        </span>
+                        <span>{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Title <span class="text-danger">*</span></label>
+                <input
+                    type="text"
+                    name="title"
+                    class="form-input"
+                    value="{{ post.title }}"
+                    placeholder="Post title..."
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Content <span class="text-danger">*</span></label>
+                <textarea
+                    name="content"
+                    class="form-input form-textarea"
+                    rows="8"
+                    placeholder="Write your content here..."
+                    required
+                >{{ post.content }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Image</label>
+                {% if post.image %}
+                <div class="newsfeed-current-image">
+                    <img src="{{ post.image.url }}" alt="{{ post.title }}" class="newsfeed-current-img">
+                    <p class="text-sm text-muted mt-8">Current image. Upload a new one to replace it.</p>
+                </div>
+                {% endif %}
+                <div class="newsfeed-image-upload mt-8" id="imageUploadArea">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <p class="text-muted">{% if post.image %}Replace image{% else %}Upload image{% endif %}</p>
+                    <span class="text-sm text-muted">JPG, PNG — max 5MB</span>
+                    <input type="file" name="image" id="imageInput" accept="image/*">
+                </div>
+                <div class="newsfeed-image-preview" id="imagePreview" style="display:none">
+                    <img id="previewImg" src="" alt="preview">
+                    <button type="button" class="newsfeed-remove-image" id="removeImage">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-check">
+                    <input
+                        type="checkbox"
+                        name="is_active"
+                        class="form-checkbox"
+                        {% if post.is_active %}checked{% endif %}
+                    >
+                    <span class="form-check-label">
+                        <strong>Active</strong> — visible to all users
+                    </span>
+                </label>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+                <a href="{% url 'newsfeed_detail' post.id %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Danger zone -->
+    {% if user.is_admin_role or post.author == user %}
+    <div class="card mt-16 danger-zone">
+        <div class="card-title text-danger">
+            <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+        </div>
+        <div class="flex-between">
+            <div>
+                <p class="text-sm"><strong>Delete this post</strong></p>
+                <p class="text-sm text-muted">This action is permanent and cannot be undone.</p>
+            </div>
+            <form method="post" action="{% url 'newsfeed_delete' post.id %}">
+                {% csrf_token %}
+                <button
+                    class="btn btn-danger"
+                    onclick="return confirm('Delete this post? This cannot be undone.')"
+                >
+                    <i class="fa-solid fa-trash"></i> Delete Post
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Type selector
+document.querySelectorAll('.newsfeed-type-option input').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.newsfeed-type-option').forEach(opt => opt.classList.remove('selected'));
+        radio.closest('.newsfeed-type-option').classList.add('selected');
+    });
+});
+document.querySelector('.newsfeed-type-option input:checked')
+    ?.closest('.newsfeed-type-option')?.classList.add('selected');
+
+// Image upload preview
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+const previewImg = document.getElementById('previewImg');
+const uploadArea = document.getElementById('imageUploadArea');
+const removeBtn = document.getElementById('removeImage');
+
+uploadArea.addEventListener('click', () => imageInput.click());
+
+imageInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        uploadArea.style.display = 'none';
+        imagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+});
+
+removeBtn.addEventListener('click', () => {
+    imageInput.value = '';
+    previewImg.src = '';
+    imagePreview.style.display = 'none';
+    uploadArea.style.display = 'flex';
+});
+</script>
+{% endblock %}

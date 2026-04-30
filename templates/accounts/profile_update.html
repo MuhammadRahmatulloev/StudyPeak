@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Edit profile</h1>
+            <p class="page-subtitle">Update your personal information</p>
+        </div>
+        <a href="{% url 'profile' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="profile-update-form">
+        {% csrf_token %}
+
+        <div class="profile-update-grid">
+
+            <!-- LEFT — Avatar -->
+            <div class="profile-update-left">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fa-solid fa-image"></i> Avatar
+                    </div>
+
+                    <div class="avatar-preview-wrap">
+                        {% if profile and profile.avatar %}
+                            <img
+                                src="{{ profile.avatar.url }}"
+                                alt="{{ user.username }}"
+                                class="avatar-preview"
+                                id="avatarPreview"
+                            >
+                        {% else %}
+                            <div class="avatar-preview avatar-preview-placeholder" id="avatarPreview">
+                                <span id="avatarLetter">{{ user.username|first|upper }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <label class="avatar-upload-btn" for="avatarInput">
+                        <i class="fa-solid fa-upload"></i>
+                        Change photo
+                    </label>
+                    <input
+                        type="file"
+                        name="avatar"
+                        id="avatarInput"
+                        accept="image/*"
+                        hidden
+                    >
+                    <p class="avatar-upload-hint">JPG, PNG — max 5MB</p>
+                </div>
+
+                <!-- Status -->
+                <div class="card mt-16">
+                    <div class="card-title">
+                        <i class="fa-solid fa-circle-dot"></i> Status
+                    </div>
+                    <div class="status-options">
+                        {% with current=profile.status|default:'offline' %}
+                        <label class="status-option status-option-active {% if current == 'active' %}selected{% endif %}">
+                            <input type="radio" name="status" value="active" {% if current == 'active' %}checked{% endif %} hidden>
+                            <span class="status-dot status-dot-active"></span>
+                            <span>Active</span>
+                        </label>
+                        <label class="status-option status-option-busy {% if current == 'busy' %}selected{% endif %}">
+                            <input type="radio" name="status" value="busy" {% if current == 'busy' %}checked{% endif %} hidden>
+                            <span class="status-dot status-dot-busy"></span>
+                            <span>Busy</span>
+                        </label>
+                        <label class="status-option status-option-away {% if current == 'away' %}selected{% endif %}">
+                            <input type="radio" name="status" value="away" {% if current == 'away' %}checked{% endif %} hidden>
+                            <span class="status-dot status-dot-away"></span>
+                            <span>Away</span>
+                        </label>
+                        <label class="status-option status-option-offline {% if current == 'offline' %}selected{% endif %}">
+                            <input type="radio" name="status" value="offline" {% if current == 'offline' %}checked{% endif %} hidden>
+                            <span class="status-dot status-dot-offline"></span>
+                            <span>Offline</span>
+                        </label>
+                        {% endwith %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT — Form fields -->
+            <div class="profile-update-right">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fa-solid fa-user"></i> Personal info
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label">First name</label>
+                            <input
+                                type="text"
+                                name="first_name"
+                                class="form-input"
+                                placeholder="Your first name"
+                                value="{{ user.first_name }}"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last name</label>
+                            <input
+                                type="text"
+                                name="last_name"
+                                class="form-input"
+                                placeholder="Your last name"
+                                value="{{ user.last_name }}"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Phone number</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-phone input-icon"></i>
+                            <input
+                                type="text"
+                                name="phone"
+                                class="form-input input-with-icon"
+                                placeholder="+992 XX XXX XXXX"
+                                value="{{ profile.phone|default:'' }}"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Bio</label>
+                        <textarea
+                            name="bio"
+                            class="form-input form-textarea"
+                            rows="3"
+                            placeholder="Tell something about yourself..."
+                        >{{ profile.bio|default:'' }}</textarea>
+                        <p class="form-hint">A short description visible on your profile</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Post text
+                            <span class="form-label-badge">Instagram-style</span>
+                        </label>
+                        <textarea
+                            name="post_text"
+                            id="postText"
+                            class="form-input form-textarea"
+                            rows="2"
+                            maxlength="200"
+                            placeholder="What's on your mind?"
+                        >{{ profile.post_text|default:'' }}</textarea>
+                        <div class="form-hint flex-between">
+                            <span>Shows on your profile as a status post</span>
+                            <span id="charCount" class="text-muted text-sm">0/200</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Save changes
+                        </button>
+                        <a href="{% url 'profile' %}" class="btn btn-secondary btn-lg">
+                            Cancel
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Avatar preview
+document.getElementById('avatarInput').addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const preview = document.getElementById('avatarPreview');
+        preview.outerHTML = `<img src="${e.target.result}" class="avatar-preview" id="avatarPreview">`;
+    };
+    reader.readAsDataURL(file);
+});
+
+// Post text char counter
+const postText = document.getElementById('postText');
+const charCount = document.getElementById('charCount');
+
+function updateCount() {
+    const len = postText.value.length;
+    charCount.textContent = `${len}/200`;
+    charCount.className = len >= 180 ? 'text-danger text-sm' : 'text-muted text-sm';
+}
+
+postText.addEventListener('input', updateCount);
+updateCount();
+
+// Status option toggle
+document.querySelectorAll('.status-option input').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('selected'));
+        radio.closest('.status-option').classList.add('selected');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reset Password — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            <span class="auth-logo-icon">⚡</span>
+            <span class="auth-logo-text">StudyPeak</span>
+        </div>
+
+        <div class="auth-verify-icon auth-icon-warning">
+            <i class="fa-solid fa-lock"></i>
+        </div>
+
+        <div class="auth-header">
+            <h1 class="auth-title">Forgot password?</h1>
+            <p class="auth-subtitle">Enter your email and we'll send you a reset code</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Email address</label>
+                <div class="input-icon-wrap">
+                    <i class="fa-solid fa-envelope input-icon"></i>
+                    <input
+                        type="email"
+                        name="email"
+                        class="form-input input-with-icon"
+                        placeholder="Enter your email"
+                        value="{{ request.POST.email }}"
+                        autocomplete="email"
+                        autofocus
+                        required
+                    >
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <i class="fa-solid fa-paper-plane"></i>
+                Send reset code
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <a href="{% url 'login' %}" class="auth-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to login
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

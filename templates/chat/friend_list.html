@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Friends — StudyPeak{% endblock %}
+{% block nav_chat %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Friends</h1>
+            <p class="page-subtitle">Manage your connections</p>
+        </div>
+        <a href="{% url 'conversation_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-comment"></i> Messages
+        </a>
+    </div>
+
+    <div class="friends-grid">
+
+        <!-- Incoming requests -->
+        {% if pending_received %}
+        <div class="card">
+            <div class="card-title">
+                <i class="fa-solid fa-envelope"></i>
+                Incoming Requests
+                <span class="badge badge-red" style="margin-left:6px">{{ pending_received|length }}</span>
+            </div>
+            <div class="friend-list">
+                {% for req in pending_received %}
+                <div class="friend-item">
+                    <div class="friend-avatar">
+                        {% if req.sender.profile.avatar %}
+                            <img src="{{ req.sender.profile.avatar.url }}" alt="{{ req.sender.username }}">
+                        {% else %}
+                            <span>{{ req.sender.username|first|upper }}</span>
+                        {% endif %}
+                        <span class="friend-status-dot friend-status-{{ req.sender.profile.status|default:'offline' }}"></span>
+                    </div>
+                    <div class="friend-info">
+                        <p class="friend-name">{{ req.sender.username }}</p>
+                        <p class="text-sm text-muted">{{ req.sender.role|capfirst }}</p>
+                    </div>
+                    <div class="friend-actions">
+                        <form method="post" action="{% url 'accept_friend_request' req.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-success btn-sm">
+                                <i class="fa-solid fa-check"></i> Accept
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'reject_friend_request' req.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-danger btn-sm">
+                                <i class="fa-solid fa-xmark"></i> Decline
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Outgoing requests -->
+        {% if pending_sent %}
+        <div class="card">
+            <div class="card-title">
+                <i class="fa-solid fa-clock"></i> Sent Requests
+            </div>
+            <div class="friend-list">
+                {% for req in pending_sent %}
+                <div class="friend-item">
+                    <div class="friend-avatar">
+                        {% if req.receiver.profile.avatar %}
+                            <img src="{{ req.receiver.profile.avatar.url }}" alt="{{ req.receiver.username }}">
+                        {% else %}
+                            <span>{{ req.receiver.username|first|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="friend-info">
+                        <p class="friend-name">{{ req.receiver.username }}</p>
+                        <p class="text-sm text-muted">Pending...</p>
+                    </div>
+                    <span class="badge badge-yellow">Pending</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Friends -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fa-solid fa-user-group"></i>
+                My Friends
+                {% if friends %}
+                <span class="badge badge-green" style="margin-left:6px">{{ friends|length }}</span>
+                {% endif %}
+            </div>
+
+            {% if friends %}
+            <div class="friend-list">
+                {% for friend in friends %}
+                <div class="friend-item">
+                    <div class="friend-avatar">
+                        {% if friend.profile.avatar %}
+                            <img src="{{ friend.profile.avatar.url }}" alt="{{ friend.username }}">
+                        {% else %}
+                            <span>{{ friend.username|first|upper }}</span>
+                        {% endif %}
+                        <span class="friend-status-dot friend-status-{{ friend.profile.status|default:'offline' }}"></span>
+                    </div>
+                    <div class="friend-info">
+                        <p class="friend-name">{{ friend.username }}</p>
+                        <p class="text-sm text-muted">{{ friend.role|capfirst }}</p>
+                    </div>
+                    <div class="friend-actions">
+                        <form method="post" action="{% url 'start_conversation' friend.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-primary btn-sm">
+                                <i class="fa-solid fa-message"></i> Message
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'remove_friend' friend.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-danger btn-sm" onclick="return confirm('Remove {{ friend.username }} from friends?')">
+                                <i class="fa-solid fa-user-minus"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fa-solid fa-user-group"></i>
+                <p>You have no friends yet</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

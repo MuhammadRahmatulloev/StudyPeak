@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Period — StudyPeak{% endblock %}
+{% block nav_crm %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/crm.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Edit Period</h1>
+            <p class="page-subtitle">{{ period.course.name }}</p>
+        </div>
+        <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Period Name <span class="text-danger">*</span></label>
+                <input
+                    type="text"
+                    name="name"
+                    class="form-input"
+                    value="{{ period.name }}"
+                    placeholder="Period name"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Order</label>
+                <input
+                    type="number"
+                    name="order"
+                    class="form-input"
+                    value="{{ period.order }}"
+                    min="1"
+                >
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input
+                        type="date"
+                        name="start_date"
+                        class="form-input"
+                        value="{{ period.start_date|date:'Y-m-d' }}"
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label">End Date</label>
+                    <input
+                        type="date"
+                        name="end_date"
+                        class="form-input"
+                        value="{{ period.end_date|date:'Y-m-d' }}"
+                    >
+                </div>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+                <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}

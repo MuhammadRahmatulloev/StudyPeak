@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Group — StudyPeak{% endblock %}
+{% block nav_chat %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Edit Group</h1>
+            <p class="page-subtitle">{{ group.name }}</p>
+        </div>
+        <a href="{% url 'group_detail' group.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="group-form-avatar-wrap">
+                <div class="group-form-avatar has-image" id="avatarPreview">
+                    {% if group.avatar %}
+                        <img src="{{ group.avatar.url }}" alt="{{ group.name }}" id="avatarImg">
+                    {% else %}
+                        <span id="avatarLetter">{{ group.name|first|upper }}</span>
+                    {% endif %}
+                </div>
+                <label class="avatar-upload-btn" for="avatarInput">
+                    <i class="fa-solid fa-upload"></i> Change avatar
+                </label>
+                <input type="file" name="avatar" id="avatarInput" accept="image/*" hidden>
+            </div>
+
+            <div class="form-group mt-24">
+                <label class="form-label">Group Name <span class="text-danger">*</span></label>
+                <input
+                    type="text"
+                    name="name"
+                    class="form-input"
+                    value="{{ group.name }}"
+                    placeholder="Group name"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea
+                    name="description"
+                    class="form-input form-textarea"
+                    rows="3"
+                    placeholder="Describe this group..."
+                >{{ group.description|default:'' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-check">
+                    <input
+                        type="checkbox"
+                        name="is_study_group"
+                        class="form-checkbox"
+                        {% if group.is_study_group %}checked{% endif %}
+                    >
+                    <span class="form-check-label">
+                        <strong>Study Group</strong> — mark as an educational group
+                    </span>
+                </label>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+                <a href="{% url 'group_detail' group.id %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Danger zone -->
+    {% if group.owner == user %}
+    <div class="card mt-16 danger-zone">
+        <div class="card-title text-danger">
+            <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+        </div>
+        <div class="flex-between">
+            <div>
+                <p class="text-sm"><strong>Delete this group</strong></p>
+                <p class="text-sm text-muted">This action is permanent and cannot be undone.</p>
+            </div>
+            <form method="post" action="{% url 'group_delete' group.id %}">
+                {% csrf_token %}
+                <button
+                    class="btn btn-danger"
+                    onclick="return confirm('Are you sure you want to delete {{ group.name }}? This cannot be undone.')"
+                >
+                    <i class="fa-solid fa-trash"></i> Delete Group
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('avatarInput').addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const preview = document.getElementById('avatarPreview');
+        preview.innerHTML = `<img src="${e.target.result}" alt="preview">`;
+        preview.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+});
+</script>
+{% endblock %}

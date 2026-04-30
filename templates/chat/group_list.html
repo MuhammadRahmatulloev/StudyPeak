@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Groups — StudyPeak{% endblock %}
+{% block nav_chat %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Groups</h1>
+            <p class="page-subtitle">Your study and class groups</p>
+        </div>
+        <div class="flex gap-8">
+            <a href="{% url 'conversation_list' %}" class="btn btn-secondary">
+                <i class="fa-solid fa-comment"></i> Messages
+            </a>
+            <a href="{% url 'group_create' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> New Group
+            </a>
+        </div>
+    </div>
+
+    {% if groups %}
+    <div class="group-card-grid">
+        {% for group in groups %}
+        <a href="{% url 'group_detail' group.id %}" class="group-card card">
+            <div class="group-card-top">
+                <div class="group-card-avatar">
+                    {% if group.avatar %}
+                        <img src="{{ group.avatar.url }}" alt="{{ group.name }}">
+                    {% else %}
+                        <span>{{ group.name|first|upper }}</span>
+                    {% endif %}
+                </div>
+                <div class="group-card-badges">
+                    {% if group.is_study_group %}
+                    <span class="badge badge-blue">Study</span>
+                    {% endif %}
+                    {% if group.owner == user %}
+                    <span class="badge badge-yellow">Owner</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="group-card-info">
+                <p class="group-card-name">{{ group.name }}</p>
+                {% if group.description %}
+                <p class="group-card-desc text-muted text-sm">{{ group.description|truncatechars:60 }}</p>
+                {% endif %}
+            </div>
+            <div class="group-card-footer">
+                <span class="text-sm text-muted">
+                    <i class="fa-solid fa-users"></i>
+                    {{ group.memberships.count }} members
+                </span>
+                <span class="text-sm text-muted">
+                    <i class="fa-solid fa-user-tie"></i>
+                    {{ group.owner.username }}
+                </span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-comments"></i>
+            <p>You are not in any groups yet</p>
+            <a href="{% url 'group_create' %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Create your first group
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

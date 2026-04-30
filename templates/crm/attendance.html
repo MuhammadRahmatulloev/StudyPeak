@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance — StudyPeak{% endblock %}
+{% block nav_crm %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/crm.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Attendance</h1>
+            <p class="page-subtitle">{{ period.name }} — {{ period.course.name }}</p>
+        </div>
+        <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <!-- Date selector -->
+    <div class="card mb-16">
+        <form method="get" class="flex gap-12" style="align-items:flex-end">
+            <div class="form-group" style="margin-bottom:0; flex:1">
+                <label class="form-label">Select Date</label>
+                <input
+                    type="date"
+                    name="date"
+                    class="form-input"
+                    value="{{ date }}"
+                    required
+                >
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-calendar-check"></i> Load
+            </button>
+        </form>
+    </div>
+
+    {% if date %}
+    <!-- Attendance form -->
+    <div class="card">
+        <div class="card-title">
+            <i class="fa-solid fa-user-check"></i>
+            Attendance for {{ date }}
+        </div>
+
+        {% if students %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="date" value="{{ date }}">
+
+            <div class="attendance-list">
+                {% for student in students %}
+                <input type="hidden" name="student_ids" value="{{ student.id }}">
+                <div class="attendance-item">
+                    <div class="attendance-student">
+                        <div class="journal-student-avatar">
+                            {% if student.profile.avatar %}
+                                <img src="{{ student.profile.avatar.url }}" alt="{{ student.username }}">
+                            {% else %}
+                                <span>{{ student.username|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <p class="attendance-student-name">{{ student.username }}</p>
+                            <p class="text-sm text-muted">{{ student.role|capfirst }}</p>
+                        </div>
+                    </div>
+                    <div class="attendance-status-selector">
+                        {% with current=attendance_map|default:'' %}
+                        <label class="attendance-status-btn attendance-status-present">
+                            <input
+                                type="radio"
+                                name="status_{{ student.id }}"
+                                value="present"
+                                {% if not attendance_map or student.id not in attendance_map %}checked{% endif %}
+                                hidden
+                            >
+                            <i class="fa-solid fa-check"></i>
+                            <span>Present</span>
+                        </label>
+                        <label class="attendance-status-btn attendance-status-absent">
+                            <input
+                                type="radio"
+                                name="status_{{ student.id }}"
+                                value="absent"
+                                hidden
+                            >
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Absent</span>
+                        </label>
+                        <label class="attendance-status-btn attendance-status-excused">
+                            <input
+                                type="radio"
+                                name="status_{{ student.id }}"
+                                value="excused"
+                                hidden
+                            >
+                            <i class="fa-solid fa-clock"></i>
+                            <span>Excused</span>
+                        </label>
+                        {% endwith %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions mt-16">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Attendance
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-users-slash"></i>
+            <p>No students enrolled</p>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-calendar"></i>
+            <p>Select a date to mark attendance</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.attendance-status-selector').forEach(selector => {
+    const btns = selector.querySelectorAll('.attendance-status-btn');
+    btns.forEach(btn => {
+        const radio = btn.querySelector('input[type="radio"]');
+        radio.addEventListener('change', () => {
+            btns.forEach(b => b.classList.remove('selected'));
+            if (radio.checked) btn.classList.add('selected');
+        });
+        if (radio.checked) btn.classList.add('selected');
+    });
+});
+</script>
+{% endblock %}

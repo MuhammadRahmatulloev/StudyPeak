@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ course.name }} — StudyPeak{% endblock %}
+{% block nav_crm %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/crm.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">{{ course.name }}</h1>
+            <p class="page-subtitle">
+                <i class="fa-solid fa-user-tie"></i> {{ course.teacher.username }}
+                {% if course.is_active %}
+                <span class="badge badge-green" style="margin-left:8px">Active</span>
+                {% else %}
+                <span class="badge badge-gray" style="margin-left:8px">Inactive</span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="flex gap-8">
+            {% if user.is_teacher and course.teacher == user or user.is_admin_role %}
+            <a href="{% url 'course_update' course.id %}" class="btn btn-secondary">
+                <i class="fa-solid fa-pen"></i> Edit
+            </a>
+            {% endif %}
+            <a href="{% url 'course_list' %}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="course-detail-grid">
+
+        <!-- LEFT — Main content -->
+        <div class="course-detail-main">
+
+            <!-- Description -->
+            {% if course.description %}
+            <div class="card mb-16">
+                <div class="card-title">
+                    <i class="fa-solid fa-circle-info"></i> About
+                </div>
+                <p class="text-muted">{{ course.description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Periods -->
+            <div class="card mb-16">
+                <div class="flex-between mb-16">
+                    <div class="card-title" style="margin-bottom:0">
+                        <i class="fa-solid fa-calendar-days"></i> Periods
+                    </div>
+                    {% if user.is_teacher and course.teacher == user or user.is_admin_role %}
+                    <a href="{% url 'period_create' course.id %}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-plus"></i> Add Period
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% if periods %}
+                <div class="period-list">
+                    {% for period in periods %}
+                    <div class="period-item">
+                        <div class="period-item-left">
+                            <div class="period-number">{{ period.order }}</div>
+                            <div class="period-info">
+                                <p class="period-name">{{ period.name }}</p>
+                                {% if period.start_date and period.end_date %}
+                                <p class="text-sm text-muted">
+                                    {{ period.start_date|date:"M d" }} — {{ period.end_date|date:"M d, Y" }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="period-actions flex gap-8">
+                            {% if user.is_teacher and course.teacher == user or user.is_admin_role %}
+                            <a href="{% url 'weekly_journal' period.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-book-open"></i> Journal
+                            </a>
+                            <a href="{% url 'attendance' period.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-user-check"></i> Attendance
+                            </a>
+                            <a href="{% url 'grade_list' period.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-star"></i> Grades
+                            </a>
+                            <a href="{% url 'period_update' period.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            <form method="post" action="{% url 'period_delete' period.id %}">
+                                {% csrf_token %}
+                                <button
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Delete period {{ period.name }}?')"
+                                >
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                            {% else %}
+                            <a href="{% url 'student_journal' period.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-book-open"></i> My Journal
+                            </a>
+                            <a href="{% url 'student_attendance' period.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-calendar-check"></i> Attendance
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                    <p>No periods yet</p>
+                    {% if user.is_teacher and course.teacher == user or user.is_admin_role %}
+                    <a href="{% url 'period_create' course.id %}" class="btn btn-primary btn-sm">Add first period</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Pending enrollments -->
+            {% if pending and user.is_teacher and course.teacher == user or pending and user.is_admin_role %}
+            <div class="card mb-16">
+                <div class="card-title">
+                    <i class="fa-solid fa-clock"></i> Pending Requests
+                    <span class="badge badge-yellow" style="margin-left:6px">{{ pending|length }}</span>
+                </div>
+                <div class="enrollment-list">
+                    {% for enrollment in pending %}
+                    <div class="enrollment-item">
+                        <div class="enrollment-user">
+                            <div class="enrollment-avatar">
+                                {% if enrollment.student.profile.avatar %}
+                                    <img src="{{ enrollment.student.profile.avatar.url }}" alt="{{ enrollment.student.username }}">
+                                {% else %}
+                                    <span>{{ enrollment.student.username|first|upper }}</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <p class="enrollment-name">{{ enrollment.student.username }}</p>
+                                <p class="text-sm text-muted">{{ enrollment.enrolled_at|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="enrollment-actions flex gap-8">
+                            <form method="post" action="{% url 'enroll_approve' enrollment.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-success btn-sm">
+                                    <i class="fa-solid fa-check"></i> Approve
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'enroll_reject' enrollment.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-danger btn-sm">
+                                    <i class="fa-solid fa-xmark"></i> Reject
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- RIGHT — Sidebar -->
+        <div class="course-detail-side">
+
+            <!-- Enroll button for students -->
+            {% if user.is_student %}
+            <div class="card mb-16">
+                <div class="card-title">
+                    <i class="fa-solid fa-graduation-cap"></i> Enrollment
+                </div>
+                <form method="post" action="{% url 'enroll_request' course.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-primary btn-block">
+                        <i class="fa-solid fa-graduation-cap"></i> Request Enrollment
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Invite student -->
+            {% if user.is_teacher and course.teacher == user or user.is_admin_role %}
+            <div class="card mb-16">
+                <div class="card-title">
+                    <i class="fa-solid fa-user-plus"></i> Invite Student
+                </div>
+                <form method="post" action="{% url 'enroll_invite' course.id %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input
+                            type="number"
+                            name="student_id"
+                            class="form-input"
+                            placeholder="Enter student ID"
+                            min="1"
+                            required
+                        >
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fa-solid fa-user-plus"></i> Add Student
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Enrolled students -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="fa-solid fa-users"></i> Students
+                    <span class="badge badge-blue" style="margin-left:6px">{{ enrollments|length }}</span>
+                </div>
+
+                {% if enrollments %}
+                <div class="student-list">
+                    {% for enrollment in enrollments %}
+                    <div class="student-item">
+                        <div class="student-avatar">
+                            {% if enrollment.student.profile.avatar %}
+                                <img src="{{ enrollment.student.profile.avatar.url }}" alt="{{ enrollment.student.username }}">
+                            {% else %}
+                                <span>{{ enrollment.student.username|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="student-info">
+                            <p class="student-name">{{ enrollment.student.username }}</p>
+                            <p class="text-sm text-muted">Since {{ enrollment.enrolled_at|date:"M d" }}</p>
+                        </div>
+                        {% if user.is_teacher and course.teacher == user or user.is_admin_role %}
+                        <form method="post" action="{% url 'enroll_remove' enrollment.id %}">
+                            {% csrf_token %}
+                            <button
+                                class="btn btn-danger btn-sm"
+                                onclick="return confirm('Remove {{ enrollment.student.username }}?')"
+                                title="Remove"
+                            >
+                                <i class="fa-solid fa-user-minus"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-user-slash"></i>
+                    <p>No students enrolled</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ group.name }} — StudyPeak{% endblock %}
+{% block nav_chat %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-page">
+
+    <!-- Sidebar — members & info -->
+    <div class="chat-sidebar">
+
+        <div class="chat-sidebar-header">
+            <div class="group-sidebar-avatar">
+                {% if group.avatar %}
+                    <img src="{{ group.avatar.url }}" alt="{{ group.name }}">
+                {% else %}
+                    <span>{{ group.name|first|upper }}</span>
+                {% endif %}
+            </div>
+            <div>
+                <p class="chat-sidebar-title">{{ group.name }}</p>
+                <p class="text-sm text-muted">{{ members|length }} members</p>
+            </div>
+        </div>
+
+        <!-- Pinned messages -->
+        {% if pinned %}
+        <div class="chat-sidebar-section">
+            <p class="chat-sidebar-section-title">
+                <i class="fa-solid fa-thumbtack"></i> Pinned
+            </p>
+            {% for msg in pinned %}
+            <div class="pinned-msg">
+                <p class="text-sm">{{ msg.content|truncatechars:60 }}</p>
+                <p class="text-sm text-muted">{{ msg.sender.username }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Members -->
+        <div class="chat-sidebar-section">
+            <p class="chat-sidebar-section-title">
+                <i class="fa-solid fa-users"></i> Members
+            </p>
+            <div class="member-list">
+                {% for member in members %}
+                <div class="member-item">
+                    <div class="member-avatar">
+                        {% if member.user.profile.avatar %}
+                            <img src="{{ member.user.profile.avatar.url }}" alt="{{ member.user.username }}">
+                        {% else %}
+                            <span>{{ member.user.username|first|upper }}</span>
+                        {% endif %}
+                        <span class="member-status-dot member-status-{{ member.user.profile.status|default:'offline' }}"></span>
+                    </div>
+                    <div class="member-info">
+                        <p class="member-name">{{ member.user.username }}</p>
+                        <p class="text-sm text-muted">{{ member.get_role_display }}</p>
+                    </div>
+                    {% if membership.role == 'admin' and member.user != user and member.user != group.owner %}
+                    <div class="member-actions">
+                        <form method="post" action="{% url 'group_kick_member' group.id member.user.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-danger btn-sm" title="Kick" onclick="return confirm('Kick {{ member.user.username }}?')">
+                                <i class="fa-solid fa-user-minus"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Admin actions -->
+        {% if membership.role == 'admin' %}
+        <div class="chat-sidebar-section">
+            <p class="chat-sidebar-section-title">
+                <i class="fa-solid fa-gear"></i> Admin
+            </p>
+            <div class="sidebar-admin-actions">
+                <a href="{% url 'group_update' group.id %}" class="btn btn-secondary btn-sm w-full">
+                    <i class="fa-solid fa-pen"></i> Edit Group
+                </a>
+
+                <!-- Invite user form -->
+                <form method="post" action="{% url 'send_group_invitation' group.id %}" class="mt-8">
+                    {% csrf_token %}
+                    <div class="flex gap-8">
+                        <input
+                            type="number"
+                            name="user_id"
+                            class="form-input"
+                            placeholder="User ID to invite"
+                            min="1"
+                            required
+                        >
+                        <button class="btn btn-primary btn-sm" type="submit">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Leave group -->
+        {% if group.owner != user %}
+        <div class="chat-sidebar-section">
+            <form method="post" action="{% url 'group_leave' group.id %}">
+                {% csrf_token %}
+                <button class="btn btn-danger btn-sm w-full" onclick="return confirm('Leave {{ group.name }}?')">
+                    <i class="fa-solid fa-right-from-bracket"></i> Leave Group
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- Chat main -->
+    <div class="chat-main">
+
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="flex gap-12" style="align-items:center">
+                <a href="{% url 'group_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <div>
+                    <p class="chat-header-name">{{ group.name }}</p>
+                    {% if group.description %}
+                    <p class="text-sm text-muted">{{ group.description|truncatechars:50 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex gap-8">
+                {% if group.is_study_group %}
+                <span class="badge badge-blue">Study Group</span>
+                {% endif %}
+                <span class="badge badge-gray">{{ members|length }} members</span>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-messages" id="chatMessages">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="chat-message {% if message.sender == user %}chat-message-own{% endif %}">
+                    {% if message.sender != user %}
+                    <div class="chat-msg-avatar">
+                        {% if message.sender.profile.avatar %}
+                            <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.username }}">
+                        {% else %}
+                            <span>{{ message.sender.username|first|upper }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="chat-msg-body">
+                        {% if message.sender != user %}
+                        <p class="chat-msg-sender text-sm text-muted">{{ message.sender.username }}</p>
+                        {% endif %}
+                        <div class="chat-msg-bubble {% if message.is_pinned %}chat-msg-pinned{% endif %}">
+                            {% if message.is_pinned %}
+                            <span class="pinned-indicator text-sm">
+                                <i class="fa-solid fa-thumbtack"></i>
+                            </span>
+                            {% endif %}
+                            <p>{{ message.content }}</p>
+                        </div>
+                        <div class="chat-msg-meta">
+                            <span class="text-sm text-muted">{{ message.created_at|timesince }} ago</span>
+                            {% if membership.role == 'admin' or message.sender == user %}
+                            <div class="chat-msg-actions">
+                                {% if membership.role == 'admin' %}
+                                <form method="post" action="{% url 'pin_message' message.id %}">
+                                    {% csrf_token %}
+                                    <button class="chat-msg-action-btn {% if message.is_pinned %}active{% endif %}" title="{% if message.is_pinned %}Unpin{% else %}Pin{% endif %}">
+                                        <i class="fa-solid fa-thumbtack"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if membership.role == 'admin' or message.sender == user %}
+                                <form method="post" action="{% url 'delete_message' message.id %}">
+                                    {% csrf_token %}
+                                    <button class="chat-msg-action-btn text-danger" title="Delete" onclick="return confirm('Delete this message?')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="chat-empty">
+                <i class="fa-solid fa-comments"></i>
+                <p>No messages yet. Start the conversation!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Input -->
+        <div class="chat-input-area">
+            <form method="post" action="{% url 'group_detail' group.id %}" class="chat-form">
+                {% csrf_token %}
+                <textarea
+                    name="content"
+                    class="chat-input"
+                    placeholder="Type a message..."
+                    rows="1"
+                    id="chatInput"
+                    required
+                ></textarea>
+                <button type="submit" class="btn btn-primary chat-send-btn">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chatMessages = document.getElementById('chatMessages');
+if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+const chatInput = document.getElementById('chatInput');
+if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.closest('form').submit();
+        }
+    });
+    chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}News — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">News Feed</h1>
+            <p class="page-subtitle">Latest announcements and updates</p>
+        </div>
+        {% if user.is_teacher or user.is_admin_role %}
+        <a href="{% url 'newsfeed_create' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> New Post
+        </a>
+        {% endif %}
+    </div>
+
+    {% if posts %}
+    <div class="newsfeed-list">
+        {% for post in posts %}
+        <div class="newsfeed-card card">
+
+            {% if post.image %}
+            <div class="newsfeed-cover">
+                <img src="{{ post.image.url }}" alt="{{ post.title }}">
+            </div>
+            {% endif %}
+
+            <div class="newsfeed-body">
+                <div class="newsfeed-meta">
+                    <span class="badge
+                        {% if post.type == 'ad' %}badge-yellow
+                        {% elif post.type == 'image' %}badge-blue
+                        {% else %}badge-gray{% endif %}">
+                        {{ post.type|upper }}
+                    </span>
+                    {% if not post.is_active %}
+                    <span class="badge badge-red">Hidden</span>
+                    {% endif %}
+                    <span class="text-sm text-muted">{{ post.created_at|date:"M d, Y" }}</span>
+                </div>
+
+                <h2 class="newsfeed-title">{{ post.title }}</h2>
+                <p class="newsfeed-excerpt text-muted">{{ post.content|truncatechars:160 }}</p>
+
+                <div class="newsfeed-footer">
+                    <div class="newsfeed-author">
+                        <div class="newsfeed-author-avatar">
+                            {% if post.author.profile.avatar %}
+                                <img src="{{ post.author.profile.avatar.url }}" alt="{{ post.author.username }}">
+                            {% else %}
+                                <span>{{ post.author.username|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <p class="text-sm font-display">{{ post.author.username }}</p>
+                            <p class="text-sm text-muted">{{ post.created_at|timesince }} ago</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-8">
+                        <a href="{% url 'newsfeed_detail' post.id %}" class="btn btn-secondary btn-sm">
+                            Read more <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        {% if user.is_admin_role or post.author == user %}
+                        <a href="{% url 'newsfeed_update' post.id %}" class="btn btn-secondary btn-sm">
+                            <i class="fa-solid fa-pen"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-newspaper"></i>
+            <p>No posts yet</p>
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'newsfeed_create' %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Create first post
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

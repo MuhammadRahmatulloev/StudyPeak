@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}New Post — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">New Post</h1>
+            <p class="page-subtitle">Publish an announcement or update</p>
+        </div>
+        <a href="{% url 'newsfeed_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Post Type</label>
+                <div class="newsfeed-type-selector">
+                    {% for value, label in type_choices %}
+                    <label class="newsfeed-type-option" id="type-{{ value }}">
+                        <input type="radio" name="type" value="{{ value }}"
+                            {% if value == 'text' %}checked{% endif %} hidden>
+                        <span class="newsfeed-type-icon">
+                            {% if value == 'text' %}<i class="fa-solid fa-align-left"></i>
+                            {% elif value == 'image' %}<i class="fa-solid fa-image"></i>
+                            {% else %}<i class="fa-solid fa-bullhorn"></i>
+                            {% endif %}
+                        </span>
+                        <span>{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Title <span class="text-danger">*</span></label>
+                <input
+                    type="text"
+                    name="title"
+                    class="form-input"
+                    placeholder="Post title..."
+                    value="{{ request.POST.title }}"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Content <span class="text-danger">*</span></label>
+                <textarea
+                    name="content"
+                    class="form-input form-textarea"
+                    rows="8"
+                    placeholder="Write your announcement or update here..."
+                    required
+                >{{ request.POST.content }}</textarea>
+            </div>
+
+            <div class="form-group" id="imageField">
+                <label class="form-label">Image</label>
+                <div class="newsfeed-image-upload" id="imageUploadArea">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <p class="text-muted">Click to upload or drag an image</p>
+                    <span class="text-sm text-muted">JPG, PNG — max 5MB</span>
+                    <input type="file" name="image" id="imageInput" accept="image/*">
+                </div>
+                <div class="newsfeed-image-preview" id="imagePreview" style="display:none">
+                    <img id="previewImg" src="" alt="preview">
+                    <button type="button" class="newsfeed-remove-image" id="removeImage">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-paper-plane"></i> Publish Post
+                </button>
+                <a href="{% url 'newsfeed_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Type selector
+document.querySelectorAll('.newsfeed-type-option input').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.newsfeed-type-option').forEach(opt => opt.classList.remove('selected'));
+        radio.closest('.newsfeed-type-option').classList.add('selected');
+    });
+});
+document.querySelector('.newsfeed-type-option input:checked')
+    ?.closest('.newsfeed-type-option')?.classList.add('selected');
+
+// Image upload preview
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+const previewImg = document.getElementById('previewImg');
+const uploadArea = document.getElementById('imageUploadArea');
+const removeBtn = document.getElementById('removeImage');
+
+uploadArea.addEventListener('click', () => imageInput.click());
+
+imageInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        uploadArea.style.display = 'none';
+        imagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+});
+
+removeBtn.addEventListener('click', () => {
+    imageInput.value = '';
+    previewImg.src = '';
+    imagePreview.style.display = 'none';
+    uploadArea.style.display = 'flex';
+});
+
+// Drag and drop
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag-over');
+});
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        imageInput.files = dt.files;
+        imageInput.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+{% endblock %}

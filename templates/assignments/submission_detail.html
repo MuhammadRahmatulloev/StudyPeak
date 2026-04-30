@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submission — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Submission</h1>
+            <p class="page-subtitle">{{ submission.assignment.title }}</p>
+        </div>
+        <div class="flex gap-8">
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'submission_list' submission.assignment.id %}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> All Submissions
+            </a>
+            {% else %}
+            <a href="{% url 'assignment_detail' submission.assignment.id %}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Student + result info -->
+    <div class="card mb-16">
+        <div class="submission-header">
+            <div class="submission-header-student">
+                <div class="submission-avatar-lg">
+                    {% if submission.student.profile.avatar %}
+                        <img src="{{ submission.student.profile.avatar.url }}" alt="{{ submission.student.username }}">
+                    {% else %}
+                        <span>{{ submission.student.username|first|upper }}</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <h2 class="submission-header-name">{{ submission.student.username }}</h2>
+                    <p class="text-muted text-sm">{{ submission.student.role|capfirst }}</p>
+                    {% if submission.submitted_at %}
+                    <p class="text-sm text-muted mt-8">
+                        <i class="fa-solid fa-clock"></i>
+                        Submitted {{ submission.submitted_at|date:"M d, Y — H:i" }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="submission-header-result">
+                <div class="submission-score-circle
+                    {% if submission.total_score >= 80 %}score-circle-green
+                    {% elif submission.total_score >= 50 %}score-circle-blue
+                    {% elif submission.total_score >= 30 %}score-circle-yellow
+                    {% else %}score-circle-red{% endif %}">
+                    <span class="submission-score-value">{{ submission.total_score }}</span>
+                    <span class="submission-score-label">points</span>
+                </div>
+                <div class="submission-status-wrap">
+                    {% if submission.status == 'graded' %}
+                    <span class="badge badge-green">
+                        <i class="fa-solid fa-star"></i> Graded
+                    </span>
+                    {% elif submission.status == 'submitted' %}
+                    <span class="badge badge-blue">
+                        <i class="fa-solid fa-check"></i> Submitted
+                    </span>
+                    {% else %}
+                    <span class="badge badge-gray">
+                        <i class="fa-solid fa-clock"></i> Pending
+                    </span>
+                    {% endif %}
+                    <p class="text-sm text-muted mt-8">
+                        {{ submission.assignment.type|upper }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Answers -->
+    <div class="submission-answers">
+        {% for answer in answers %}
+        <div class="card mb-16 answer-card
+            {% if answer.is_correct == True %}answer-card-correct
+            {% elif answer.is_correct == False %}answer-card-wrong
+            {% else %}answer-card-pending{% endif %}">
+
+            <div class="answer-question-header">
+                <div class="answer-question-num">Q{{ forloop.counter }}</div>
+                <div class="answer-question-info">
+                    <p class="answer-question-text">{{ answer.question.text }}</p>
+                    <div class="flex gap-8 mt-8">
+                        <span class="badge badge-gray text-sm">
+                            {{ answer.question.get_type_display }}
+                        </span>
+                        <span class="badge badge-blue text-sm">
+                            Max: {{ answer.question.score }} pts
+                        </span>
+                    </div>
+                </div>
+                <div class="answer-result-badge">
+                    {% if answer.is_correct == True %}
+                    <span class="badge badge-green">
+                        <i class="fa-solid fa-check"></i> Correct
+                    </span>
+                    {% elif answer.is_correct == False %}
+                    <span class="badge badge-red">
+                        <i class="fa-solid fa-xmark"></i> Wrong
+                    </span>
+                    {% else %}
+                    <span class="badge badge-yellow">
+                        <i class="fa-solid fa-pen"></i> Manual
+                    </span>
+                    {% endif %}
+                    <p class="answer-score text-sm mt-8">
+                        <strong>{{ answer.score }}</strong> / {{ answer.question.score }} pts
+                    </p>
+                </div>
+            </div>
+
+            <div class="answer-body">
+
+                <!-- MCQ / True-False answer -->
+                {% if answer.question.type == 'mcq' or answer.question.type == 'true_false' %}
+                <div class="answer-choices">
+                    {% for choice in answer.question.choices.all %}
+                    <div class="answer-choice
+                        {% if choice == answer.selected_choice and choice.is_correct %}choice-correct-selected
+                        {% elif choice == answer.selected_choice and not choice.is_correct %}choice-wrong-selected
+                        {% elif choice.is_correct %}choice-correct
+                        {% else %}choice-default{% endif %}">
+                        <div class="choice-indicator">
+                            {% if choice == answer.selected_choice and choice.is_correct %}
+                                <i class="fa-solid fa-check text-success"></i>
+                            {% elif choice == answer.selected_choice and not choice.is_correct %}
+                                <i class="fa-solid fa-xmark text-danger"></i>
+                            {% elif choice.is_correct %}
+                                <i class="fa-solid fa-check text-success"></i>
+                            {% else %}
+                                <i class="fa-regular fa-circle text-muted"></i>
+                            {% endif %}
+                        </div>
+                        <span class="choice-text
+                            {% if choice == answer.selected_choice %}choice-text-selected{% endif %}">
+                            {{ choice.text }}
+                        </span>
+                        {% if choice == answer.selected_choice %}
+                        <span class="badge badge-gray text-sm" style="margin-left:auto">Your answer</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Text answer -->
+                {% elif answer.question.type == 'text' %}
+                <div class="answer-text-wrap">
+                    <p class="answer-text-label text-sm text-muted">Student's answer:</p>
+                    <div class="answer-text-bubble">
+                        {% if answer.answer_text %}
+                            {{ answer.answer_text }}
+                        {% else %}
+                            <span class="text-muted text-sm">No answer provided</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Grade text answer form (teacher only) -->
+                {% if user.is_teacher or user.is_admin_role %}
+                <div class="grade-answer-form mt-16">
+                    <div class="grade-answer-form-header">
+                        <p class="text-sm"><strong>Grade this answer:</strong></p>
+                    </div>
+                    <form method="post" action="{% url 'grade_answer' submission.id answer.id %}">
+                        {% csrf_token %}
+                        <div class="flex gap-12" style="align-items:flex-end">
+                            <div class="form-group" style="margin-bottom:0">
+                                <label class="form-label">Score (0–{{ answer.question.score }})</label>
+                                <input
+                                    type="number"
+                                    name="score"
+                                    class="form-input"
+                                    value="{{ answer.score }}"
+                                    min="0"
+                                    max="{{ answer.question.score }}"
+                                    style="width:100px"
+                                >
+                            </div>
+                            <div class="form-group" style="margin-bottom:0">
+                                <label class="form-check">
+                                    <input
+                                        type="checkbox"
+                                        name="is_correct"
+                                        class="form-checkbox"
+                                        {% if answer.is_correct %}checked{% endif %}
+                                    >
+                                    <span class="form-check-label">Mark as correct</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fa-solid fa-star"></i> Save
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+                {% endif %}
+
+            </div>
+        </div>
+        {% empty %}
+        <div class="card">
+            <div class="empty-state">
+                <i class="fa-solid fa-file-circle-xmark"></i>
+                <p>No answers found</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

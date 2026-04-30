@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Group — StudyPeak{% endblock %}
+{% block nav_chat %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Create Group</h1>
+            <p class="page-subtitle">Set up a new group or study room</p>
+        </div>
+        <a href="{% url 'group_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="group-form-avatar-wrap">
+                <div class="group-form-avatar" id="avatarPreview">
+                    <i class="fa-solid fa-image"></i>
+                </div>
+                <label class="avatar-upload-btn" for="avatarInput">
+                    <i class="fa-solid fa-upload"></i> Upload avatar
+                </label>
+                <input type="file" name="avatar" id="avatarInput" accept="image/*" hidden>
+            </div>
+
+            <div class="form-group mt-24">
+                <label class="form-label">Group Name <span class="text-danger">*</span></label>
+                <input
+                    type="text"
+                    name="name"
+                    class="form-input"
+                    placeholder="e.g. Python Class 2025"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea
+                    name="description"
+                    class="form-input form-textarea"
+                    rows="3"
+                    placeholder="What is this group about?"
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-check">
+                    <input type="checkbox" name="is_study_group" class="form-checkbox">
+                    <span class="form-check-label">
+                        <strong>Study Group</strong> — mark as an educational group
+                    </span>
+                </label>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-plus"></i> Create Group
+                </button>
+                <a href="{% url 'group_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('avatarInput').addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const preview = document.getElementById('avatarPreview');
+        preview.innerHTML = `<img src="${e.target.result}" alt="preview">`;
+        preview.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+});
+</script>
+{% endblock %}

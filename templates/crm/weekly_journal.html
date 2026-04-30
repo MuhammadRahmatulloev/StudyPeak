@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Weekly Journal — StudyPeak{% endblock %}
+{% block nav_crm %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/crm.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Weekly Journal</h1>
+            <p class="page-subtitle">{{ period.name }} — {{ period.course.name }}</p>
+        </div>
+        <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <!-- Week selector -->
+    <div class="card mb-16">
+        <form method="get" class="week-selector-form">
+            <div class="flex gap-12" style="align-items:flex-end">
+                <div class="form-group" style="margin-bottom:0; flex:1">
+                    <label class="form-label">Week Number</label>
+                    <input
+                        type="number"
+                        name="week"
+                        class="form-input"
+                        value="{{ week }}"
+                        min="1"
+                        placeholder="e.g. 1"
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-magnifying-glass"></i> Load Week
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Journal table -->
+    <div class="card">
+        <div class="card-title">
+            <i class="fa-solid fa-book-open"></i> Week {{ week }} — Scores
+        </div>
+
+        {% if students %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="week" value="{{ week }}">
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Base Score <span class="text-muted">(0–100)</span></th>
+                            <th>Bonus <span class="text-muted">(0–10)</span></th>
+                            <th>Total</th>
+                            <th>Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        {% with j=journal_map|default:'' %}
+                        <input type="hidden" name="student_ids" value="{{ student.id }}">
+                        <tr>
+                            <td>
+                                <div class="journal-student">
+                                    <div class="journal-student-avatar">
+                                        {% if student.profile.avatar %}
+                                            <img src="{{ student.profile.avatar.url }}" alt="{{ student.username }}">
+                                        {% else %}
+                                            <span>{{ student.username|first|upper }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <span>{{ student.username }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <input
+                                    type="number"
+                                    name="base_{{ student.id }}"
+                                    class="form-input journal-score-input"
+                                    value="{% if journal_map %}{% if student.id in journal_map %}{{ journal_map|default:''}}{% endif %}{% endif %}0"
+                                    min="0"
+                                    max="100"
+                                >
+                            </td>
+                            <td>
+                                <input
+                                    type="number"
+                                    name="bonus_{{ student.id }}"
+                                    class="form-input journal-score-input"
+                                    value="0"
+                                    min="0"
+                                    max="10"
+                                >
+                            </td>
+                            <td>
+                                <span class="badge badge-blue journal-total">—</span>
+                            </td>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="comment_{{ student.id }}"
+                                    class="form-input"
+                                    placeholder="Optional..."
+                                >
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-actions mt-16">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Week {{ week }}
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-users-slash"></i>
+            <p>No students enrolled in this course</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('input[name^="base_"], input[name^="bonus_"]').forEach(input => {
+    input.addEventListener('input', function() {
+        const row = this.closest('tr');
+        const base = parseInt(row.querySelector('input[name^="base_"]').value) || 0;
+        const bonus = parseInt(row.querySelector('input[name^="bonus_"]').value) || 0;
+        const total = row.querySelector('.journal-total');
+        if (total) total.textContent = base + bonus;
+    });
+});
+</script>
+{% endblock %}

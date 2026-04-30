@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card auth-card-wide">
+
+        <div class="auth-logo">
+            <span class="auth-logo-icon">⚡</span>
+            <span class="auth-logo-text">StudyPeak</span>
+        </div>
+
+        <div class="auth-header">
+            <h1 class="auth-title">Create account</h1>
+            <p class="auth-subtitle">Join StudyPeak and start learning</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            <!-- Role selector -->
+            <div class="form-group">
+                <label class="form-label">I am a</label>
+                <div class="role-selector">
+                    <label class="role-option" id="roleStudent">
+                        <input type="radio" name="role" value="student" checked hidden>
+                        <span class="role-icon"><i class="fa-solid fa-user-graduate"></i></span>
+                        <span class="role-label">Student</span>
+                        <span class="role-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                    <label class="role-option" id="roleTeacher">
+                        <input type="radio" name="role" value="teacher" hidden>
+                        <span class="role-icon"><i class="fa-solid fa-chalkboard-user"></i></span>
+                        <span class="role-label">Teacher</span>
+                        <span class="role-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <div class="input-icon-wrap">
+                    <i class="fa-solid fa-user input-icon"></i>
+                    <input
+                        type="text"
+                        name="username"
+                        class="form-input input-with-icon"
+                        placeholder="e.g. john_doe"
+                        value="{{ request.POST.username }}"
+                        autocomplete="username"
+                        required
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <div class="input-icon-wrap">
+                    <i class="fa-solid fa-envelope input-icon"></i>
+                    <input
+                        type="email"
+                        name="email"
+                        class="form-input input-with-icon"
+                        placeholder="e.g. john@gmail.com"
+                        value="{{ request.POST.email }}"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <div class="input-icon-wrap">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input
+                        type="password"
+                        name="password"
+                        id="passwordInput"
+                        class="form-input input-with-icon input-with-icon-right"
+                        placeholder="Create a strong password"
+                        autocomplete="new-password"
+                        required
+                    >
+                    <button type="button" class="input-icon-right" onclick="togglePassword('passwordInput', 'eyeIcon1')">
+                        <i class="fa-solid fa-eye" id="eyeIcon1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Confirm Password</label>
+                <div class="input-icon-wrap">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input
+                        type="password"
+                        name="confirm_password"
+                        id="confirmInput"
+                        class="form-input input-with-icon input-with-icon-right"
+                        placeholder="Repeat your password"
+                        autocomplete="new-password"
+                        required
+                    >
+                    <button type="button" class="input-icon-right" onclick="togglePassword('confirmInput', 'eyeIcon2')">
+                        <i class="fa-solid fa-eye" id="eyeIcon2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <i class="fa-solid fa-user-plus"></i>
+                Create account
+            </button>
+        </form>
+
+        <div class="auth-divider">
+            <span>Already have an account?</span>
+        </div>
+
+        <a href="{% url 'login' %}" class="btn btn-secondary btn-block">
+            Sign in
+        </a>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+    }
+}
+
+// Role selector visual toggle
+document.querySelectorAll('.role-option input').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.role-option').forEach(opt => opt.classList.remove('active'));
+        radio.closest('.role-option').classList.add('active');
+    });
+});
+
+// Set default active on load
+document.querySelector('.role-option input:checked')
+    ?.closest('.role-option')
+    ?.classList.add('active');
+</script>
+{% endblock %}

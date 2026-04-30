@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Attendance — StudyPeak{% endblock %}
+{% block nav_crm %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/crm.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">My Attendance</h1>
+            <p class="page-subtitle">{{ period.name }} — {{ period.course.name }}</p>
+        </div>
+        <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <!-- Summary stats -->
+    {% if records %}
+    <div class="grid-3 mb-16">
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-green">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <p class="stat-value">{{ records|length }}</p>
+                    <p class="stat-label text-muted text-sm">Total Days</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-blue">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <div>
+                    <p class="stat-value">
+                        {% with cnt=0 %}
+                        {% for r in records %}{% if r.status == 'present' %}{% endfor %}
+                        —
+                        {% endwith %}
+                    </p>
+                    <p class="stat-label text-muted text-sm">Present</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-red">
+                    <i class="fa-solid fa-user-xmark"></i>
+                </div>
+                <div>
+                    <p class="stat-value">—</p>
+                    <p class="stat-label text-muted text-sm">Absent</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td class="text-muted text-sm">{{ forloop.counter }}</td>
+                        <td>{{ record.date|date:"l, M d, Y" }}</td>
+                        <td>
+                            {% if record.status == 'present' %}
+                            <span class="badge badge-green">
+                                <i class="fa-solid fa-check"></i> Present
+                            </span>
+                            {% elif record.status == 'absent' %}
+                            <span class="badge badge-red">
+                                <i class="fa-solid fa-xmark"></i> Absent
+                            </span>
+                            {% else %}
+                            <span class="badge badge-yellow">
+                                <i class="fa-solid fa-clock"></i> Excused
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-calendar-xmark"></i>
+            <p>No attendance records yet</p>
+            <p class="text-muted text-sm">Your teacher hasn't marked attendance yet</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

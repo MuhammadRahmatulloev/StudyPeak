@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}New Password — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            <span class="auth-logo-icon">⚡</span>
+            <span class="auth-logo-text">StudyPeak</span>
+        </div>
+
+        <div class="auth-verify-icon auth-icon-success">
+            <i class="fa-solid fa-lock-open"></i>
+        </div>
+
+        <div class="auth-header">
+            <h1 class="auth-title">Set new password</h1>
+            <p class="auth-subtitle">Choose a strong password for your account</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">New password</label>
+                <div class="input-icon-wrap">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input
+                        type="password"
+                        name="new_password"
+                        id="newPassword"
+                        class="form-input input-with-icon input-with-icon-right"
+                        placeholder="Enter new password"
+                        autocomplete="new-password"
+                        autofocus
+                        required
+                    >
+                    <button type="button" class="input-icon-right" onclick="togglePassword('newPassword', 'eye1')">
+                        <i class="fa-solid fa-eye" id="eye1"></i>
+                    </button>
+                </div>
+                <div class="password-strength" id="strengthBar">
+                    <div class="strength-track">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <span class="strength-label" id="strengthLabel"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Confirm new password</label>
+                <div class="input-icon-wrap">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input
+                        type="password"
+                        name="confirm_password"
+                        id="confirmPassword"
+                        class="form-input input-with-icon input-with-icon-right"
+                        placeholder="Repeat new password"
+                        autocomplete="new-password"
+                        required
+                    >
+                    <button type="button" class="input-icon-right" onclick="togglePassword('confirmPassword', 'eye2')">
+                        <i class="fa-solid fa-eye" id="eye2"></i>
+                    </button>
+                </div>
+                <p class="auth-hint" id="matchHint"></p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">
+                <i class="fa-solid fa-shield-halved"></i>
+                Save new password
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <a href="{% url 'login' %}" class="auth-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to login
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.className = input.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+}
+
+const newPass = document.getElementById('newPassword');
+const confirmPass = document.getElementById('confirmPassword');
+const matchHint = document.getElementById('matchHint');
+const submitBtn = document.getElementById('submitBtn');
+const strengthFill = document.getElementById('strengthFill');
+const strengthLabel = document.getElementById('strengthLabel');
+
+newPass.addEventListener('input', () => {
+    const val = newPass.value;
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    const levels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+    const colors = ['', '#f87171', '#fbbf24', '#34d399', '#4f8ef7'];
+    const widths = ['0%', '25%', '50%', '75%', '100%'];
+
+    strengthFill.style.width = widths[score];
+    strengthFill.style.background = colors[score];
+    strengthLabel.textContent = levels[score];
+    strengthLabel.style.color = colors[score];
+
+    checkMatch();
+});
+
+confirmPass.addEventListener('input', checkMatch);
+
+function checkMatch() {
+    if (!confirmPass.value) {
+        matchHint.textContent = '';
+        matchHint.className = 'auth-hint';
+        return;
+    }
+    if (newPass.value === confirmPass.value) {
+        matchHint.textContent = '✓ Passwords match';
+        matchHint.className = 'auth-hint auth-hint-success';
+        submitBtn.disabled = false;
+    } else {
+        matchHint.textContent = '✗ Passwords do not match';
+        matchHint.className = 'auth-hint auth-hint-error';
+        submitBtn.disabled = true;
+    }
+}
+</script>
+{% endblock %}

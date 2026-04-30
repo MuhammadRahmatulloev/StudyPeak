@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Grades — StudyPeak{% endblock %}
+{% block nav_crm %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/crm.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Grades</h1>
+            <p class="page-subtitle">{{ period.name }} — {{ period.course.name }}</p>
+        </div>
+        <div class="flex gap-8">
+            <a href="{% url 'grade_create' period.id %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Add Grade
+            </a>
+            <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    {% if grades %}
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Assignment</th>
+                        <th>Score</th>
+                        <th>Comment</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td>
+                            <div class="journal-student">
+                                <div class="journal-student-avatar">
+                                    {% if grade.student.profile.avatar %}
+                                        <img src="{{ grade.student.profile.avatar.url }}" alt="{{ grade.student.username }}">
+                                    {% else %}
+                                        <span>{{ grade.student.username|first|upper }}</span>
+                                    {% endif %}
+                                </div>
+                                <span>{{ grade.student.username }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-sm">{{ grade.assignment.assignment.title }}</span>
+                        </td>
+                        <td>
+                            <span class="badge
+                                {% if grade.score >= 90 %}badge-green
+                                {% elif grade.score >= 60 %}badge-blue
+                                {% elif grade.score >= 40 %}badge-yellow
+                                {% else %}badge-red{% endif %}">
+                                {{ grade.score }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if grade.teacher_comment %}
+                            <p class="text-sm text-muted">{{ grade.teacher_comment|truncatechars:50 }}</p>
+                            {% else %}
+                            <span class="text-muted text-sm">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-sm text-muted">{{ grade.graded_at|date:"M d, Y" }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-star"></i>
+            <p>No grades recorded yet</p>
+            <a href="{% url 'grade_create' period.id %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Add first grade
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ post.title }} — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <a href="{% url 'newsfeed_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to News
+        </a>
+        {% if user.is_admin_role or post.author == user %}
+        <div class="flex gap-8">
+            <a href="{% url 'newsfeed_update' post.id %}" class="btn btn-secondary">
+                <i class="fa-solid fa-pen"></i> Edit
+            </a>
+            <form method="post" action="{% url 'newsfeed_delete' post.id %}">
+                {% csrf_token %}
+                <button
+                    class="btn btn-danger"
+                    onclick="return confirm('Delete this post?')"
+                >
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+
+        <!-- Cover image -->
+        {% if post.image %}
+        <div class="newsfeed-cover newsfeed-cover-detail">
+            <img src="{{ post.image.url }}" alt="{{ post.title }}">
+        </div>
+        {% endif %}
+
+        <div class="newsfeed-detail-body">
+
+            <!-- Meta -->
+            <div class="newsfeed-meta mb-16">
+                <span class="badge
+                    {% if post.type == 'ad' %}badge-yellow
+                    {% elif post.type == 'image' %}badge-blue
+                    {% else %}badge-gray{% endif %}">
+                    {{ post.type|upper }}
+                </span>
+                {% if not post.is_active %}
+                <span class="badge badge-red">Hidden</span>
+                {% endif %}
+                <span class="text-sm text-muted">{{ post.created_at|date:"F d, Y" }}</span>
+            </div>
+
+            <!-- Title -->
+            <h1 class="newsfeed-detail-title">{{ post.title }}</h1>
+
+            <!-- Author -->
+            <div class="newsfeed-author mt-16 mb-24">
+                <div class="newsfeed-author-avatar">
+                    {% if post.author.profile.avatar %}
+                        <img src="{{ post.author.profile.avatar.url }}" alt="{{ post.author.username }}">
+                    {% else %}
+                        <span>{{ post.author.username|first|upper }}</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <p class="font-display">{{ post.author.username }}</p>
+                    <p class="text-sm text-muted">
+                        {{ post.author.role|capfirst }} · {{ post.created_at|timesince }} ago
+                    </p>
+                </div>
+            </div>
+
+            <div class="newsfeed-divider"></div>
+
+            <!-- Content -->
+            <div class="newsfeed-content mt-24">
+                {{ post.content|linebreaks }}
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

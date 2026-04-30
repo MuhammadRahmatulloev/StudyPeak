@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Journal — StudyPeak{% endblock %}
+{% block nav_crm %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/crm.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">My Journal</h1>
+            <p class="page-subtitle">{{ period.name }} — {{ period.course.name }}</p>
+        </div>
+        <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    {% if journals %}
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Week</th>
+                        <th>Base Score</th>
+                        <th>Bonus</th>
+                        <th>Total</th>
+                        <th>Comment</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for j in journals %}
+                    <tr>
+                        <td>
+                            <span class="badge badge-blue">Week {{ j.week_number }}</span>
+                        </td>
+                        <td>
+                            <div class="score-bar-wrap">
+                                <span class="score-value">{{ j.base_score }}</span>
+                                <div class="score-bar">
+                                </div>
+                                <span class="text-muted text-sm">/100</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-green">+{{ j.bonus_score }}</span>
+                        </td>
+                        <td>
+                            <span class="journal-total-badge
+                                {% if j.total_score >= 90 %}badge-green
+                                {% elif j.total_score >= 60 %}badge-blue
+                                {% elif j.total_score >= 40 %}badge-yellow
+                                {% else %}badge-red{% endif %} badge">
+                                {{ j.total_score }}/110
+                            </span>
+                        </td>
+                        <td>
+                            {% if j.teacher_comment %}
+                            <p class="text-sm text-muted">{{ j.teacher_comment }}</p>
+                            {% else %}
+                            <span class="text-muted text-sm">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-sm text-muted">{{ j.updated_at|date:"M d, Y" }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="grid-3 mt-16">
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-blue">
+                    <i class="fa-solid fa-list-ol"></i>
+                </div>
+                <div>
+                    <p class="stat-value">{{ journals|length }}</p>
+                    <p class="stat-label text-muted text-sm">Total Weeks</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-green">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div>
+                    <p class="stat-value">
+                        {% with total=0 %}
+                        {% for j in journals %}
+                        {% endfor %}
+                        —
+                        {% endwith %}
+                    </p>
+                    <p class="stat-label text-muted text-sm">Avg Score</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="stat-card-inner">
+                <div class="stat-icon stat-icon-yellow">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div>
+                    <p class="stat-value">
+                        {% for j in journals %}{% if j.coins_awarded %}<i class="fa-solid fa-check text-success"></i>{% endif %}{% endfor %}
+                        {{ journals.count }}
+                    </p>
+                    <p class="stat-label text-muted text-sm">Weeks Recorded</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-book-open"></i>
+            <p>No journal entries yet</p>
+            <p class="text-muted text-sm">Your teacher hasn't recorded any scores yet</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

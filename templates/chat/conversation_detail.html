@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat — StudyPeak{% endblock %}
+{% block nav_chat %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-page">
+
+    <!-- Sidebar -->
+    <div class="chat-sidebar">
+        <div class="chat-sidebar-header">
+            <h2 class="chat-sidebar-title">Messages</h2>
+            <a href="{% url 'conversation_list' %}" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+        </div>
+
+        <div class="conversation-list chat-sidebar-list">
+            {% for conv in conversations %}
+            {% for participant in conv.participants.all %}
+            {% if participant != user %}
+            <a href="{% url 'conversation_detail' conv.id %}"
+               class="conversation-item {% if conv == conversation %}conv-active{% endif %}">
+                <div class="conv-avatar conv-avatar-sm">
+                    {% if participant.profile.avatar %}
+                        <img src="{{ participant.profile.avatar.url }}" alt="{{ participant.username }}">
+                    {% else %}
+                        <span>{{ participant.username|first|upper }}</span>
+                    {% endif %}
+                </div>
+                <div class="conv-info">
+                    <span class="conv-name">{{ participant.username }}</span>
+                    {% with last=conv.messages.last %}
+                    {% if last and not last.is_deleted %}
+                    <p class="conv-preview text-muted text-sm">{{ last.content|truncatechars:30 }}</p>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </a>
+            {% endif %}
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Chat area -->
+    <div class="chat-main">
+
+        <!-- Chat header -->
+        {% for participant in conversation.participants.all %}
+        {% if participant != user %}
+        <div class="chat-header">
+            <div class="chat-header-user">
+                <div class="conv-avatar">
+                    {% if participant.profile.avatar %}
+                        <img src="{{ participant.profile.avatar.url }}" alt="{{ participant.username }}">
+                    {% else %}
+                        <span>{{ participant.username|first|upper }}</span>
+                    {% endif %}
+                    <span class="conv-status-dot conv-status-{{ participant.profile.status|default:'offline' }}"></span>
+                </div>
+                <div>
+                    <p class="chat-header-name">{{ participant.username }}</p>
+                    <p class="text-sm text-muted">{{ participant.profile.get_status_display|default:'Offline' }}</p>
+                </div>
+            </div>
+            <form method="post" action="{% url 'start_conversation' participant.id %}">
+                {% csrf_token %}
+            </form>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        <!-- Messages -->
+        <div class="chat-messages" id="chatMessages">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="chat-message {% if message.sender == user %}chat-message-own{% endif %}">
+                    {% if message.sender != user %}
+                    <div class="chat-msg-avatar">
+                        {% if message.sender.profile.avatar %}
+                            <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.username }}">
+                        {% else %}
+                            <span>{{ message.sender.username|first|upper }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <div class="chat-msg-body">
+                        <div class="chat-msg-bubble">
+                            <p>{{ message.content }}</p>
+                        </div>
+                        <div class="chat-msg-meta">
+                            <span class="text-sm text-muted">{{ message.created_at|timesince }} ago</span>
+                            {% if message.sender == user %}
+                            <form method="post" action="{% url 'delete_message' message.id %}" class="chat-msg-action">
+                                {% csrf_token %}
+                                <button class="chat-msg-delete" title="Delete">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="chat-empty">
+                <i class="fa-solid fa-comments"></i>
+                <p>Start the conversation!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Input -->
+        <div class="chat-input-area">
+            <form method="post" action="{% url 'conversation_detail' conversation.id %}" class="chat-form">
+                {% csrf_token %}
+                <textarea
+                    name="content"
+                    class="chat-input"
+                    placeholder="Type a message..."
+                    rows="1"
+                    id="chatInput"
+                    required
+                ></textarea>
+                <button type="submit" class="btn btn-primary chat-send-btn">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chatMessages = document.getElementById('chatMessages');
+if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+const chatInput = document.getElementById('chatInput');
+if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.closest('form').submit();
+        }
+    });
+    chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+}
+</script>
+{% endblock %}

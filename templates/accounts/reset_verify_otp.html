@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify Reset Code — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            <span class="auth-logo-icon">⚡</span>
+            <span class="auth-logo-text">StudyPeak</span>
+        </div>
+
+        <div class="auth-verify-icon auth-icon-warning">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <div class="auth-header">
+            <h1 class="auth-title">Enter reset code</h1>
+            <p class="auth-subtitle">
+                We sent a 6-digit code to<br>
+                <strong class="text-accent">{{ email }}</strong>
+            </p>
+        </div>
+
+        <form method="post" class="auth-form" id="otpForm">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label" style="text-align:center; display:block">
+                    6-digit verification code
+                </label>
+                <div class="otp-inputs">
+                    <input class="otp-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="0" autofocus>
+                    <input class="otp-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="1">
+                    <input class="otp-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="2">
+                    <input class="otp-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="3">
+                    <input class="otp-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="4">
+                    <input class="otp-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="5">
+                </div>
+                <input type="hidden" name="otp_code" id="otpHidden">
+            </div>
+
+            <div class="otp-timer">
+                <i class="fa-solid fa-clock"></i>
+                Code expires in <span id="timer" class="otp-timer-count">10:00</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn" disabled>
+                <i class="fa-solid fa-arrow-right"></i>
+                Verify code
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p class="text-muted text-sm">Didn't receive the code?</p>
+            <a href="{% url 'reset_request' %}" class="auth-link text-sm">
+                <i class="fa-solid fa-rotate-right"></i> Try again
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const inputs = document.querySelectorAll('.otp-input');
+const hidden = document.getElementById('otpHidden');
+const submitBtn = document.getElementById('submitBtn');
+
+inputs.forEach((input, idx) => {
+    input.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '');
+        if (e.target.value && idx < inputs.length - 1) {
+            inputs[idx + 1].focus();
+        }
+        updateHidden();
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value && idx > 0) {
+            inputs[idx - 1].focus();
+            inputs[idx - 1].value = '';
+            updateHidden();
+        }
+    });
+
+    input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+        pasted.split('').forEach((char, i) => {
+            if (inputs[i]) inputs[i].value = char;
+        });
+        const nextEmpty = [...inputs].findIndex(inp => !inp.value);
+        if (nextEmpty !== -1) inputs[nextEmpty].focus();
+        else inputs[inputs.length - 1].focus();
+        updateHidden();
+    });
+});
+
+function updateHidden() {
+    const code = [...inputs].map(i => i.value).join('');
+    hidden.value = code;
+    submitBtn.disabled = code.length < 6;
+    inputs.forEach(inp => {
+        inp.classList.toggle('otp-input-filled', inp.value !== '');
+    });
+}
+
+let seconds = 600;
+const timerEl = document.getElementById('timer');
+const countdown = setInterval(() => {
+    seconds--;
+    if (seconds <= 0) {
+        clearInterval(countdown);
+        timerEl.textContent = 'Expired';
+        timerEl.classList.add('text-danger');
+        submitBtn.disabled = true;
+        return;
+    }
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    timerEl.textContent = `${m}:${s}`;
+    if (seconds <= 60) timerEl.classList.add('text-danger');
+}, 1000);
+</script>
+{% endblock %}
