@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assignments — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Assignments</h1>
+            <p class="page-subtitle">
+                {% if user.is_teacher %}Your assignments and quizzes{% else %}Your tasks and tests{% endif %}
+            </p>
+        </div>
+        {% if user.is_teacher or user.is_admin_role %}
+        <a href="{% url 'assignment_create' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> New Assignment
+        </a>
+        {% endif %}
+    </div>
+
+    {% if assignments %}
+
+    <div class="assignment-filter-tabs mb-16">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="homework">Homework</button>
+        <button class="filter-tab" data-filter="test">Test</button>
+        <button class="filter-tab" data-filter="quiz">Quiz</button>
+    </div>
+
+    <div class="assignment-grid">
+        {% for assignment in assignments %}
+        <a href="{% url 'assignment_detail' assignment.id %}"
+           class="assignment-card card"
+           data-type="{{ assignment.type }}">
+
+            <div class="assignment-card-top">
+                <div class="assignment-type-badge
+                    {% if assignment.type == 'quiz' %}type-badge-quiz
+                    {% elif assignment.type == 'test' %}type-badge-test
+                    {% else %}type-badge-hw{% endif %}">
+                    {% if assignment.type == 'quiz' %}
+                        <i class="fa-solid fa-stopwatch"></i>
+                    {% elif assignment.type == 'test' %}
+                        <i class="fa-solid fa-file-pen"></i>
+                    {% else %}
+                        <i class="fa-solid fa-book"></i>
+                    {% endif %}
+                    <span>{{ assignment.get_type_display }}</span>
+                </div>
+
+                <div class="assignment-card-badges">
+                    {% if assignment.is_published %}
+                    <span class="badge badge-green">Published</span>
+                    {% else %}
+                    <span class="badge badge-gray">Draft</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="assignment-card-body">
+                <h3 class="assignment-card-title">{{ assignment.title }}</h3>
+                {% if assignment.description %}
+                <p class="assignment-card-desc text-muted text-sm">
+                    {{ assignment.description|truncatechars:80 }}
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="assignment-card-footer">
+                <div class="assignment-card-meta">
+                    <span class="text-sm text-muted">
+                        <i class="fa-solid fa-book-open"></i>
+                        {{ assignment.subject.title }}
+                    </span>
+                    <span class="text-sm text-muted">
+                        <i class="fa-solid fa-users"></i>
+                        {{ assignment.group.name }}
+                    </span>
+                </div>
+                <div class="assignment-card-right">
+                    {% if assignment.deadline %}
+                    <span class="assignment-deadline text-sm
+                        {% if assignment.type == 'quiz' %}text-danger{% else %}text-muted{% endif %}">
+                        <i class="fa-solid fa-clock"></i>
+                        {{ assignment.deadline|date:"M d, H:i" }}
+                    </span>
+                    {% endif %}
+                    {% if assignment.type == 'quiz' and assignment.time_limit %}
+                    <span class="badge badge-yellow text-sm">
+                        <i class="fa-solid fa-hourglass"></i>
+                        {{ assignment.time_limit }} min
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if user.is_student %}
+            <div class="assignment-card-status">
+                <div class="assignment-progress-bar">
+                    <div class="assignment-progress-fill"></div>
+                </div>
+            </div>
+            {% endif %}
+
+        </a>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <p>No assignments yet</p>
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'assignment_create' %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Create first assignment
+            </a>
+            {% else %}
+            <p class="text-muted text-sm">Your teacher hasn't published any assignments yet</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', function () {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        const filter = this.dataset.filter;
+        document.querySelectorAll('.assignment-card').forEach(card => {
+            if (filter === 'all' || card.dataset.type === filter) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

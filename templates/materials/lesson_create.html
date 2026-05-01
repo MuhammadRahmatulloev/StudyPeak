@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Lesson — StudyPeak{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/materials.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <a href="{% url 'subject_detail' subject.id %}" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <p class="page-header-sub">{{ subject.title }}</p>
+                <h1 class="page-title">Create Lesson</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-page-layout">
+        <div class="form-card card">
+
+            {% if messages %}
+            <div class="messages-list">
+                {% for message in messages %}
+                <div class="message message-{{ message.tags }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'lesson_create' subject.id %}">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label class="form-label" for="title">
+                        <i class="fa-solid fa-heading"></i> Lesson Title
+                        <span class="form-required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        class="form-input"
+                        placeholder="e.g. Introduction to Variables"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">
+                        <i class="fa-solid fa-align-left"></i> Description
+                    </label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        class="form-input form-textarea"
+                        rows="4"
+                        placeholder="What will students learn in this lesson?"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="order">
+                        <i class="fa-solid fa-sort"></i> Order
+                    </label>
+                    <input
+                        type="number"
+                        id="order"
+                        name="order"
+                        class="form-input form-input-sm"
+                        value="0"
+                        min="0"
+                    >
+                    <p class="form-hint">Determines the position of this lesson inside the subject.</p>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{% url 'subject_detail' subject.id %}" class="btn btn-ghost">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i> Create Lesson
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="form-side">
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-book-open"></i> Subject
+                </p>
+                <p class="side-card-value">{{ subject.title }}</p>
+                {% if subject.description %}
+                <p class="text-sm text-muted mt-8">{{ subject.description }}</p>
+                {% endif %}
+            </div>
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-circle-info"></i> Tips
+                </p>
+                <ul class="side-tips-list">
+                    <li>Give your lesson a clear, descriptive title.</li>
+                    <li>Use the order field to arrange lessons in sequence.</li>
+                    <li>After creating, you can add materials like PDFs, links, or text.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

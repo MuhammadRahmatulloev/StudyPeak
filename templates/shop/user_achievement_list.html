@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Achievements — StudyPeak{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                {% if user.is_admin_role %}All Achievements{% else %}My Achievements{% endif %}
+            </h1>
+            <p class="page-subtitle">
+                {% if user.is_admin_role %}Achievements earned by all users{% else %}Badges you have earned{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'achievement_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-medal"></i> All Achievements
+        </a>
+    </div>
+
+    {% if user_achievements %}
+    <div class="user-achievement-grid">
+        {% for ua in user_achievements %}
+        <div class="user-achievement-card card">
+            <div class="user-achievement-top">
+                <div class="achievement-icon-wrap achievement-icon-wrap-earned">
+                    {% if ua.achievement.icon %}
+                    <img src="{{ ua.achievement.icon.url }}" alt="{{ ua.achievement.name }}"
+                        class="achievement-icon-img">
+                    {% else %}
+                    <div class="achievement-icon-placeholder achievement-icon-earned">
+                        <i class="fa-solid fa-medal"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="achievement-earned-stamp">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+            <div class="user-achievement-body">
+                {% if user.is_admin_role %}
+                <div class="user-achievement-user mb-8">
+                    <div class="purchase-avatar purchase-avatar-sm">
+                        {% if ua.user.profile.avatar %}
+                        <img src="{{ ua.user.profile.avatar.url }}" alt="{{ ua.user.username }}">
+                        {% else %}
+                        <span>{{ ua.user.username|first|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-sm text-muted">{{ ua.user.username }}</span>
+                </div>
+                {% endif %}
+                <h3 class="achievement-name">{{ ua.achievement.name }}</h3>
+                <p class="achievement-desc text-sm text-muted">{{ ua.achievement.description }}</p>
+                {% if ua.achievement.coin_reward > 0 %}
+                <div class="achievement-reward mt-8">
+                    <i class="fa-solid fa-coins"></i>
+                    <span class="text-sm">+{{ ua.achievement.coin_reward }} coins</span>
+                </div>
+                {% endif %}
+                <p class="text-sm text-muted mt-8">
+                    <i class="fa-solid fa-clock"></i>
+                    Earned {{ ua.earned_at|date:"M d, Y" }}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-trophy"></i>
+            <p>No achievements earned yet</p>
+            <p class="text-muted text-sm">Keep working hard to earn your first badge!</p>
+            <a href="{% url 'achievement_list' %}" class="btn btn-primary btn-sm mt-16">
+                <i class="fa-solid fa-medal"></i> View Achievements
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

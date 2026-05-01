@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Viewed Lessons{% endblock %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="page-header">
+        <h2 class="page-title">Viewed Lessons</h2>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="table-wrapper">
+        {% if views %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Lesson</th>
+                        <th>Subject</th>
+                        <th>Viewed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for view in views %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ view.user.username }}</td>
+                            <td>
+                                <a href="{% url 'lesson_detail' view.lesson.subject.id view.lesson.id %}" class="table-link">
+                                    {{ view.lesson.title }}
+                                </a>
+                            </td>
+                            <td>{{ view.lesson.subject.title }}</td>
+                            <td>{{ view.viewed_at|date:"d M Y, H:i" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-text">No lesson views found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

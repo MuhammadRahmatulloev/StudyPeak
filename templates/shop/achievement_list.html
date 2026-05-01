@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Achievements — StudyPeak{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Achievements</h1>
+            <p class="page-subtitle">Earn badges and rewards for your efforts</p>
+        </div>
+        <div class="flex gap-8">
+            <a href="{% url 'user_achievement_list' %}" class="btn btn-secondary">
+                <i class="fa-solid fa-trophy"></i> My Achievements
+            </a>
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'achievement_create' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> New Achievement
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if achievements %}
+    <div class="achievement-grid">
+        {% for achievement in achievements %}
+        <div class="achievement-card card {% if achievement.id in user_achievement_ids %}achievement-card-earned{% endif %}">
+            <div class="achievement-card-top">
+                <div class="achievement-icon-wrap">
+                    {% if achievement.icon %}
+                    <img src="{{ achievement.icon.url }}" alt="{{ achievement.name }}" class="achievement-icon-img">
+                    {% else %}
+                    <div class="achievement-icon-placeholder">
+                        <i class="fa-solid fa-medal"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if achievement.id in user_achievement_ids %}
+                <div class="achievement-earned-badge">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Earned</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="achievement-card-body">
+                <h3 class="achievement-name">{{ achievement.name }}</h3>
+                <p class="achievement-desc text-sm text-muted">{{ achievement.description }}</p>
+                {% if achievement.coin_reward > 0 %}
+                <div class="achievement-reward">
+                    <i class="fa-solid fa-coins"></i>
+                    <span class="text-sm">{{ achievement.coin_reward }} coins reward</span>
+                </div>
+                {% endif %}
+            </div>
+            {% if user.is_teacher or user.is_admin_role %}
+            <div class="achievement-card-actions">
+                <form method="post" action="{% url 'grant_achievement' achievement.id %}" class="flex gap-8">
+                    {% csrf_token %}
+                    <input type="number" name="student_id" class="form-input" placeholder="Student ID" min="1" required>
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="fa-solid fa-award"></i> Grant
+                    </button>
+                </form>
+                <form method="post" action="{% url 'achievement_delete' achievement.id %}" class="mt-8">
+                    {% csrf_token %}
+                    <button class="btn btn-danger btn-sm w-full"
+                        onclick="return confirm('Delete this achievement?')">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-medal"></i>
+            <p>No achievements yet</p>
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'achievement_create' %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Create first achievement
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Question — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Add Question</h1>
+            <p class="page-subtitle">{{ assignment.title }}</p>
+        </div>
+        <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Question Type <span class="text-danger">*</span></label>
+                <div class="question-type-selector">
+                    {% for value, label in type_choices %}
+                    <label class="question-type-option">
+                        <input
+                            type="radio"
+                            name="type"
+                            value="{{ value }}"
+                            {% if value == 'mcq' %}checked{% endif %}
+                            hidden
+                        >
+                        <span class="question-type-icon">
+                            {% if value == 'mcq' %}<i class="fa-solid fa-list-ul"></i>
+                            {% elif value == 'text' %}<i class="fa-solid fa-pen-line"></i>
+                            {% else %}<i class="fa-solid fa-toggle-on"></i>
+                            {% endif %}
+                        </span>
+                        <span class="question-type-label">{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Question Text <span class="text-danger">*</span></label>
+                <textarea
+                    name="text"
+                    class="form-input form-textarea"
+                    rows="4"
+                    placeholder="Write your question here..."
+                    required
+                    autofocus
+                >{{ request.POST.text }}</textarea>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Order</label>
+                    <input
+                        type="number"
+                        name="order"
+                        class="form-input"
+                        value="{{ request.POST.order|default:'0' }}"
+                        min="0"
+                        placeholder="0"
+                    >
+                    <p class="text-sm text-muted mt-8">Display order among all questions</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Score Points <span class="text-danger">*</span></label>
+                    <input
+                        type="number"
+                        name="score"
+                        class="form-input"
+                        value="{{ request.POST.score|default:'1' }}"
+                        min="1"
+                        placeholder="1"
+                        required
+                    >
+                    <p class="text-sm text-muted mt-8">Points awarded for a correct answer</p>
+                </div>
+            </div>
+
+            <div class="question-type-hint card" id="typeHint" style="background:var(--accent-soft); border-color:var(--accent);">
+                <p class="text-sm text-accent">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <strong>MCQ / True-False:</strong> After saving, you'll be able to add answer choices on the next page.
+                    <strong>Text:</strong> Students type a free-form answer — you grade it manually.
+                </p>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-plus"></i> Add Question
+                </button>
+                <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.question-type-option input').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.question-type-option').forEach(o => o.classList.remove('selected'));
+        radio.closest('.question-type-option').classList.add('selected');
+    });
+});
+document.querySelector('.question-type-option input:checked')
+    ?.closest('.question-type-option')?.classList.add('selected');
+</script>
+{% endblock %}

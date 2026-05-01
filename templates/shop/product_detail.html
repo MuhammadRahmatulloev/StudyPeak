@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ product.name }} — StudyPeak{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container-md">
+    <div class="page-header">
+        <a href="{% url 'product_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Shop
+        </a>
+        {% if user.is_teacher or user.is_admin_role %}
+        <div class="flex gap-8">
+            <a href="{% url 'product_update' product.id %}" class="btn btn-secondary">
+                <i class="fa-solid fa-pen"></i> Edit
+            </a>
+            <form method="post" action="{% url 'product_delete' product.id %}">
+                {% csrf_token %}
+                <button class="btn btn-danger" onclick="return confirm('Delete this product?')">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="product-detail-grid">
+        <div class="product-detail-img-col">
+            <div class="product-detail-img-wrap card">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-detail-img">
+                {% else %}
+                <div class="product-detail-img-placeholder">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="product-detail-info-col">
+            <div class="card">
+                <div class="product-detail-header">
+                    <div class="flex gap-8 mb-16">
+                        <span class="badge {% if product.type == 'global' %}badge-blue{% else %}badge-green{% endif %}">
+                            {{ product.get_type_display }}
+                        </span>
+                        {% if not product.is_active %}
+                        <span class="badge badge-red">Inactive</span>
+                        {% endif %}
+                        {% if product.stock <= 0 %}
+                        <span class="badge badge-red">Out of Stock</span>
+                        {% endif %}
+                    </div>
+                    <h1 class="product-detail-name">{{ product.name }}</h1>
+                    {% if product.description %}
+                    <p class="product-detail-desc text-muted mt-16">{{ product.description }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="product-detail-meta mt-24">
+                    <div class="product-meta-row">
+                        <span class="text-muted text-sm">Price</span>
+                        <div class="product-detail-price">
+                            <i class="fa-solid fa-coins"></i>
+                            <span>{{ product.price }} coins</span>
+                        </div>
+                    </div>
+                    <div class="product-meta-row">
+                        <span class="text-muted text-sm">Stock</span>
+                        <span class="badge {% if product.stock > 0 %}badge-green{% else %}badge-red{% endif %}">
+                            {{ product.stock }} available
+                        </span>
+                    </div>
+                    {% if product.course %}
+                    <div class="product-meta-row">
+                        <span class="text-muted text-sm">Course</span>
+                        <a href="{% url 'course_detail' product.course.id %}" class="text-accent text-sm">
+                            {{ product.course.name }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    <div class="product-meta-row">
+                        <span class="text-muted text-sm">Added by</span>
+                        <span class="text-sm">{{ product.created_by.username }}</span>
+                    </div>
+                </div>
+
+                {% if profile %}
+                <div class="product-your-coins mt-16">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span class="text-sm">Your balance: <strong>{{ profile.coins }} coins</strong></span>
+                </div>
+                {% endif %}
+
+                {% if user.is_student %}
+                <div class="mt-24">
+                    {% if already_purchased %}
+                    <div class="product-purchased-banner">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>You already own this product</span>
+                    </div>
+                    {% elif product.stock <= 0 %}
+                    <button class="btn btn-secondary btn-block btn-lg" disabled>
+                        <i class="fa-solid fa-ban"></i> Out of Stock
+                    </button>
+                    {% elif profile and profile.coins < product.price %}
+                    <button class="btn btn-secondary btn-block btn-lg" disabled>
+                        <i class="fa-solid fa-coins"></i> Not enough coins
+                    </button>
+                    {% else %}
+                    <form method="post" action="{% url 'purchase_product' product.id %}">
+                        {% csrf_token %}
+                        <button
+                            class="btn btn-primary btn-block btn-lg"
+                            onclick="return confirm('Buy {{ product.name }} for {{ product.price }} coins?')"
+                        >
+                            <i class="fa-solid fa-cart-shopping"></i> Buy for {{ product.price }} coins
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

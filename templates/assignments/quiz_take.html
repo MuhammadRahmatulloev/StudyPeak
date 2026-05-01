@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quiz — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+<link rel="stylesheet" href="{% static 'css/quiz.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div
+    id="quizMeta"
+    data-time="{{ time_limit_seconds }}"
+    data-total="{{ questions|length }}"
+    data-has-timer="{% if assignment.time_limit %}1{% else %}0{% endif %}"
+    style="display:none"
+></div>
+
+<div class="quiz-page">
+
+    <div class="quiz-topbar">
+        <div class="quiz-topbar-inner">
+            <div class="quiz-topbar-left">
+                <span class="quiz-topbar-title">
+                    <i class="fa-solid fa-stopwatch"></i>
+                    {{ assignment.title }}
+                </span>
+                <span class="badge badge-yellow">QUIZ</span>
+            </div>
+            <div class="quiz-topbar-center">
+                {% if assignment.time_limit %}
+                <div class="quiz-timer" id="quizTimer">
+                    <i class="fa-solid fa-clock"></i>
+                    <span id="timerDisplay">{{ assignment.time_limit }}:00</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="quiz-topbar-right">
+                <span class="quiz-progress-label text-sm text-muted">
+                    <span id="answeredCount">0</span> / {{ questions|length }} answered
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="quiz-body">
+        <form method="post" action="{% url 'quiz_take' assignment.id %}" id="quizForm">
+            {% csrf_token %}
+
+            <div class="quiz-questions">
+                {% for question in questions %}
+                <div class="quiz-question-card card" id="question-{{ forloop.counter }}" data-question="{{ forloop.counter }}">
+
+                    <div class="quiz-question-header">
+                        <div class="quiz-question-num">
+                            <span>{{ forloop.counter }}</span>
+                        </div>
+                        <div class="quiz-question-meta">
+                            <span class="badge badge-gray text-sm">{{ question.get_type_display }}</span>
+                            <span class="badge badge-blue text-sm">{{ question.score }} pts</span>
+                        </div>
+                    </div>
+
+                    <p class="quiz-question-text">{{ question.text }}</p>
+
+                    <div class="quiz-question-body">
+
+                        {% if question.type == 'mcq' %}
+                        <div class="quiz-choices">
+                            {% for choice in question.choices.all %}
+                            <label class="quiz-choice">
+                                <input
+                                    type="radio"
+                                    name="question_{{ question.id }}"
+                                    value="{{ choice.id }}"
+                                    class="quiz-choice-radio"
+                                    data-question="{{ forloop.parentloop.counter }}"
+                                    style="display:none"
+                                >
+                                <div class="quiz-choice-indicator">
+                                    <span class="quiz-choice-letter">
+                                        {% if forloop.counter == 1 %}A
+                                        {% elif forloop.counter == 2 %}B
+                                        {% elif forloop.counter == 3 %}C
+                                        {% elif forloop.counter == 4 %}D
+                                        {% else %}{{ forloop.counter }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <span class="quiz-choice-text">{{ choice.text }}</span>
+                                <div class="quiz-choice-check">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+
+                        {% elif question.type == 'true_false' %}
+                        <div class="quiz-tf-choices">
+                            {% for choice in question.choices.all %}
+                            <label class="quiz-tf-btn">
+                                <input
+                                    type="radio"
+                                    name="question_{{ question.id }}"
+                                    value="{{ choice.id }}"
+                                    class="quiz-choice-radio"
+                                    data-question="{{ forloop.parentloop.counter }}"
+                                    style="display:none"
+                                >
+                                {% if choice.text|lower == 'true' %}
+                                <i class="fa-solid fa-check"></i>
+                                {% else %}
+                                <i class="fa-solid fa-xmark"></i>
+                                {% endif %}
+                                <span>{{ choice.text }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+
+                        {% elif question.type == 'text' %}
+                        <div class="quiz-text-answer">
+                            <textarea
+                                name="question_{{ question.id }}"
+                                class="form-input form-textarea quiz-textarea"
+                                rows="4"
+                                placeholder="Write your answer here..."
+                                data-question="{{ forloop.counter }}"
+                            ></textarea>
+                            <p class="text-sm text-muted mt-8">
+                                <i class="fa-solid fa-info-circle"></i>
+                                This answer will be manually graded by your teacher.
+                            </p>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="quiz-submit-section card">
+                <div class="quiz-submit-inner">
+                    <div class="quiz-submit-info">
+                        <p class="quiz-submit-title">
+                            <i class="fa-solid fa-paper-plane"></i> Ready to submit?
+                        </p>
+                        <p class="text-sm text-muted">
+                            You answered <strong id="answeredFinal">0</strong> out of
+                            <strong>{{ questions|length }}</strong> questions.
+                            {% if assignment.time_limit %}
+                            Time remaining: <span id="timerFinal">{{ assignment.time_limit }}:00</span>
+                            {% endif %}
+                        </p>
+                        <p class="text-sm text-danger mt-8">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            You cannot change your answers after submitting.
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-lg" id="submitQuizBtn">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Quiz
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="quiz-navigator">
+        <p class="quiz-nav-title text-sm text-muted">Questions</p>
+        <div class="quiz-nav-grid">
+            {% for question in questions %}
+            <button
+                class="quiz-nav-btn"
+                id="nav-btn-{{ forloop.counter }}"
+                data-num="{{ forloop.counter }}"
+                type="button"
+            >
+                {{ forloop.counter }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/quiz.js' %}"></script>
+{% endblock %}

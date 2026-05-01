@@ -1,0 +1,1020 @@
+/* ═══════════════════════════════════════════
+   STUDYPEAK — home.css
+   Home page, News Feed (list, create, detail, update)
+   Covers: home.html, newsfeed_list.html,
+   newsfeed_create.html, newsfeed_detail.html,
+   newsfeed_update.html
+═══════════════════════════════════════════ */
+
+
+/* ─────────────────────────────────────────
+   HOME GRID LAYOUT
+───────────────────────────────────────── */
+.home-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+}
+
+.home-left,
+.home-right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+
+/* ─────────────────────────────────────────
+   WELCOME BANNER
+───────────────────────────────────────── */
+.welcome-banner {
+    background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+}
+
+.welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    pointer-events: none;
+}
+
+.welcome-banner::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(52, 211, 153, 0.05);
+    pointer-events: none;
+}
+
+.welcome-banner-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.welcome-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.welcome-label {
+    font-size: 0.8rem;
+    color: var(--text-3);
+    font-weight: 500;
+}
+
+.welcome-name {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.welcome-role {
+    align-self: flex-start;
+    margin-top: 2px;
+}
+
+.welcome-stats {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.welcome-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 12px 18px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-width: 72px;
+    transition: border-color var(--transition);
+}
+
+.welcome-stat-item:hover {
+    border-color: var(--accent);
+}
+
+.welcome-stat-value {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+}
+
+.welcome-stat-label {
+    font-size: 0.72rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+
+/* ─────────────────────────────────────────
+   GROUP INVITATIONS
+───────────────────────────────────────── */
+.invitation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.invitation-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color var(--transition);
+}
+
+.invitation-item:hover {
+    border-color: var(--accent);
+}
+
+.invitation-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.invitation-group {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.invitation-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+
+/* ─────────────────────────────────────────
+   ASSIGNMENT LIST (home page compact)
+───────────────────────────────────────── */
+.assignment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.assignment-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: background var(--transition);
+    cursor: pointer;
+}
+
+.assignment-item:hover {
+    background: var(--bg-3);
+}
+
+.assignment-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+}
+
+.assignment-type-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.icon-quiz {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.icon-test {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.icon-hw {
+    background: var(--bg-4);
+    color: var(--text-2);
+}
+
+.assignment-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.assignment-meta {
+    margin-top: 2px;
+}
+
+.assignment-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+
+/* ─────────────────────────────────────────
+   GROUP LIST (home page compact)
+───────────────────────────────────────── */
+.group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.group-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: background var(--transition);
+}
+
+.group-item:hover {
+    background: var(--bg-3);
+}
+
+.group-avatar {
+    width: 38px; height: 38px;
+    border-radius: var(--radius);
+    background: var(--bg-4);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-2);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.group-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+.group-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.group-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* ─────────────────────────────────────────
+   NOTIFICATIONS (home right column)
+───────────────────────────────────────── */
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    border: 1px solid transparent;
+    transition: all var(--transition);
+}
+
+.notification-item:hover {
+    border-color: var(--border);
+}
+
+.notif-unread {
+    background: var(--accent-soft);
+    border-color: rgba(79, 142, 247, 0.15);
+}
+
+.notif-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 5px;
+    transition: background var(--transition);
+}
+
+.notification-item:not(.notif-unread) .notif-dot {
+    background: var(--text-3);
+}
+
+.notif-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-message {
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.45;
+}
+
+.notif-close {
+    background: none;
+    border: none;
+    color: var(--text-3);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    transition: all var(--transition);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.notif-close:hover {
+    color: var(--danger);
+    background: var(--danger-soft);
+}
+
+
+/* ─────────────────────────────────────────
+   QUICK ACCESS LINKS
+───────────────────────────────────────── */
+.quick-links {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.quick-link-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    padding: 14px 8px;
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: all var(--transition);
+    font-size: 0.72rem;
+    color: var(--text-2);
+    font-weight: 500;
+    text-align: center;
+}
+
+.quick-link-item:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+    transform: translateY(-1px);
+}
+
+.quick-link-icon {
+    width: 34px; height: 34px;
+    border-radius: var(--radius);
+    background: var(--bg-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: background var(--transition);
+}
+
+.quick-link-item:hover .quick-link-icon {
+    background: var(--accent);
+    color: #fff;
+}
+
+
+/* ─────────────────────────────────────────
+   COURSES LIST (home — enrolled student)
+───────────────────────────────────────── */
+.course-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.course-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: background var(--transition);
+}
+
+.course-item:hover {
+    background: var(--bg-3);
+}
+
+.course-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+}
+
+.course-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* ─────────────────────────────────────────
+   NEWS PREVIEW (home right column)
+───────────────────────────────────────── */
+.news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.news-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: background var(--transition);
+}
+
+.news-item:hover {
+    background: var(--bg-3);
+}
+
+.news-img {
+    width: 52px; height: 44px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-4);
+}
+
+.news-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+.news-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.news-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+}
+
+
+/* ─────────────────────────────────────────
+   NEWSFEED LIST PAGE
+───────────────────────────────────────── */
+.newsfeed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.newsfeed-card {
+    padding: 0;
+    overflow: hidden;
+    transition: border-color var(--transition), transform var(--transition);
+}
+
+.newsfeed-card:hover {
+    border-color: var(--border-2);
+    transform: translateY(-1px);
+}
+
+/* Cover image on list cards */
+.newsfeed-cover {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: var(--bg-3);
+}
+
+.newsfeed-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.newsfeed-card:hover .newsfeed-cover img {
+    transform: scale(1.02);
+}
+
+.newsfeed-body {
+    padding: 20px 24px 24px;
+}
+
+.newsfeed-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.newsfeed-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    transition: color var(--transition);
+}
+
+.newsfeed-card:hover .newsfeed-title {
+    color: var(--accent);
+}
+
+.newsfeed-excerpt {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.newsfeed-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.newsfeed-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.newsfeed-author-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--bg-4);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-2);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.newsfeed-author-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+
+/* ─────────────────────────────────────────
+   NEWSFEED DETAIL PAGE
+───────────────────────────────────────── */
+.newsfeed-cover-detail {
+    height: 320px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.newsfeed-cover-detail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.newsfeed-detail-body {
+    padding: 28px 32px 32px;
+}
+
+.newsfeed-detail-title {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin-bottom: 0;
+}
+
+.newsfeed-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+}
+
+.newsfeed-content {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--text);
+}
+
+.newsfeed-content p {
+    margin-bottom: 1em;
+}
+
+.newsfeed-content p:last-child {
+    margin-bottom: 0;
+}
+
+
+/* ─────────────────────────────────────────
+   NEWSFEED CREATE / UPDATE — Type selector
+───────────────────────────────────────── */
+.newsfeed-type-selector {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.newsfeed-type-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 18px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 0.875rem;
+    color: var(--text-2);
+    font-weight: 500;
+    user-select: none;
+}
+
+.newsfeed-type-option:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.newsfeed-type-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.newsfeed-type-icon {
+    font-size: 1rem;
+    line-height: 1;
+    transition: transform var(--transition);
+}
+
+.newsfeed-type-option.selected .newsfeed-type-icon {
+    transform: scale(1.1);
+}
+
+
+/* ─────────────────────────────────────────
+   NEWSFEED CREATE — Image Upload Zone
+───────────────────────────────────────── */
+.newsfeed-image-upload {
+    border: 2px dashed var(--border-2);
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 36px 24px;
+    text-align: center;
+    position: relative;
+}
+
+.newsfeed-image-upload input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.newsfeed-image-upload i {
+    font-size: 2rem;
+    color: var(--text-3);
+    transition: color var(--transition);
+}
+
+.newsfeed-image-upload:hover,
+.newsfeed-image-upload.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.newsfeed-image-upload:hover i {
+    color: var(--accent);
+}
+
+.newsfeed-image-upload.drag-over {
+    transform: scale(1.01);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Image preview (after upload) */
+.newsfeed-image-preview {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.newsfeed-image-preview img {
+    width: 100%;
+    max-height: 260px;
+    object-fit: cover;
+    display: block;
+}
+
+.newsfeed-remove-image {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all var(--transition);
+}
+
+.newsfeed-remove-image:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+
+/* ─────────────────────────────────────────
+   NEWSFEED UPDATE — Current image preview
+───────────────────────────────────────── */
+.newsfeed-current-image {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+}
+
+.newsfeed-current-img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+
+/* ─────────────────────────────────────────
+   DANGER ZONE (update/delete pages)
+   already in main.css — extended styles here
+───────────────────────────────────────── */
+.danger-zone .card-title {
+    margin-bottom: 14px;
+}
+
+.danger-zone .flex-between {
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+
+/* ─────────────────────────────────────────
+   FORM ACTIONS (create / update forms)
+───────────────────────────────────────── */
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+}
+
+
+/* ─────────────────────────────────────────
+   EMPTY STATE — home page variant
+───────────────────────────────────────── */
+.home-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-3);
+}
+
+.home-empty i {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    display: block;
+    opacity: 0.5;
+}
+
+.home-empty p {
+    font-size: 0.85rem;
+    color: var(--text-2);
+}
+
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
+@media (max-width: 1100px) {
+    .home-grid {
+        grid-template-columns: 1fr 300px;
+    }
+
+    .quick-links {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .home-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .home-right {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .welcome-banner-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .welcome-stats {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .newsfeed-cover-detail {
+        height: 220px;
+    }
+}
+
+@media (max-width: 640px) {
+    .home-right {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-stat-item {
+        flex: 1;
+        min-width: 60px;
+    }
+
+    .welcome-name {
+        font-size: 1.3rem;
+    }
+
+    .quick-links {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+
+    .quick-link-item {
+        padding: 10px 4px;
+        font-size: 0.68rem;
+    }
+
+    .quick-link-icon {
+        width: 28px; height: 28px;
+        font-size: 0.8rem;
+    }
+
+    .newsfeed-detail-body {
+        padding: 20px;
+    }
+
+    .newsfeed-detail-title {
+        font-size: 1.4rem;
+    }
+
+    .newsfeed-cover-detail {
+        height: 180px;
+        border-radius: 0;
+    }
+
+    .newsfeed-type-selector {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .newsfeed-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .welcome-stats {
+        gap: 10px;
+    }
+
+    .welcome-stat-item {
+        padding: 10px 12px;
+    }
+
+    .welcome-stat-value {
+        font-size: 1.1rem;
+    }
+
+    .invitation-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .invitation-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .newsfeed-type-option {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+    }
+}

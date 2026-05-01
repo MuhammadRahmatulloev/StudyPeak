@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}New Achievement — StudyPeak{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container-md">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">New Achievement</h1>
+            <p class="page-subtitle">Create a badge to reward students</p>
+        </div>
+        <a href="{% url 'achievement_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Achievement Name <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-input"
+                    placeholder="e.g. Perfect Week" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description <span class="text-danger">*</span></label>
+                <textarea name="description" class="form-input form-textarea" rows="3"
+                    placeholder="What does a student need to do to earn this?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Coin Reward</label>
+                <div class="give-coins-input-wrap">
+                    <i class="fa-solid fa-coins give-coins-icon"></i>
+                    <input type="number" name="coin_reward" class="form-input give-coins-input"
+                        placeholder="0" min="0" value="0">
+                </div>
+                <p class="text-sm text-muted mt-8">Set to 0 for no coin reward</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Achievement Icon</label>
+                <input type="file" name="icon" class="form-file" accept="image/*">
+                <p class="text-sm text-muted mt-8">Optional — a small icon representing the achievement</p>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-medal"></i> Create Achievement
+                </button>
+                <a href="{% url 'achievement_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

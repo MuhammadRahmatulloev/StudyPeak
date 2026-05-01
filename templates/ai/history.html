@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI History — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ai.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">AI History</h1>
+            <p class="page-subtitle">Your conversations with the AI assistant</p>
+        </div>
+        {% if user.is_admin_role %}
+        <a href="{% url 'ai_usage_limits' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-chart-bar"></i> Usage Limits
+        </a>
+        {% endif %}
+    </div>
+
+    {% if history %}
+    <div class="ai-history-list">
+        {% for item in history %}
+        <div class="ai-history-card card">
+
+            <div class="ai-history-header">
+                <div class="ai-history-meta">
+                    {% if user.is_admin_role %}
+                    <div class="ai-history-user">
+                        <div class="ai-history-avatar">
+                            {% if item.user.profile.avatar %}
+                                <img src="{{ item.user.profile.avatar.url }}" alt="{{ item.user.username }}">
+                            {% else %}
+                                <span>{{ item.user.username|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="text-sm">{{ item.user.username }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="ai-history-badges">
+                        <span class="badge
+                            {% if item.context == 'material' %}badge-blue
+                            {% elif item.context == 'assignment' %}badge-yellow
+                            {% else %}badge-gray{% endif %}">
+                            {{ item.get_context_display }}
+                        </span>
+                        {% if item.is_blocked %}
+                        <span class="badge badge-red">
+                            <i class="fa-solid fa-ban"></i> Blocked
+                        </span>
+                        {% endif %}
+                        {% if item.lesson %}
+                        <span class="badge badge-green text-sm">
+                            <i class="fa-solid fa-book-open"></i> {{ item.lesson.title|truncatechars:20 }}
+                        </span>
+                        {% endif %}
+                        {% if item.assignment %}
+                        <span class="badge badge-yellow text-sm">
+                            <i class="fa-solid fa-pen-to-square"></i> {{ item.assignment.title|truncatechars:20 }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="ai-history-actions">
+                    <span class="text-sm text-muted">
+                        <i class="fa-solid fa-clock"></i>
+                        {{ item.created_at|timesince }} ago
+                    </span>
+                    <form method="post" action="{% url 'ai_history_delete' item.id %}">
+                        {% csrf_token %}
+                        <button
+                            class="btn btn-danger btn-sm"
+                            onclick="return confirm('Delete this entry?')"
+                        >
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="ai-history-body">
+                <div class="ai-history-question">
+                    <div class="ai-bubble ai-bubble-user">
+                        <div class="ai-bubble-icon">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="ai-bubble-content">
+                            <p class="ai-bubble-label text-sm text-muted">Question</p>
+                            <p class="ai-bubble-text">{{ item.question }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if item.response %}
+                <div class="ai-history-response">
+                    <div class="ai-bubble ai-bubble-ai {% if item.is_blocked %}ai-bubble-blocked{% endif %}">
+                        <div class="ai-bubble-icon">
+                            {% if item.is_blocked %}
+                            <i class="fa-solid fa-ban"></i>
+                            {% else %}
+                            <i class="fa-solid fa-robot"></i>
+                            {% endif %}
+                        </div>
+                        <div class="ai-bubble-content">
+                            <p class="ai-bubble-label text-sm text-muted">
+                                {% if item.is_blocked %}Blocked response{% else %}AI Response{% endif %}
+                            </p>
+                            <p class="ai-bubble-text">{{ item.response }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-robot"></i>
+            <p>No AI conversations yet</p>
+            <p class="text-muted text-sm">Start a conversation with the AI assistant on a lesson or assignment page</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

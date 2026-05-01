@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Material — StudyPeak{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/materials.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <p class="page-header-sub">
+                    <a href="{% url 'subject_detail' subject.id %}" class="breadcrumb-link">{{ subject.title }}</a>
+                    <span class="breadcrumb-sep">/</span>
+                    <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="breadcrumb-link">{{ lesson.title }}</a>
+                </p>
+                <h1 class="page-title">Add Material</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-page-layout">
+        <div class="form-card card">
+
+            {% if messages %}
+            <div class="messages-list">
+                {% for message in messages %}
+                <div class="message message-{{ message.tags }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'material_create' subject.id lesson.id %}" enctype="multipart/form-data" id="materialForm">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label class="form-label" for="title">
+                        <i class="fa-solid fa-heading"></i> Title
+                        <span class="form-required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        class="form-input"
+                        placeholder="e.g. Chapter 1 Notes"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-shapes"></i> Material Type
+                        <span class="form-required">*</span>
+                    </label>
+                    <div class="type-selector" id="typeSelector">
+                        {% for value, label in type_choices %}
+                        <label class="type-option" data-type="{{ value }}">
+                            <input type="radio" name="type" value="{{ value }}" class="type-radio" style="display:none">
+                            <div class="type-option-icon type-icon-{{ value }}">
+                                {% if value == 'pdf' %}
+                                <i class="fa-solid fa-file-pdf"></i>
+                                {% elif value == 'link' %}
+                                <i class="fa-solid fa-link"></i>
+                                {% elif value == 'text' %}
+                                <i class="fa-solid fa-file-lines"></i>
+                                {% elif value == 'image' %}
+                                <i class="fa-solid fa-image"></i>
+                                {% elif value == 'video' %}
+                                <i class="fa-solid fa-circle-play"></i>
+                                {% endif %}
+                            </div>
+                            <span class="type-option-label">{{ label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group" id="field-order">
+                    <label class="form-label" for="order">
+                        <i class="fa-solid fa-sort"></i> Order
+                    </label>
+                    <input
+                        type="number"
+                        id="order"
+                        name="order"
+                        class="form-input form-input-sm"
+                        value="0"
+                        min="0"
+                    >
+                    <p class="form-hint">Position of this material within the lesson.</p>
+                </div>
+
+                <div id="field-url" class="form-group type-field" style="display:none">
+                    <label class="form-label" for="url">
+                        <i class="fa-solid fa-link"></i> URL
+                        <span class="form-required">*</span>
+                    </label>
+                    <input
+                        type="url"
+                        id="url"
+                        name="url"
+                        class="form-input"
+                        placeholder="https://example.com"
+                    >
+                    <p class="form-hint">Paste the full URL including https://</p>
+                </div>
+
+                <div id="field-content" class="form-group type-field" style="display:none">
+                    <label class="form-label" for="content">
+                        <i class="fa-solid fa-align-left"></i> Content
+                        <span class="form-required">*</span>
+                    </label>
+                    <textarea
+                        id="content"
+                        name="content"
+                        class="form-input form-textarea"
+                        rows="8"
+                        placeholder="Write your lesson text here..."
+                    ></textarea>
+                </div>
+
+                <div id="field-file" class="form-group type-field" style="display:none">
+                    <label class="form-label" for="file">
+                        <i class="fa-solid fa-upload"></i> File
+                        <span class="form-required">*</span>
+                    </label>
+                    <div class="file-drop-zone" id="fileDropZone">
+                        <input type="file" id="file" name="file" class="file-input" id="fileInput">
+                        <div class="file-drop-inner" id="fileDropInner">
+                            <i class="fa-solid fa-cloud-arrow-up file-drop-icon"></i>
+                            <p class="file-drop-title">Click to upload or drag & drop</p>
+                            <p class="file-drop-sub text-sm text-muted" id="fileTypeHint">Select a file</p>
+                        </div>
+                    </div>
+                    <p class="file-name-preview text-sm text-muted" id="fileNamePreview" style="display:none">
+                        <i class="fa-solid fa-paperclip"></i> <span id="fileNameText"></span>
+                    </p>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="btn btn-ghost">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                        <i class="fa-solid fa-plus"></i> Add Material
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="form-side">
+
+            <div class="side-card card" id="typeInfoCard">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-circle-info"></i> Select a type
+                </p>
+                <p class="text-sm text-muted">Choose a material type on the left to see what's required.</p>
+            </div>
+
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-book-open"></i> Lesson
+                </p>
+                <p class="side-card-value">{{ lesson.title }}</p>
+                <a href="{% url 'subject_detail' subject.id %}" class="side-card-link mt-8">
+                    {{ subject.title }}
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/material_form.js' %}"></script>
+{% endblock %}

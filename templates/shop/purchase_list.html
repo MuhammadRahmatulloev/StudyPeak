@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Purchases — StudyPeak{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Purchases</h1>
+            <p class="page-subtitle">{% if user.is_admin_role %}All purchases{% else %}Your purchase history{% endif %}</p>
+        </div>
+        <a href="{% url 'product_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-store"></i> Shop
+        </a>
+    </div>
+
+    {% if purchases %}
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        {% if user.is_admin_role %}<th>User</th>{% endif %}
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for purchase in purchases %}
+                    <tr>
+                        <td class="text-muted text-sm">{{ forloop.counter }}</td>
+                        {% if user.is_admin_role %}
+                        <td>
+                            <div class="purchase-user">
+                                <div class="purchase-avatar">
+                                    {% if purchase.user.profile.avatar %}
+                                    <img src="{{ purchase.user.profile.avatar.url }}" alt="{{ purchase.user.username }}">
+                                    {% else %}
+                                    <span>{{ purchase.user.username|first|upper }}</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm">{{ purchase.user.username }}</span>
+                            </div>
+                        </td>
+                        {% endif %}
+                        <td>
+                            <div class="purchase-product">
+                                {% if purchase.product.image %}
+                                <img src="{{ purchase.product.image.url }}" alt="{{ purchase.product.name }}" class="purchase-product-img">
+                                {% else %}
+                                <div class="purchase-product-icon">
+                                    <i class="fa-solid fa-box-open"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <p class="text-sm">{{ purchase.product.name }}</p>
+                                    <p class="text-sm text-muted">{{ purchase.product.get_type_display }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="purchase-price">
+                                <i class="fa-solid fa-coins"></i>
+                                <span class="text-sm">{{ purchase.product.price }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if purchase.status == 'completed' %}
+                            <span class="badge badge-green">
+                                <i class="fa-solid fa-check"></i> Completed
+                            </span>
+                            {% elif purchase.status == 'cancelled' %}
+                            <span class="badge badge-red">Cancelled</span>
+                            {% else %}
+                            <span class="badge badge-yellow">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-sm text-muted">{{ purchase.purchased_at|date:"M d, Y" }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <p>No purchases yet</p>
+            <a href="{% url 'product_list' %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-store"></i> Go to Shop
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

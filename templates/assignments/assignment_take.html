@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ assignment.title }} — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">{{ assignment.title }}</h1>
+            <p class="page-subtitle">
+                <span class="badge {% if assignment.type == 'test' %}badge-blue{% else %}badge-gray{% endif %}">
+                    {{ assignment.get_type_display|upper }}
+                </span>
+                <span class="text-muted" style="margin-left:8px">{{ assignment.subject.title }}</span>
+            </p>
+        </div>
+        {% if assignment.deadline %}
+        <div class="assignment-take-deadline">
+            <i class="fa-solid fa-clock text-danger"></i>
+            <span class="text-sm">Due: {{ assignment.deadline|date:"M d, Y — H:i" }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if assignment.description %}
+    <div class="card mb-16">
+        <div class="card-title">
+            <i class="fa-solid fa-circle-info"></i> Instructions
+        </div>
+        <p class="text-muted">{{ assignment.description }}</p>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'assignment_take' assignment.id %}" id="takeForm">
+        {% csrf_token %}
+
+        <div class="take-questions" id="takeQuestions" data-total="{{ questions|length }}">
+            {% for question in questions %}
+            <div
+                class="card mb-16 take-question-card"
+                id="q-{{ forloop.counter }}"
+                data-qtype="{{ question.type }}"
+                data-qname="question_{{ question.id }}"
+            >
+                <div class="take-question-header">
+                    <div class="take-question-num">
+                        <span>{{ forloop.counter }}</span>
+                    </div>
+                    <div class="take-question-meta">
+                        <p class="take-question-text">{{ question.text }}</p>
+                        <div class="flex gap-8 mt-8">
+                            <span class="badge badge-gray text-sm">{{ question.get_type_display }}</span>
+                            <span class="badge badge-blue text-sm">{{ question.score }} pts</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="take-question-body">
+
+                    {% if question.type == 'mcq' %}
+                    <div class="take-choices">
+                        {% for choice in question.choices.all %}
+                        <label class="take-choice">
+                            <input
+                                type="radio"
+                                name="question_{{ question.id }}"
+                                value="{{ choice.id }}"
+                                class="take-choice-radio"
+                                hidden
+                            >
+                            <div class="take-choice-indicator">
+                                <span class="take-choice-letter">
+                                    {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
+                                </span>
+                            </div>
+                            <span class="take-choice-text">{{ choice.text }}</span>
+                            <div class="take-choice-check">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                        </label>
+                        {% empty %}
+                        <p class="text-muted text-sm">No choices added for this question.</p>
+                        {% endfor %}
+                    </div>
+
+                    {% elif question.type == 'true_false' %}
+                    <div class="take-tf-choices">
+                        {% for choice in question.choices.all %}
+                        <label class="take-tf-btn">
+                            <input
+                                type="radio"
+                                name="question_{{ question.id }}"
+                                value="{{ choice.id }}"
+                                class="take-choice-radio"
+                                hidden
+                            >
+                            {% if choice.text|lower == 'true' %}
+                            <i class="fa-solid fa-check"></i>
+                            {% else %}
+                            <i class="fa-solid fa-xmark"></i>
+                            {% endif %}
+                            <span>{{ choice.text }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    {% elif question.type == 'text' %}
+                    <div class="take-text-answer">
+                        <textarea
+                            name="question_{{ question.id }}"
+                            class="form-input form-textarea take-textarea"
+                            rows="5"
+                            placeholder="Write your answer here..."
+                        ></textarea>
+                        <p class="text-sm text-muted mt-8">
+                            <i class="fa-solid fa-info-circle"></i>
+                            This answer will be manually reviewed by your teacher.
+                        </p>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+            {% empty %}
+            <div class="card">
+                <div class="empty-state">
+                    <i class="fa-solid fa-circle-question"></i>
+                    <p>No questions in this assignment</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if questions %}
+        <div class="take-submit-section card">
+            <div class="take-submit-inner">
+                <div class="take-submit-info">
+                    <p class="take-submit-title">
+                        <i class="fa-solid fa-paper-plane"></i> Ready to submit?
+                    </p>
+                    <p class="text-sm text-muted">
+                        You answered <strong id="answeredCount">0</strong> out of
+                        <strong>{{ questions|length }}</strong> questions.
+                    </p>
+                    <p class="text-sm text-danger mt-8">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        You cannot change your answers after submitting.
+                    </p>
+                </div>
+                <div class="take-submit-actions">
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-lg"
+                        onclick="return confirm('Submit this assignment? You cannot change answers after this.')"
+                    >
+                        <i class="fa-solid fa-paper-plane"></i> Submit Assignment
+                    </button>
+                    <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-secondary">
+                        Save & Exit
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    function updateCount() {
+        var answered = 0;
+        document.querySelectorAll('.take-question-card').forEach(function (card) {
+            var qtype = card.dataset.qtype;
+            var qname = card.dataset.qname;
+            if (qtype === 'text') {
+                var ta = card.querySelector('textarea[name="' + qname + '"]');
+                if (ta && ta.value.trim().length > 0) answered++;
+            } else {
+                var checked = card.querySelector('input[name="' + qname + '"]:checked');
+                if (checked) answered++;
+            }
+        });
+        var el = document.getElementById('answeredCount');
+        if (el) el.textContent = answered;
+    }
+
+    document.querySelectorAll('.take-choice-radio').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            var name = this.name;
+            document.querySelectorAll('input[name="' + name + '"]').forEach(function (r) {
+                var label = r.closest('.take-choice, .take-tf-btn');
+                if (label) label.classList.remove('selected');
+            });
+            var label = this.closest('.take-choice, .take-tf-btn');
+            if (label) label.classList.add('selected');
+            updateCount();
+        });
+    });
+
+    document.querySelectorAll('.take-textarea').forEach(function (ta) {
+        ta.addEventListener('input', updateCount);
+    });
+
+    updateCount();
+
+    window.addEventListener('beforeunload', function (e) {
+        e.preventDefault();
+        e.returnValue = '';
+    });
+
+    var form = document.getElementById('takeForm');
+    if (form) {
+        form.addEventListener('submit', function () {
+            window.removeEventListener('beforeunload', function () {});
+        });
+    }
+})();
+</script>
+{% endblock %}

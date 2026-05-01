@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Admin Stats{% endblock %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="page-header">
+        <h2 class="page-title">Admin Statistics</h2>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="admin-stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Total Users</span>
+            <span class="stat-value">{{ total_users }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Students</span>
+            <span class="stat-value">{{ total_students }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Teachers</span>
+            <span class="stat-value">{{ total_teachers }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Submissions</span>
+            <span class="stat-value">{{ total_submissions }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Enrollments</span>
+            <span class="stat-value">{{ total_enrollments }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Groups</span>
+            <span class="stat-value">{{ total_groups }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Messages</span>
+            <span class="stat-value">{{ total_messages }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Lesson Views</span>
+            <span class="stat-value">{{ total_lesson_views }}</span>
+        </div>
+    </div>
+
+    <div class="admin-grid">
+        <div class="admin-section">
+            <h3 class="section-title">Recent Registrations</h3>
+            {% if recent_registrations %}
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in recent_registrations %}
+                            <tr>
+                                <td>{{ u.username }}</td>
+                                <td>{{ u.email }}</td>
+                                <td><span class="badge">{{ u.role }}</span></td>
+                                <td>{{ u.date_joined|date:"d M Y" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-text">No registrations found.</p>
+            {% endif %}
+        </div>
+
+        <div class="admin-section">
+            <h3 class="section-title">Recent Submissions</h3>
+            {% if recent_submissions %}
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Assignment</th>
+                            <th>Score</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in recent_submissions %}
+                            <tr>
+                                <td>{{ sub.student.username }}</td>
+                                <td>
+                                    <a href="{% url 'submission_detail' sub.id %}" class="table-link">
+                                        {{ sub.assignment.title }}
+                                    </a>
+                                </td>
+                                <td>{{ sub.total_score }}</td>
+                                <td>
+                                    {% if sub.submitted_at %}
+                                        {{ sub.submitted_at|date:"d M Y" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-text">No submissions found.</p>
+            {% endif %}
+        </div>
+
+        <div class="admin-section">
+            <h3 class="section-title">Top Students by Score</h3>
+            {% if top_students %}
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Student</th>
+                            <th>Total Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in top_students %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ s.student__username }}</td>
+                                <td>{{ s.total }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="empty-text">No data found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

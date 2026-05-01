@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ subject.title }} — StudyPeak{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/materials.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <a href="{% url 'subject_list' %}" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <p class="page-header-sub">Subjects</p>
+                <h1 class="page-title">{{ subject.title }}</h1>
+            </div>
+        </div>
+        <div class="page-header-right">
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'subject_update' subject.id %}" class="btn btn-ghost btn-sm">
+                <i class="fa-solid fa-pen"></i> Edit
+            </a>
+            <a href="{% url 'lesson_create' subject.id %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Add Lesson
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="messages-list">
+        {% for message in messages %}
+        <div class="message message-{{ message.tags }}">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if subject.cover %}
+    <div class="subject-banner">
+        <img src="{{ subject.cover.url }}" alt="{{ subject.title }}" class="subject-banner-img">
+        <div class="subject-banner-overlay"></div>
+    </div>
+    {% endif %}
+
+    <div class="subject-layout">
+
+        <div class="subject-main">
+
+            {% if subject.description %}
+            <div class="subject-desc card">
+                <p class="subject-desc-text">{{ subject.description }}</p>
+            </div>
+            {% endif %}
+
+            <div class="lessons-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fa-solid fa-graduation-cap"></i> Lessons
+                        <span class="badge badge-gray">{{ lessons|length }}</span>
+                    </h2>
+                    {% if user.is_teacher or user.is_admin_role %}
+                    <a href="{% url 'lesson_create' subject.id %}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-plus"></i> Add Lesson
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% if lessons %}
+                <div class="lessons-list">
+                    {% for lesson in lessons %}
+                    <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="lesson-row card">
+                        <div class="lesson-row-num">
+                            <span>{{ lesson.order }}</span>
+                        </div>
+                        <div class="lesson-row-body">
+                            <p class="lesson-row-title">{{ lesson.title }}</p>
+                            {% if lesson.description %}
+                            <p class="lesson-row-desc text-sm text-muted">
+                                {{ lesson.description|truncatewords:10 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="lesson-row-meta">
+                            <span class="text-sm text-muted">
+                                <i class="fa-solid fa-paperclip"></i>
+                                {{ lesson.materials.count }}
+                            </span>
+                            <i class="fa-solid fa-chevron-right text-muted"></i>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                {% else %}
+                <div class="empty-state card">
+                    <i class="fa-solid fa-graduation-cap empty-state-icon"></i>
+                    <p class="empty-state-title">No lessons yet</p>
+                    {% if user.is_teacher or user.is_admin_role %}
+                    <p class="text-sm text-muted">Add your first lesson to this subject.</p>
+                    <a href="{% url 'lesson_create' subject.id %}" class="btn btn-primary mt-16">
+                        <i class="fa-solid fa-plus"></i> Add Lesson
+                    </a>
+                    {% else %}
+                    <p class="text-sm text-muted">Your teacher hasn't added any lessons yet.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <div class="subject-side">
+
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-circle-info"></i> Subject Info
+                </p>
+                <div class="side-info-list">
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Teacher</span>
+                        <span class="text-sm">
+                            {{ subject.teacher.get_full_name|default:subject.teacher.username }}
+                        </span>
+                    </div>
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Lessons</span>
+                        <span class="badge badge-blue">{{ lessons|length }}</span>
+                    </div>
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Status</span>
+                        {% if subject.is_active %}
+                        <span class="badge badge-green">Active</span>
+                        {% else %}
+                        <span class="badge badge-gray">Inactive</span>
+                        {% endif %}
+                    </div>
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Created</span>
+                        <span class="text-sm">{{ subject.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if subject.group %}
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-users"></i> Group
+                </p>
+                <p class="side-card-value">{{ subject.group.name }}</p>
+                {% if subject.group.description %}
+                <p class="text-sm text-muted mt-8">{{ subject.group.description|truncatewords:10 }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if user.is_teacher or user.is_admin_role %}
+            <div class="side-card card side-card-danger">
+                <p class="side-card-title text-danger">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+                </p>
+                <p class="text-sm text-muted mb-12">
+                    Deleting this subject removes all lessons and materials permanently.
+                </p>
+                <form method="post" action="{% url 'subject_delete' subject.id %}" onsubmit="return confirm('Delete this subject and everything inside it?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fa-solid fa-trash"></i> Delete Subject
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

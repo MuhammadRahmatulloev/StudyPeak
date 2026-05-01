@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Streak{% endblock %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="page-header">
+        <h2 class="page-title">🔥 Daily Streak</h2>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="streak-card">
+        <div class="streak-stat">
+            <span class="streak-stat-label">Current Streak</span>
+            <span class="streak-stat-value">{{ streak.current_streak }} days</span>
+        </div>
+        <div class="streak-stat">
+            <span class="streak-stat-label">Longest Streak</span>
+            <span class="streak-stat-value">{{ streak.longest_streak }} days</span>
+        </div>
+        <div class="streak-stat">
+            <span class="streak-stat-label">Last Active</span>
+            <span class="streak-stat-value">
+                {% if streak.last_active_date %}
+                    {{ streak.last_active_date|date:"d M Y" }}
+                {% else %}
+                    —
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3 class="section-title">Top Streaks</h3>
+        {% if top_streaks %}
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>User</th>
+                            <th>Current Streak</th>
+                            <th>Longest Streak</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in top_streaks %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ s.user.username }}</td>
+                                <td>🔥 {{ s.current_streak }} days</td>
+                                <td>{{ s.longest_streak }} days</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-text">No streak data found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

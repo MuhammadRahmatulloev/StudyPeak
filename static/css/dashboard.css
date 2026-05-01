@@ -1,0 +1,641 @@
+/* =============================================
+   DASHBOARD.CSS — StudyPeak Dashboard Styles
+   Covers: dashboard, activity_log_list,
+           lesson_view_list, streak,
+           student_progress, admin_stats
+   ============================================= */
+
+/* ─── Dashboard Main ─── */
+
+.dashboard-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem 2rem;
+}
+
+.dashboard-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dashboard-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+}
+
+.dashboard-avatar-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dashboard-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.dashboard-username {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.dashboard-role {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: capitalize;
+    background: var(--bg);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+}
+
+.dashboard-streak {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.5rem 1.2rem;
+}
+
+.streak-icon {
+    font-size: 1.2rem;
+}
+
+.streak-count {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* ─── Stat Cards ─── */
+
+.dashboard-stats,
+.progress-stats,
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.stat-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.stat-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+}
+
+/* ─── Dashboard Grid & Sections ─── */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.dashboard-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+/* ─── Activity List ─── */
+
+.activity-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--bg);
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+
+.activity-action {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.82rem;
+}
+
+.activity-desc {
+    color: var(--text);
+    flex: 1;
+}
+
+.activity-date {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+/* ─── Lesson View List ─── */
+
+.lesson-view-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lesson-view-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    background: var(--bg);
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--border);
+    gap: 0.5rem;
+}
+
+.lesson-view-link {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.87rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.lesson-view-link:hover {
+    color: var(--primary);
+}
+
+.lesson-view-date {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* ─── Assignment List (in dashboard) ─── */
+
+.assignment-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.assignment-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--bg);
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--border);
+}
+
+.assignment-link {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.87rem;
+    font-weight: 500;
+    flex: 1;
+    transition: color 0.2s;
+}
+
+.assignment-link:hover {
+    color: var(--primary);
+}
+
+.assignment-deadline {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* ─── Enrollment List ─── */
+
+.enrollment-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.enrollment-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--bg);
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--border);
+}
+
+.enrollment-link {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.87rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.enrollment-link:hover {
+    color: var(--primary);
+}
+
+.enrollment-teacher {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+/* ─── Dashboard Actions ─── */
+
+.dashboard-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ─── Streak Page ─── */
+
+.streak-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem 2rem;
+}
+
+.streak-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.5rem 0;
+}
+
+.streak-stat + .streak-stat {
+    border-left: 1px solid var(--border);
+    padding-left: 1.5rem;
+}
+
+.streak-stat-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+}
+
+.streak-stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+/* ─── Student Progress ─── */
+
+.progress-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem 2rem;
+}
+
+.progress-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+}
+
+.progress-avatar-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.progress-username {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.progress-role {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: capitalize;
+}
+
+/* ─── Attendance Stats ─── */
+
+.progress-attendance {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.attendance-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.attendance-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: center;
+    padding: 1rem;
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--border);
+}
+
+.attendance-stat.present {
+    border-color: var(--success, #22c55e);
+    background: color-mix(in srgb, var(--success, #22c55e) 8%, transparent);
+}
+
+.attendance-stat.absent {
+    border-color: var(--danger, #ef4444);
+    background: color-mix(in srgb, var(--danger, #ef4444) 8%, transparent);
+}
+
+.attendance-stat.excused {
+    border-color: var(--warning, #f59e0b);
+    background: color-mix(in srgb, var(--warning, #f59e0b) 8%, transparent);
+}
+
+.attendance-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+}
+
+.attendance-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+/* ─── Progress Grid & Lists ─── */
+
+.progress-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.progress-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.progress-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.progress-list-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem;
+    background: var(--bg);
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+
+.progress-link {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    flex: 1;
+    transition: color 0.2s;
+}
+
+a.progress-link:hover {
+    color: var(--primary);
+}
+
+.progress-meta {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-left: auto;
+}
+
+.progress-comment {
+    width: 100%;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-style: italic;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--border);
+}
+
+/* ─── Admin Stats ─── */
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.25rem;
+}
+
+.admin-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-x: auto;
+}
+
+/* ─── Empty Text ─── */
+
+.empty-text {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+/* ─── Page Wrapper (shared) ─── */
+
+.page-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .dashboard-grid,
+    .progress-grid,
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .attendance-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .streak-card {
+        grid-template-columns: 1fr;
+    }
+
+    .streak-stat + .streak-stat {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--border);
+        padding-top: 1rem;
+    }
+
+    .admin-stats-grid,
+    .dashboard-stats,
+    .progress-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-stats-grid,
+    .dashboard-stats,
+    .progress-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+    }
+}

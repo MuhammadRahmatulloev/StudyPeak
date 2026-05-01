@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}New Assignment — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">New Assignment</h1>
+            <p class="page-subtitle">Create a homework, test or quiz for your students</p>
+        </div>
+        <a href="{% url 'assignment_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post" id="assignmentForm">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Assignment Type <span class="text-danger">*</span></label>
+                <div class="assignment-type-selector">
+                    {% for value, label in type_choices %}
+                    <label class="assignment-type-option" id="type-{{ value }}">
+                        <input
+                            type="radio"
+                            name="type"
+                            value="{{ value }}"
+                            {% if value == 'homework' %}checked{% endif %}
+                            hidden
+                        >
+                        <span class="assignment-type-icon">
+                            {% if value == 'homework' %}<i class="fa-solid fa-book"></i>
+                            {% elif value == 'test' %}<i class="fa-solid fa-file-pen"></i>
+                            {% else %}<i class="fa-solid fa-stopwatch"></i>
+                            {% endif %}
+                        </span>
+                        <span class="assignment-type-label">{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Title <span class="text-danger">*</span></label>
+                <input
+                    type="text"
+                    name="title"
+                    class="form-input"
+                    placeholder="e.g. Chapter 5 Homework"
+                    value="{{ request.POST.title }}"
+                    required
+                    autofocus
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea
+                    name="description"
+                    class="form-input form-textarea"
+                    rows="4"
+                    placeholder="Describe what students need to do..."
+                >{{ request.POST.description }}</textarea>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Subject <span class="text-danger">*</span></label>
+                    <select name="subject_id" class="form-input" required>
+                        <option value="">— Select subject —</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}"
+                            {% if request.POST.subject_id == subject.id|stringformat:"s" %}selected{% endif %}>
+                            {{ subject.title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Group <span class="text-danger">*</span></label>
+                    <select name="group_id" class="form-input" required>
+                        <option value="">— Select group —</option>
+                        {% for group in groups %}
+                        <option value="{{ group.id }}"
+                            {% if request.POST.group_id == group.id|stringformat:"s" %}selected{% endif %}>
+                            {{ group.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Deadline</label>
+                    <input
+                        type="datetime-local"
+                        name="deadline"
+                        class="form-input"
+                        value="{{ request.POST.deadline }}"
+                    >
+                    <p class="text-sm text-muted mt-8">Leave empty for no deadline</p>
+                </div>
+
+                <div class="form-group" id="timeLimitField">
+                    <label class="form-label">
+                        Time Limit (minutes)
+                        <span class="badge badge-yellow" style="margin-left:6px">Quiz only</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="time_limit"
+                        class="form-input"
+                        placeholder="e.g. 30"
+                        min="1"
+                        value="{{ request.POST.time_limit }}"
+                    >
+                    <p class="text-sm text-muted mt-8">Only applies to quiz type</p>
+                </div>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-plus"></i> Create Assignment
+                </button>
+                <a href="{% url 'assignment_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const typeOptions = document.querySelectorAll('.assignment-type-option');
+const timeLimitField = document.getElementById('timeLimitField');
+
+typeOptions.forEach(option => {
+    const radio = option.querySelector('input[type="radio"]');
+    radio.addEventListener('change', () => {
+        typeOptions.forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        timeLimitField.style.opacity = radio.value === 'quiz' ? '1' : '0.4';
+    });
+    if (radio.checked) {
+        option.classList.add('selected');
+        timeLimitField.style.opacity = radio.value === 'quiz' ? '1' : '0.4';
+    }
+});
+</script>
+{% endblock %}

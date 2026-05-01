@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Usage Limits — StudyPeak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ai.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">AI Usage Limits</h1>
+            <p class="page-subtitle">Daily usage statistics per user</p>
+        </div>
+        <a href="{% url 'ai_history' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-clock-rotate-left"></i> AI History
+        </a>
+    </div>
+
+    {% if limits %}
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Daily Usage</th>
+                        <th>Last Reset</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for limit in limits %}
+                    <tr>
+                        <td class="text-muted text-sm">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="ai-usage-user">
+                                <div class="ai-usage-avatar">
+                                    {% if limit.user.profile.avatar %}
+                                        <img src="{{ limit.user.profile.avatar.url }}" alt="{{ limit.user.username }}">
+                                    {% else %}
+                                        <span>{{ limit.user.username|first|upper }}</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="text-sm">{{ limit.user.username }}</p>
+                                    <p class="text-sm text-muted">{{ limit.user.email }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge
+                                {% if limit.user.role == 'teacher' %}badge-blue
+                                {% elif limit.user.role == 'admin' %}badge-yellow
+                                {% else %}badge-green{% endif %}">
+                                {{ limit.user.role|capfirst }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="ai-usage-bar-wrap">
+                                <div class="ai-usage-bar">
+                                    {% with width=limit.daily_count|default:0 %}
+                                    <div
+                                        class="ai-usage-bar-fill
+                                            {% if limit.daily_count >= 20 %}usage-full
+                                            {% elif limit.daily_count >= 15 %}usage-high
+                                            {% elif limit.daily_count >= 10 %}usage-mid
+                                            {% else %}usage-low{% endif %}"
+                                        data-width="{% widthratio limit.daily_count 20 100 %}"
+                                    ></div>
+                                    {% endwith %}
+                                </div>
+                                <span class="ai-usage-count text-sm">
+                                    {{ limit.daily_count }} / 20
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-sm text-muted">
+                                {% if limit.last_reset_date %}
+                                    {{ limit.last_reset_date|date:"M d, Y" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if limit.daily_count >= 20 %}
+                            <span class="badge badge-red">
+                                <i class="fa-solid fa-lock"></i> Limit reached
+                            </span>
+                            {% elif limit.daily_count >= 15 %}
+                            <span class="badge badge-yellow">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Almost full
+                            </span>
+                            {% else %}
+                            <span class="badge badge-green">
+                                <i class="fa-solid fa-circle-check"></i> Active
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-chart-bar"></i>
+            <p>No usage data yet</p>
+            <p class="text-muted text-sm">Data will appear once users start using the AI assistant</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

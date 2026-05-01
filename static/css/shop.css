@@ -1,0 +1,904 @@
+/* ═══════════════════════════════════════════
+   STUDYPEAK — shop.css
+   Shop, Products, Purchases, Coins,
+   Achievements
+   Covers: product_list, product_detail,
+   product_create, product_update,
+   purchase_list, coin_transaction_list,
+   give_coins, achievement_list,
+   achievement_create, user_achievement_list
+═══════════════════════════════════════════ */
+
+
+/* ─────────────────────────────────────────
+   SHOP HEADER — coins badge
+───────────────────────────────────────── */
+.shop-coins-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    background: var(--warning-soft);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--warning);
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+}
+
+.shop-coins-badge i { font-size: 0.9rem; }
+
+.shop-coins-badge-lg {
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+
+/* ─────────────────────────────────────────
+   SHOP NAV TABS
+───────────────────────────────────────── */
+.shop-nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    width: fit-content;
+    flex-wrap: wrap;
+}
+
+.shop-nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border-radius: calc(var(--radius) - 2px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-2);
+    text-decoration: none;
+    transition: all var(--transition);
+    border: none;
+    background: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.shop-nav-tab i { font-size: 0.8rem; }
+
+.shop-nav-tab:hover {
+    color: var(--text);
+    background: var(--bg-3);
+}
+
+.shop-nav-tab.active {
+    background: var(--accent);
+    color: #fff;
+}
+
+
+/* ─────────────────────────────────────────
+   PRODUCT GRID
+───────────────────────────────────────── */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+
+/* ─────────────────────────────────────────
+   PRODUCT CARD
+───────────────────────────────────────── */
+.product-card {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.product-card:hover {
+    border-color: var(--border-2);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.product-card-img-wrap {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    background: var(--bg-3);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.product-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+    display: block;
+}
+
+.product-card:hover .product-card-img {
+    transform: scale(1.04);
+}
+
+.product-card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+    color: var(--text-3);
+    opacity: 0.4;
+}
+
+.product-card-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.product-card-body {
+    padding: 18px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.product-card-name {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-card-desc {
+    line-height: 1.5;
+    flex: 1;
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+}
+
+.product-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--warning);
+}
+
+.product-price i { font-size: 0.9rem; }
+
+.product-stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.product-stock i { font-size: 0.75rem; }
+
+
+/* ─────────────────────────────────────────
+   PRODUCT DETAIL
+───────────────────────────────────────── */
+.product-detail-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+
+.product-detail-img-wrap {
+    padding: 0;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-3);
+}
+
+.product-detail-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.product-detail-img-placeholder {
+    font-size: 5rem;
+    color: var(--text-3);
+    opacity: 0.3;
+}
+
+
+
+.product-detail-name {
+    font-family: var(--font-display);
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+}
+
+.product-detail-desc {
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+.product-detail-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.product-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.product-meta-row:last-child { border-bottom: none; }
+
+.product-detail-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--warning);
+}
+
+.product-detail-price i { font-size: 1.1rem; }
+
+.product-your-coins {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-2);
+}
+
+.product-your-coins i { color: var(--warning); }
+
+.product-your-coins strong { color: var(--text); }
+
+.product-purchased-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--success-soft);
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.product-purchased-banner i { font-size: 1rem; }
+
+
+/* ─────────────────────────────────────────
+   PRODUCT CREATE / UPDATE
+───────────────────────────────────────── */
+.product-type-selector {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.product-type-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 18px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 0.875rem;
+    color: var(--text-2);
+    font-weight: 500;
+    user-select: none;
+}
+
+.product-type-option:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.product-type-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.product-type-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.product-current-img {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.product-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+
+/* ─────────────────────────────────────────
+   PURCHASE LIST
+───────────────────────────────────────── */
+.purchase-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.purchase-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-4);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.purchase-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.purchase-avatar-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+}
+
+.purchase-product {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.purchase-product-img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.purchase-product-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    background: var(--bg-4);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--text-3);
+    flex-shrink: 0;
+}
+
+.purchase-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--warning);
+    font-weight: 600;
+}
+
+.purchase-price i { font-size: 0.8rem; }
+
+
+/* ─────────────────────────────────────────
+   COIN TRANSACTIONS
+───────────────────────────────────────── */
+.coin-tx-amount {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.coin-tx-amount i { font-size: 0.75rem; }
+
+.coin-earn {
+    color: var(--success);
+}
+
+.coin-spend {
+    color: var(--danger);
+}
+
+
+/* ─────────────────────────────────────────
+   GIVE COINS PAGE
+───────────────────────────────────────── */
+.give-coins-input-wrap {
+    position: relative;
+}
+
+.give-coins-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--warning);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.give-coins-input {
+    padding-left: 38px !important;
+}
+
+
+
+/* ─────────────────────────────────────────
+   ACHIEVEMENT GRID
+───────────────────────────────────────── */
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+
+/* ─────────────────────────────────────────
+   ACHIEVEMENT CARD
+───────────────────────────────────────── */
+.achievement-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color var(--transition), transform var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.achievement-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--warning), transparent);
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+
+.achievement-card:hover {
+    border-color: var(--border-2);
+    transform: translateY(-2px);
+}
+
+.achievement-card:hover::before {
+    opacity: 1;
+}
+
+.achievement-card-earned {
+    border-color: rgba(52, 211, 153, 0.3);
+    background: linear-gradient(135deg, var(--bg-2) 0%, rgba(52, 211, 153, 0.04) 100%);
+}
+
+.achievement-card-earned::before {
+    background: linear-gradient(90deg, var(--success), transparent);
+    opacity: 1;
+}
+
+.achievement-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.achievement-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.achievement-icon-wrap-earned {
+    background: var(--success-soft);
+    border-color: rgba(52, 211, 153, 0.3);
+}
+
+.achievement-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.achievement-icon-placeholder {
+    font-size: 1.6rem;
+    color: var(--text-3);
+}
+
+.achievement-icon-earned {
+    color: var(--success);
+}
+
+.achievement-earned-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: var(--success-soft);
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--success);
+    flex-shrink: 0;
+}
+
+.achievement-earned-badge i { font-size: 0.7rem; }
+
+.achievement-card-body { flex: 1; }
+
+.achievement-name {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+}
+
+.achievement-desc {
+    line-height: 1.55;
+}
+
+.achievement-reward {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 5px 12px;
+    background: var(--warning-soft);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--warning);
+}
+
+.achievement-reward i { font-size: 0.75rem; }
+
+.achievement-card-actions {
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.achievement-card-actions .flex {
+    align-items: center;
+}
+
+.achievement-card-actions .form-input {
+    font-size: 0.8rem;
+    padding: 7px 11px;
+    height: 36px;
+}
+
+
+/* ─────────────────────────────────────────
+   USER ACHIEVEMENT GRID
+───────────────────────────────────────── */
+.user-achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.user-achievement-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color var(--transition), transform var(--transition);
+    border-color: rgba(52, 211, 153, 0.2);
+    background: linear-gradient(135deg, var(--bg-2) 0%, rgba(52, 211, 153, 0.03) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.user-achievement-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--success), transparent);
+}
+
+.user-achievement-card:hover {
+    border-color: rgba(52, 211, 153, 0.4);
+    transform: translateY(-2px);
+}
+
+.user-achievement-top {
+    position: relative;
+    width: fit-content;
+}
+
+.achievement-earned-stamp {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 2px solid var(--bg-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: #fff;
+}
+
+.user-achievement-body { flex: 1; }
+
+.user-achievement-user {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+
+/* ─────────────────────────────────────────
+   AI USAGE BAR (reused in usage_limits)
+───────────────────────────────────────── */
+.ai-usage-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ai-usage-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-4);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.ai-usage-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.ai-usage-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 160px;
+}
+
+.ai-usage-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-4);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.ai-usage-bar-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.4s ease;
+    min-width: 4px;
+}
+
+.usage-low  { background: var(--success); }
+.usage-mid  { background: var(--accent); }
+.usage-high { background: var(--warning); }
+.usage-full { background: var(--danger); }
+
+.ai-usage-count {
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+
+/* ─────────────────────────────────────────
+   SHOP EMPTY STATE EXTENDED
+───────────────────────────────────────── */
+.shop-empty-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 56px 24px;
+    text-align: center;
+}
+
+.shop-empty-cta i {
+    font-size: 2.5rem;
+    color: var(--text-3);
+    opacity: 0.45;
+    margin-bottom: 4px;
+}
+
+.shop-empty-cta p {
+    font-size: 0.9rem;
+    color: var(--text-2);
+}
+
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .product-detail-grid {
+        grid-template-columns: 300px 1fr;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 860px) {
+    .product-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-detail-img-wrap {
+        aspect-ratio: 16 / 9;
+        max-height: 300px;
+    }
+
+    .product-detail-img {
+        border-radius: var(--radius-lg);
+    }
+}
+
+@media (max-width: 768px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .achievement-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .user-achievement-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .shop-nav-tabs {
+        width: 100%;
+    }
+
+    .shop-nav-tab {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 10px;
+        font-size: 0.78rem;
+    }
+
+    .shop-coins-badge { font-size: 0.8rem; }
+}
+
+@media (max-width: 560px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-card-img-wrap {
+        height: 200px;
+    }
+
+    .achievement-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .user-achievement-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-type-selector {
+        flex-direction: column;
+    }
+
+    .product-type-option {
+        width: 100%;
+    }
+
+    .shop-nav-tabs {
+        gap: 2px;
+        padding: 3px;
+    }
+
+    .shop-nav-tab {
+        padding: 7px 8px;
+        font-size: 0.75rem;
+    }
+
+    .shop-nav-tab span {
+        display: none;
+    }
+}

@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Assignment — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Edit Assignment</h1>
+            <p class="page-subtitle">{{ assignment.title }}</p>
+        </div>
+        <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Assignment Type</label>
+                <div class="assignment-type-selector">
+                    {% for value, label in type_choices %}
+                    <label class="assignment-type-option {% if assignment.type == value %}selected{% endif %}">
+                        <input
+                            type="radio"
+                            name="type"
+                            value="{{ value }}"
+                            {% if assignment.type == value %}checked{% endif %}
+                            hidden
+                        >
+                        <span class="assignment-type-icon">
+                            {% if value == 'homework' %}<i class="fa-solid fa-book"></i>
+                            {% elif value == 'test' %}<i class="fa-solid fa-file-pen"></i>
+                            {% else %}<i class="fa-solid fa-stopwatch"></i>
+                            {% endif %}
+                        </span>
+                        <span class="assignment-type-label">{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                <p class="text-sm text-muted mt-8">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Subject and group cannot be changed after creation.
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Title <span class="text-danger">*</span></label>
+                <input
+                    type="text"
+                    name="title"
+                    class="form-input"
+                    value="{{ assignment.title }}"
+                    placeholder="Assignment title"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea
+                    name="description"
+                    class="form-input form-textarea"
+                    rows="4"
+                    placeholder="Describe what students need to do..."
+                >{{ assignment.description|default:'' }}</textarea>
+            </div>
+
+            <div class="card mb-16" style="background: var(--bg-3); padding: 16px;">
+                <p class="text-sm text-muted">
+                    <i class="fa-solid fa-thumbtack"></i>
+                    <strong>Subject:</strong> {{ assignment.subject.title }} &nbsp;&nbsp;
+                    <strong>Group:</strong> {{ assignment.group.name }}
+                </p>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Deadline</label>
+                    <input
+                        type="datetime-local"
+                        name="deadline"
+                        class="form-input"
+                        value="{% if assignment.deadline %}{{ assignment.deadline|date:'Y-m-d' }}T{{ assignment.deadline|date:'H:i' }}{% endif %}"
+                    >
+                    <p class="text-sm text-muted mt-8">Leave empty to remove deadline</p>
+                </div>
+
+                <div class="form-group" id="timeLimitField">
+                    <label class="form-label">
+                        Time Limit (minutes)
+                        <span class="badge badge-yellow" style="margin-left:6px">Quiz only</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="time_limit"
+                        class="form-input"
+                        placeholder="e.g. 30"
+                        min="1"
+                        value="{{ assignment.time_limit|default:'' }}"
+                    >
+                </div>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+                <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="card mt-16 danger-zone">
+        <div class="card-title text-danger">
+            <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+        </div>
+        <div class="flex-between">
+            <div>
+                <p class="text-sm"><strong>Delete this assignment</strong></p>
+                <p class="text-sm text-muted">All questions, answers and submissions will be deleted permanently.</p>
+            </div>
+            <form method="post" action="{% url 'assignment_delete' assignment.id %}">
+                {% csrf_token %}
+                <button
+                    class="btn btn-danger"
+                    onclick="return confirm('Delete {{ assignment.title }}? This cannot be undone.')"
+                >
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.assignment-type-option input').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.assignment-type-option').forEach(o => o.classList.remove('selected'));
+        radio.closest('.assignment-type-option').classList.add('selected');
+        const timeLimitField = document.getElementById('timeLimitField');
+        timeLimitField.style.opacity = radio.value === 'quiz' ? '1' : '0.4';
+    });
+});
+
+const currentType = '{{ assignment.type }}';
+const timeLimitField = document.getElementById('timeLimitField');
+timeLimitField.style.opacity = currentType === 'quiz' ? '1' : '0.4';
+</script>
+{% endblock %}

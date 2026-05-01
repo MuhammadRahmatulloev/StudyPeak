@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Student Progress{% endblock %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="page-header">
+        <h2 class="page-title">Student Progress</h2>
+        {% if students %}
+            <form method="get" class="filter-form">
+                <select name="student_id" class="form-input">
+                    <option value="">Select student</option>
+                    {% for s in students %}
+                        <option value="{{ s.id }}" {% if target.id == s.id %}selected{% endif %}>
+                            {{ s.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">View</button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="progress-header">
+        {% if profile and profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="avatar" class="progress-avatar">
+        {% else %}
+            <div class="progress-avatar-placeholder">{{ target.username|first|upper }}</div>
+        {% endif %}
+        <div class="progress-user-info">
+            <h3 class="progress-username">{{ target.username }}</h3>
+            <span class="progress-role">{{ target.role }}</span>
+        </div>
+    </div>
+
+    <div class="progress-stats">
+        <div class="stat-card">
+            <span class="stat-label">Lessons Viewed</span>
+            <span class="stat-value">{{ total_lessons_viewed }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Submitted</span>
+            <span class="stat-value">{{ total_submitted }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Graded</span>
+            <span class="stat-value">{{ total_graded }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Current Streak</span>
+            <span class="stat-value">🔥 {{ streak.current_streak }}</span>
+        </div>
+    </div>
+
+    <div class="progress-attendance">
+        <h3 class="section-title">Attendance</h3>
+        <div class="attendance-stats">
+            <div class="attendance-stat present">
+                <span class="attendance-label">Present</span>
+                <span class="attendance-value">{{ present_count }}</span>
+            </div>
+            <div class="attendance-stat absent">
+                <span class="attendance-label">Absent</span>
+                <span class="attendance-value">{{ absent_count }}</span>
+            </div>
+            <div class="attendance-stat excused">
+                <span class="attendance-label">Excused</span>
+                <span class="attendance-value">{{ excused_count }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-grid">
+        <div class="progress-section">
+            <h3 class="section-title">Enrolled Courses</h3>
+            {% if enrollments %}
+                <ul class="progress-list">
+                    {% for enrollment in enrollments %}
+                        <li class="progress-list-item">
+                            <a href="{% url 'course_detail' enrollment.course.id %}" class="progress-link">
+                                {{ enrollment.course.name }}
+                            </a>
+                            <span class="progress-meta">{{ enrollment.course.teacher.username }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-text">No courses found.</p>
+            {% endif %}
+        </div>
+
+        <div class="progress-section">
+            <h3 class="section-title">Submissions</h3>
+            {% if submissions %}
+                <ul class="progress-list">
+                    {% for sub in submissions %}
+                        <li class="progress-list-item">
+                            <a href="{% url 'submission_detail' sub.id %}" class="progress-link">
+                                {{ sub.assignment.title }}
+                            </a>
+                            <span class="badge">{{ sub.get_status_display }}</span>
+                            <span class="progress-meta">Score: {{ sub.total_score }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-text">No submissions found.</p>
+            {% endif %}
+        </div>
+
+        <div class="progress-section">
+            <h3 class="section-title">Weekly Journals</h3>
+            {% if journals %}
+                <ul class="progress-list">
+                    {% for journal in journals %}
+                        <li class="progress-list-item">
+                            <span class="progress-link">Week {{ journal.week_number }} — {{ journal.period.name }}</span>
+                            <span class="progress-meta">Score: {{ journal.total_score }}</span>
+                            {% if journal.teacher_comment %}
+                                <span class="progress-comment">{{ journal.teacher_comment }}</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-text">No journal entries found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

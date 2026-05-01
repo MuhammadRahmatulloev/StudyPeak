@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Question — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Question #{{ question.order }}</h1>
+            <p class="page-subtitle">{{ assignment.title }}</p>
+        </div>
+        <div class="flex gap-8">
+            <a href="{% url 'question_update' assignment.id question.id %}" class="btn btn-secondary">
+                <i class="fa-solid fa-pen"></i> Edit
+            </a>
+            <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-16">
+        <div class="question-detail-header">
+            <div class="question-detail-meta">
+                <span class="badge
+                    {% if question.type == 'mcq' %}badge-blue
+                    {% elif question.type == 'text' %}badge-green
+                    {% else %}badge-yellow{% endif %}">
+                    {{ question.get_type_display }}
+                </span>
+                <span class="badge badge-blue">
+                    <i class="fa-solid fa-star"></i> {{ question.score }} pts
+                </span>
+                <span class="badge badge-gray">
+                    Order: {{ question.order }}
+                </span>
+            </div>
+            <p class="question-detail-text">{{ question.text }}</p>
+        </div>
+    </div>
+
+    {% if question.type == 'mcq' or question.type == 'true_false' %}
+    <div class="card">
+        <div class="flex-between mb-16">
+            <div class="card-title" style="margin-bottom:0">
+                <i class="fa-solid fa-list-check"></i>
+                Answer Choices
+                <span class="badge badge-blue" style="margin-left:6px">{{ choices|length }}</span>
+            </div>
+            <a href="{% url 'choice_create' assignment.id question.id %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Add Choice
+            </a>
+        </div>
+
+        {% if choices %}
+        <div class="choice-list">
+            {% for choice in choices %}
+            <div class="choice-item {% if choice.is_correct %}choice-item-correct{% endif %}">
+                <div class="choice-item-left">
+                    <div class="choice-item-indicator">
+                        {% if choice.is_correct %}
+                        <i class="fa-solid fa-check text-success"></i>
+                        {% else %}
+                        <i class="fa-regular fa-circle text-muted"></i>
+                        {% endif %}
+                    </div>
+                    <p class="choice-item-text">{{ choice.text }}</p>
+                    {% if choice.is_correct %}
+                    <span class="badge badge-green">Correct Answer</span>
+                    {% endif %}
+                </div>
+                <div class="choice-item-actions flex gap-8">
+                    <form method="post" action="{% url 'choice_update' assignment.id question.id choice.id %}">
+                        {% csrf_token %}
+                        <div class="flex gap-8" style="align-items:center">
+                            <input
+                                type="text"
+                                name="text"
+                                class="form-input"
+                                value="{{ choice.text }}"
+                                style="width:200px"
+                                required
+                            >
+                            <label class="form-check">
+                                <input
+                                    type="checkbox"
+                                    name="is_correct"
+                                    class="form-checkbox"
+                                    {% if choice.is_correct %}checked{% endif %}
+                                >
+                                <span class="form-check-label text-sm">Correct</span>
+                            </label>
+                            <button type="submit" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                            </button>
+                        </div>
+                    </form>
+                    <form method="post" action="{% url 'choice_delete' assignment.id question.id choice.id %}">
+                        {% csrf_token %}
+                        <button
+                            class="btn btn-danger btn-sm"
+                            onclick="return confirm('Delete this choice?')"
+                        >
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-list-check"></i>
+            <p>No choices added yet</p>
+            <a href="{% url 'choice_create' assignment.id question.id %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Add first choice
+            </a>
+        </div>
+        {% endif %}
+
+        {% if choices %}
+        <div class="card mt-16" style="background:var(--bg-3);">
+            <div class="card-title" style="margin-bottom:12px">
+                <i class="fa-solid fa-plus"></i> Add New Choice
+            </div>
+            <form method="post" action="{% url 'choice_create' assignment.id question.id %}">
+                {% csrf_token %}
+                <div class="flex gap-12" style="align-items:flex-end">
+                    <div class="form-group" style="margin-bottom:0; flex:1">
+                        <label class="form-label">Choice Text</label>
+                        <input
+                            type="text"
+                            name="text"
+                            class="form-input"
+                            placeholder="Enter choice text..."
+                            required
+                        >
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-check">
+                            <input type="checkbox" name="is_correct" class="form-checkbox">
+                            <span class="form-check-label">Correct</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    {% elif question.type == 'text' %}
+    <div class="card">
+        <div class="card-title">
+            <i class="fa-solid fa-pen-line"></i> Text Answer Question
+        </div>
+        <div class="text-answer-info">
+            <i class="fa-solid fa-circle-info text-accent" style="font-size:2rem; margin-bottom:12px; display:block"></i>
+            <p class="text-muted">
+                This is a free-text question. Students will type their answer manually.
+                You will need to grade these answers manually from the submission detail page.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card mt-16 danger-zone">
+        <div class="card-title text-danger">
+            <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+        </div>
+        <div class="flex-between">
+            <div>
+                <p class="text-sm"><strong>Delete this question</strong></p>
+                <p class="text-sm text-muted">All choices and student answers for this question will be deleted.</p>
+            </div>
+            <form method="post" action="{% url 'question_delete' assignment.id question.id %}">
+                {% csrf_token %}
+                <button
+                    class="btn btn-danger"
+                    onclick="return confirm('Delete this question? This cannot be undone.')"
+                >
+                    <i class="fa-solid fa-trash"></i> Delete Question
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

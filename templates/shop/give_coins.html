@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Give Coins — StudyPeak{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container-md">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Give Coins</h1>
+            <p class="page-subtitle">Reward a student with coins</p>
+        </div>
+        <a href="{% url 'product_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Select Student <span class="text-danger">*</span></label>
+                <select name="student_id" class="form-input" required>
+                    <option value="">— Choose a student —</option>
+                    {% for student in students %}
+                    <option value="{{ student.id }}">
+                        {{ student.username }}
+                        {% if student.profile %}({{ student.profile.coins }} coins){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Amount (coins) <span class="text-danger">*</span></label>
+                <div class="give-coins-input-wrap">
+                    <i class="fa-solid fa-coins give-coins-icon"></i>
+                    <input type="number" name="amount" class="form-input give-coins-input"
+                        placeholder="e.g. 10" min="1" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Reason / Note</label>
+                <input type="text" name="description" class="form-input"
+                    placeholder="e.g. Great work on the assignment!">
+            </div>
+
+            <div class="give-coins-quick-amounts mb-16">
+                <p class="text-sm text-muted mb-8">Quick amounts:</p>
+                <div class="flex gap-8">
+                    <button type="button" class="btn btn-secondary btn-sm quick-amount" data-amount="5">+5</button>
+                    <button type="button" class="btn btn-secondary btn-sm quick-amount" data-amount="10">+10</button>
+                    <button type="button" class="btn btn-secondary btn-sm quick-amount" data-amount="20">+20</button>
+                    <button type="button" class="btn btn-secondary btn-sm quick-amount" data-amount="50">+50</button>
+                </div>
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-gift"></i> Give Coins
+                </button>
+                <a href="{% url 'product_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.querySelectorAll('.quick-amount').forEach(btn => {
+    btn.addEventListener('click', function () {
+        document.querySelector('input[name="amount"]').value = this.dataset.amount;
+    });
+});
+</script>
+{% endblock %}

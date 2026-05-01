@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Lesson — StudyPeak{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/materials.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <p class="page-header-sub">
+                    <a href="{% url 'subject_detail' subject.id %}" class="breadcrumb-link">{{ subject.title }}</a>
+                    <span class="breadcrumb-sep">/</span>
+                    <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="breadcrumb-link">{{ lesson.title }}</a>
+                </p>
+                <h1 class="page-title">Edit Lesson</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-page-layout">
+        <div class="form-card card">
+
+            {% if messages %}
+            <div class="messages-list">
+                {% for message in messages %}
+                <div class="message message-{{ message.tags }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'lesson_update' subject.id lesson.id %}">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label class="form-label" for="title">
+                        <i class="fa-solid fa-heading"></i> Lesson Title
+                        <span class="form-required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        class="form-input"
+                        value="{{ lesson.title }}"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">
+                        <i class="fa-solid fa-align-left"></i> Description
+                    </label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        class="form-input form-textarea"
+                        rows="4"
+                        placeholder="What will students learn in this lesson?"
+                    >{{ lesson.description }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="order">
+                        <i class="fa-solid fa-sort"></i> Order
+                    </label>
+                    <input
+                        type="number"
+                        id="order"
+                        name="order"
+                        class="form-input form-input-sm"
+                        value="{{ lesson.order }}"
+                        min="0"
+                    >
+                    <p class="form-hint">Determines the position of this lesson inside the subject.</p>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="btn btn-ghost">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="form-side">
+
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-circle-info"></i> Current Info
+                </p>
+                <div class="side-info-list">
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Title</span>
+                        <span class="text-sm">{{ lesson.title }}</span>
+                    </div>
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Order</span>
+                        <span class="badge badge-gray"># {{ lesson.order }}</span>
+                    </div>
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Created</span>
+                        <span class="text-sm">{{ lesson.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-book-open"></i> Subject
+                </p>
+                <a href="{% url 'subject_detail' subject.id %}" class="side-card-link">
+                    {{ subject.title }}
+                </a>
+            </div>
+
+            <div class="side-card card side-card-danger">
+                <p class="side-card-title text-danger">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+                </p>
+                <p class="text-sm text-muted mb-12">
+                    Deleting this lesson will also remove all its materials permanently.
+                </p>
+                <form method="post" action="{% url 'lesson_delete' subject.id lesson.id %}" onsubmit="return confirm('Delete this lesson and all its materials? This cannot be undone.')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fa-solid fa-trash"></i> Delete Lesson
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

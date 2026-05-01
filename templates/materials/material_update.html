@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Material — StudyPeak{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/materials.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <p class="page-header-sub">
+                    <a href="{% url 'subject_detail' subject.id %}" class="breadcrumb-link">{{ subject.title }}</a>
+                    <span class="breadcrumb-sep">/</span>
+                    <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="breadcrumb-link">{{ lesson.title }}</a>
+                </p>
+                <h1 class="page-title">Edit Material</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-page-layout">
+        <div class="form-card card">
+
+            {% if messages %}
+            <div class="messages-list">
+                {% for message in messages %}
+                <div class="message message-{{ message.tags }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'material_update' subject.id lesson.id material.id %}" enctype="multipart/form-data" id="materialForm">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label class="form-label" for="title">
+                        <i class="fa-solid fa-heading"></i> Title
+                        <span class="form-required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        class="form-input"
+                        value="{{ material.title }}"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-shapes"></i> Material Type
+                    </label>
+                    <div class="type-badge-current type-icon-{{ material.type }}">
+                        {% if material.type == 'pdf' %}
+                        <i class="fa-solid fa-file-pdf"></i>
+                        {% elif material.type == 'link' %}
+                        <i class="fa-solid fa-link"></i>
+                        {% elif material.type == 'text' %}
+                        <i class="fa-solid fa-file-lines"></i>
+                        {% elif material.type == 'image' %}
+                        <i class="fa-solid fa-image"></i>
+                        {% elif material.type == 'video' %}
+                        <i class="fa-solid fa-circle-play"></i>
+                        {% endif %}
+                        {{ material.get_type_display }}
+                    </div>
+                    <input type="hidden" name="type" value="{{ material.type }}">
+                    <p class="form-hint">Material type cannot be changed after creation.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="order">
+                        <i class="fa-solid fa-sort"></i> Order
+                    </label>
+                    <input
+                        type="number"
+                        id="order"
+                        name="order"
+                        class="form-input form-input-sm"
+                        value="{{ material.order }}"
+                        min="0"
+                    >
+                    <p class="form-hint">Position of this material within the lesson.</p>
+                </div>
+
+                {% if material.type == 'link' %}
+                <div class="form-group">
+                    <label class="form-label" for="url">
+                        <i class="fa-solid fa-link"></i> URL
+                        <span class="form-required">*</span>
+                    </label>
+                    <input
+                        type="url"
+                        id="url"
+                        name="url"
+                        class="form-input"
+                        value="{{ material.url }}"
+                        placeholder="https://example.com"
+                    >
+                    {% if material.url %}
+                    <a href="{{ material.url }}" target="_blank" rel="noopener noreferrer" class="form-hint form-hint-link">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open current link
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if material.type == 'text' %}
+                <div class="form-group">
+                    <label class="form-label" for="content">
+                        <i class="fa-solid fa-align-left"></i> Content
+                        <span class="form-required">*</span>
+                    </label>
+                    <textarea
+                        id="content"
+                        name="content"
+                        class="form-input form-textarea"
+                        rows="10"
+                    >{{ material.content }}</textarea>
+                </div>
+                {% endif %}
+
+                {% if material.type == 'pdf' or material.type == 'image' or material.type == 'video' %}
+                <div class="form-group">
+                    <label class="form-label" for="file">
+                        <i class="fa-solid fa-upload"></i> Replace File
+                    </label>
+
+                    {% if material.file %}
+                    <div class="current-file-preview">
+                        {% if material.type == 'image' %}
+                        <div class="current-image-wrap">
+                            <img src="{{ material.file.url }}" alt="{{ material.title }}" class="current-image-thumb">
+                        </div>
+                        {% else %}
+                        <div class="current-file-info">
+                            <div class="current-file-icon type-icon-{{ material.type }}">
+                                {% if material.type == 'pdf' %}
+                                <i class="fa-solid fa-file-pdf"></i>
+                                {% elif material.type == 'video' %}
+                                <i class="fa-solid fa-circle-play"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <p class="text-sm">Current file</p>
+                                <a href="{{ material.file.url }}" target="_blank" class="form-hint-link text-sm">
+                                    <i class="fa-solid fa-eye"></i> View current file
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="file-drop-zone mt-12" id="fileDropZone">
+                        <input type="file" id="file" name="file" class="file-input">
+                        <div class="file-drop-inner" id="fileDropInner">
+                            <i class="fa-solid fa-cloud-arrow-up file-drop-icon"></i>
+                            <p class="file-drop-title">
+                                {% if material.file %}Upload new file to replace{% else %}Click to upload{% endif %}
+                            </p>
+                            <p class="file-drop-sub text-sm text-muted">
+                                {% if material.type == 'pdf' %}PDF files only
+                                {% elif material.type == 'image' %}JPG, PNG, GIF, WEBP
+                                {% elif material.type == 'video' %}MP4, MOV, AVI, WEBM
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <p class="file-name-preview text-sm text-muted" id="fileNamePreview" style="display:none">
+                        <i class="fa-solid fa-paperclip"></i> <span id="fileNameText"></span>
+                    </p>
+                    {% if material.file %}
+                    <p class="form-hint">Leave empty to keep the current file.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="form-actions">
+                    <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="btn btn-ghost">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="form-side">
+
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-circle-info"></i> Material Info
+                </p>
+                <div class="side-info-list">
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Type</span>
+                        <span class="badge
+                            {% if material.type == 'pdf' %}badge-red
+                            {% elif material.type == 'link' %}badge-blue
+                            {% elif material.type == 'text' %}badge-gray
+                            {% elif material.type == 'image' %}badge-green
+                            {% elif material.type == 'video' %}badge-yellow
+                            {% endif %}
+                        ">
+                            {{ material.get_type_display }}
+                        </span>
+                    </div>
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Order</span>
+                        <span class="badge badge-gray"># {{ material.order }}</span>
+                    </div>
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Created</span>
+                        <span class="text-sm">{{ material.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-graduation-cap"></i> Lesson
+                </p>
+                <a href="{% url 'lesson_detail' subject.id lesson.id %}" class="side-card-link">
+                    {{ lesson.title }}
+                </a>
+                <a href="{% url 'subject_detail' subject.id %}" class="side-card-link mt-8">
+                    <i class="fa-solid fa-book-open"></i> {{ subject.title }}
+                </a>
+            </div>
+
+            <div class="side-card card side-card-danger">
+                <p class="side-card-title text-danger">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+                </p>
+                <p class="text-sm text-muted mb-12">
+                    This will permanently delete the material and its file.
+                </p>
+                <form method="post" action="{% url 'material_delete' subject.id lesson.id material.id %}" onsubmit="return confirm('Delete this material permanently?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fa-solid fa-trash"></i> Delete Material
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/material_form.js' %}"></script>
+{% endblock %}

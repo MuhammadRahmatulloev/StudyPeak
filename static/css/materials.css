@@ -1,0 +1,1027 @@
+/* ═══════════════════════════════════════════
+   STUDYPEAK — materials.css
+   Subjects, Lessons, Materials
+   Covers: subject_list, subject_detail,
+   subject_create, subject_update,
+   lesson_create, lesson_detail, lesson_update,
+   material_create, material_update
+═══════════════════════════════════════════ */
+
+
+/* ─────────────────────────────────────────
+   SUBJECTS GRID
+───────────────────────────────────────── */
+.subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+
+/* ─────────────────────────────────────────
+   SUBJECT CARD
+───────────────────────────────────────── */
+.subject-card {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+    position: relative;
+}
+
+.subject-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity var(--transition);
+    z-index: 2;
+}
+
+.subject-card:hover {
+    border-color: var(--border-2);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.subject-card:hover::before {
+    opacity: 1;
+}
+
+/* ── Cover image area ── */
+.subject-card-cover {
+    width: 100%;
+    height: 160px;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-3);
+    flex-shrink: 0;
+}
+
+.subject-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.45s ease;
+}
+
+.subject-card:hover .subject-cover-img {
+    transform: scale(1.05);
+}
+
+.subject-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+    color: var(--text-3);
+    opacity: 0.35;
+    background: linear-gradient(135deg, var(--bg-3) 0%, var(--bg-4) 100%);
+    transition: opacity var(--transition);
+}
+
+.subject-card:hover .subject-cover-placeholder {
+    opacity: 0.5;
+}
+
+/* Inactive overlay badge */
+.subject-inactive-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: rgba(13, 15, 20, 0.82);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--danger);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 3;
+    letter-spacing: 0.03em;
+}
+
+/* ── Card body ── */
+.subject-card-body {
+    padding: 18px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.subject-card-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    margin: 0;
+    transition: color var(--transition);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.subject-card:hover .subject-card-title {
+    color: var(--accent);
+}
+
+.subject-card-desc {
+    font-size: 0.83rem;
+    color: var(--text-2);
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+}
+
+.subject-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+    flex-wrap: wrap;
+}
+
+.subject-card-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+}
+
+
+/* ─────────────────────────────────────────
+   SUBJECT BANNER (detail page hero)
+───────────────────────────────────────── */
+.subject-banner {
+    width: 100%;
+    height: 240px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.subject-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+}
+
+.subject-banner:hover .subject-banner-img {
+    transform: scale(1.02);
+}
+
+.subject-banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 35%,
+        rgba(13, 15, 20, 0.6) 100%
+    );
+    pointer-events: none;
+}
+
+
+/* ─────────────────────────────────────────
+   SUBJECT DETAIL — two-column layout
+───────────────────────────────────────── */
+.subject-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+    align-items: start;
+}
+
+.subject-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.subject-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: calc(var(--nav-h) + 24px);
+}
+
+
+/* ─────────────────────────────────────────
+   SUBJECT DESCRIPTION
+───────────────────────────────────────── */
+.subject-desc {
+    background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border-left: 3px solid var(--accent);
+    position: relative;
+    overflow: hidden;
+}
+
+.subject-desc::after {
+    content: '"';
+    position: absolute;
+    bottom: -20px;
+    right: 16px;
+    font-family: var(--font-display);
+    font-size: 7rem;
+    color: var(--accent);
+    opacity: 0.06;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+.subject-desc-text {
+    font-size: 0.95rem;
+    color: var(--text-2);
+    line-height: 1.8;
+    position: relative;
+    z-index: 1;
+}
+
+
+/* ─────────────────────────────────────────
+   LESSONS SECTION
+───────────────────────────────────────── */
+.lessons-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.lessons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+
+/* ─────────────────────────────────────────
+   LESSON ROW (in subject detail)
+───────────────────────────────────────── */
+.lesson-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    text-decoration: none;
+    transition: border-color var(--transition),
+                transform var(--transition),
+                background var(--transition),
+                box-shadow var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.lesson-row::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 2px 2px 0;
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+
+.lesson-row:hover {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, var(--bg-2) 0%, rgba(79, 142, 247, 0.04) 100%);
+    transform: translateX(2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.lesson-row:hover::after {
+    opacity: 1;
+}
+
+/* Numbered circle */
+.lesson-row-num {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-2);
+    flex-shrink: 0;
+    transition: all var(--transition);
+}
+
+.lesson-row:hover .lesson-row-num {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.lesson-row-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.lesson-row-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+    transition: color var(--transition);
+}
+
+.lesson-row:hover .lesson-row-title {
+    color: var(--accent);
+}
+
+.lesson-row-desc {
+    font-size: 0.8rem;
+    color: var(--text-2);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+}
+
+.lesson-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.lesson-row-meta i.fa-chevron-right {
+    font-size: 0.75rem;
+    transition: transform var(--transition);
+}
+
+.lesson-row:hover .lesson-row-meta i.fa-chevron-right {
+    transform: translateX(3px);
+}
+
+
+/* ─────────────────────────────────────────
+   LESSON DETAIL — two-column layout
+───────────────────────────────────────── */
+.lesson-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+    align-items: start;
+}
+
+.lesson-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.lesson-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: calc(var(--nav-h) + 24px);
+}
+
+
+/* ─────────────────────────────────────────
+   LESSON DESCRIPTION
+───────────────────────────────────────── */
+.lesson-desc {
+    background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border-left: 3px solid var(--accent);
+}
+
+.lesson-desc-text {
+    font-size: 0.95rem;
+    color: var(--text-2);
+    line-height: 1.8;
+}
+
+
+/* ─────────────────────────────────────────
+   MATERIALS SECTION
+───────────────────────────────────────── */
+.materials-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.materials-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+/* ─────────────────────────────────────────
+   MATERIAL CARD
+───────────────────────────────────────── */
+.material-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 20px;
+    border-left: 3px solid var(--border);
+    transition: border-color var(--transition),
+                transform var(--transition),
+                box-shadow var(--transition),
+                background var(--transition);
+    position: relative;
+}
+
+/* Type-specific left border on hover */
+.material-card:has(.material-icon-pdf):hover   { border-left-color: var(--danger);  }
+.material-card:has(.material-icon-link):hover  { border-left-color: var(--accent);  }
+.material-card:has(.material-icon-text):hover  { border-left-color: var(--text-2);  }
+.material-card:has(.material-icon-image):hover { border-left-color: var(--success); }
+.material-card:has(.material-icon-video):hover { border-left-color: var(--warning); }
+
+/* Permanent type coloring */
+.material-card:has(.material-icon-pdf)   { border-left-color: rgba(248, 113, 113, 0.35); }
+.material-card:has(.material-icon-link)  { border-left-color: rgba(79, 142, 247, 0.35);  }
+.material-card:has(.material-icon-image) { border-left-color: rgba(52, 211, 153, 0.35);  }
+.material-card:has(.material-icon-video) { border-left-color: rgba(251, 191, 36, 0.35);  }
+
+.material-card:hover {
+    border-color: var(--border-2);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+    background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-3) 100%);
+}
+
+
+/* ─────────────────────────────────────────
+   MATERIAL ICON
+───────────────────────────────────────── */
+.material-card-left {
+    flex-shrink: 0;
+}
+
+.material-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    border: 1px solid;
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.material-card:hover .material-icon {
+    transform: scale(1.08);
+}
+
+.material-icon-pdf {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: rgba(248, 113, 113, 0.25);
+}
+
+.material-card:hover .material-icon-pdf {
+    box-shadow: 0 4px 12px rgba(248, 113, 113, 0.2);
+}
+
+.material-icon-link {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: rgba(79, 142, 247, 0.25);
+}
+
+.material-card:hover .material-icon-link {
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.material-icon-text {
+    background: var(--bg-4);
+    color: var(--text-2);
+    border-color: var(--border);
+}
+
+.material-card:hover .material-icon-text {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.material-icon-image {
+    background: var(--success-soft);
+    color: var(--success);
+    border-color: rgba(52, 211, 153, 0.25);
+}
+
+.material-card:hover .material-icon-image {
+    box-shadow: 0 4px 12px rgba(52, 211, 153, 0.2);
+}
+
+.material-icon-video {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border-color: rgba(251, 191, 36, 0.25);
+}
+
+.material-card:hover .material-icon-video {
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+}
+
+
+/* ─────────────────────────────────────────
+   MATERIAL CARD BODY
+───────────────────────────────────────── */
+.material-card-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.material-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.material-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+    transition: color var(--transition);
+}
+
+.material-card:hover .material-title {
+    color: var(--accent);
+}
+
+.material-preview {
+    font-size: 0.82rem;
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.material-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+
+/* ─────────────────────────────────────────
+   MATERIAL TYPE STATS (lesson sidebar)
+───────────────────────────────────────── */
+.material-type-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.type-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-2);
+    gap: 8px;
+}
+
+.type-stat-row i {
+    font-size: 0.78rem;
+}
+
+.material-types-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+
+/* ─────────────────────────────────────────
+   COVER IMAGE DROP ZONE (subject create/update)
+───────────────────────────────────────── */
+.cover-drop-zone-wrap {
+    position: relative;
+}
+
+
+/* ─────────────────────────────────────────
+   FORM — checkbox toggle (subject active)
+───────────────────────────────────────── */
+.form-label-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-3);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    user-select: none;
+}
+
+.form-label-checkbox:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.form-label-checkbox .form-checkbox {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.form-label-checkbox > span {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.4;
+}
+
+.form-label-checkbox > span i {
+    color: var(--accent);
+    font-size: 0.9rem;
+}
+
+
+/* ─────────────────────────────────────────
+   SUBJECT / LESSON CREATE FORM
+   (form-page-layout already in main.css,
+    these are materials-specific extras)
+───────────────────────────────────────── */
+
+/* Highlight the form card on focus */
+.form-card:focus-within {
+    border-color: rgba(79, 142, 247, 0.2);
+}
+
+/* Form input — small number variant */
+.form-input-sm {
+    max-width: 140px;
+}
+
+
+/* ─────────────────────────────────────────
+   MATERIAL FORM — type info side card
+───────────────────────────────────────── */
+#typeInfoCard {
+    transition: border-color var(--transition), background var(--transition);
+    min-height: 120px;
+}
+
+#typeInfoCard .side-card-title i {
+    font-size: 0.9rem;
+}
+
+
+/* ─────────────────────────────────────────
+   TYPE SELECTOR — animated selected state
+   (extends main.css .type-option)
+───────────────────────────────────────── */
+.type-option.selected {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.type-option.selected .type-option-icon {
+    transform: scale(1.1);
+}
+
+.type-option-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: inherit;
+}
+
+
+/* ─────────────────────────────────────────
+   FILE DROP ZONE — materials variant
+   (extends main.css .file-drop-zone)
+───────────────────────────────────────── */
+.file-drop-zone.has-file .file-drop-inner {
+    opacity: 0.7;
+}
+
+/* Image preview inside the drop zone */
+.file-drop-zone .cover-preview-wrap {
+    display: block;
+    position: relative;
+    width: 100%;
+    padding: 8px;
+}
+
+.file-drop-zone .cover-preview-img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: calc(var(--radius) - 2px);
+    display: block;
+}
+
+
+/* ─────────────────────────────────────────
+   SUBJECT UPDATE — current image preview
+───────────────────────────────────────── */
+.current-image-wrap.mb-12 {
+    margin-bottom: 12px;
+}
+
+.current-image-wrap .cover-preview-img {
+    max-height: 180px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 100%;
+    object-fit: cover;
+}
+
+
+/* ─────────────────────────────────────────
+   EMPTY STATE — material pages
+───────────────────────────────────────── */
+.empty-state.card {
+    text-align: center;
+    padding: 60px 24px;
+}
+
+.empty-state .btn {
+    margin-top: 4px;
+}
+
+
+/* ─────────────────────────────────────────
+   BADGE — d-inline (inline form helper)
+───────────────────────────────────────── */
+.d-inline {
+    display: inline;
+}
+
+
+/* ─────────────────────────────────────────
+   UTILITY — spacing helpers used in
+   material/lesson/subject pages
+───────────────────────────────────────── */
+.mt-12  { margin-top: 12px; }
+.mb-12  { margin-bottom: 12px; }
+.mt-16  { margin-top: 16px; }
+
+
+/* ─────────────────────────────────────────
+   LIGHT THEME OVERRIDES
+───────────────────────────────────────── */
+[data-theme="light"] .subject-cover-placeholder {
+    background: linear-gradient(135deg, #eef0f6 0%, #e4e7f0 100%);
+}
+
+[data-theme="light"] .subject-inactive-badge {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .subject-banner-overlay {
+    background: linear-gradient(
+        to bottom,
+        transparent 35%,
+        rgba(240, 242, 248, 0.55) 100%
+    );
+}
+
+[data-theme="light"] .lesson-row:hover {
+    background: linear-gradient(135deg, #fff 0%, rgba(37, 99, 235, 0.04) 100%);
+}
+
+[data-theme="light"] .subject-desc::after {
+    color: var(--accent);
+    opacity: 0.05;
+}
+
+[data-theme="light"] .material-card:hover {
+    background: linear-gradient(135deg, #fff 0%, #f5f7fd 100%);
+}
+
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
+
+/* 1100px — narrow sidebar */
+@media (max-width: 1100px) {
+    .subject-layout,
+    .lesson-layout {
+        grid-template-columns: 1fr 280px;
+    }
+}
+
+/* 900px — collapse to single column */
+@media (max-width: 900px) {
+    .subject-layout,
+    .lesson-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .subject-side,
+    .lesson-side {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .subject-banner {
+        height: 200px;
+    }
+}
+
+/* 768px — two-column subject grid */
+@media (max-width: 768px) {
+    .subjects-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .subject-card-cover {
+        height: 130px;
+    }
+
+    .subject-banner {
+        height: 170px;
+        border-radius: var(--radius);
+    }
+
+    .material-card {
+        gap: 12px;
+    }
+
+    .material-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+    }
+
+    .lesson-row {
+        gap: 12px;
+        padding: 14px 16px;
+    }
+
+    .lesson-row-num {
+        width: 36px;
+        height: 36px;
+        font-size: 0.85rem;
+    }
+}
+
+/* 640px — stack form side cards */
+@media (max-width: 640px) {
+    .subject-side,
+    .lesson-side {
+        grid-template-columns: 1fr;
+    }
+
+    .subject-banner {
+        height: 140px;
+    }
+
+    .subject-card-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .material-card-actions {
+        flex-wrap: wrap;
+    }
+
+    .type-selector {
+        gap: 6px;
+    }
+
+    .type-option {
+        padding: 11px 12px;
+        min-width: 70px;
+    }
+}
+
+/* 560px — single column everything */
+@media (max-width: 560px) {
+    .subjects-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subject-card-cover {
+        height: 150px;
+    }
+
+    .subject-card-body {
+        padding: 14px 16px 16px;
+    }
+
+    .material-card {
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 16px;
+    }
+
+    .material-card-actions {
+        padding-top: 8px;
+    }
+
+    .lesson-row-title {
+        font-size: 0.85rem;
+    }
+
+    .lesson-row-meta .text-sm {
+        display: none;
+    }
+
+    .form-input-sm {
+        max-width: 100%;
+    }
+}
+
+/* 480px — compact adjustments */
+@media (max-width: 480px) {
+    .subject-cover-placeholder {
+        font-size: 2.2rem;
+    }
+
+    .lesson-row {
+        padding: 12px 14px;
+    }
+
+    .lesson-row-num {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+    }
+
+    .material-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    .material-card-top {
+        gap: 8px;
+    }
+
+    .form-label-checkbox {
+        padding: 12px 14px;
+        gap: 10px;
+    }
+}

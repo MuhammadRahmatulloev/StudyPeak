@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}New Product — StudyPeak{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container-md">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">New Product</h1>
+            <p class="page-subtitle">Add a product students can buy with coins</p>
+        </div>
+        <a href="{% url 'product_list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Product Type</label>
+                <div class="product-type-selector">
+                    {% for value, label in type_choices %}
+                    <label class="product-type-option">
+                        <input type="radio" name="type" value="{{ value }}"
+                            {% if value == 'global' %}checked{% endif %} hidden>
+                        <span class="product-type-icon">
+                            {% if value == 'global' %}
+                            <i class="fa-solid fa-globe"></i>
+                            {% else %}
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            {% endif %}
+                        </span>
+                        <span>{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-input"
+                    placeholder="e.g. Premium Sticker Pack" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-input form-textarea" rows="4"
+                    placeholder="Describe what this product is..."></textarea>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Price (coins) <span class="text-danger">*</span></label>
+                    <input type="number" name="price" class="form-input"
+                        placeholder="e.g. 50" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stock <span class="text-danger">*</span></label>
+                    <input type="number" name="stock" class="form-input"
+                        placeholder="e.g. 10" min="0" value="0" required>
+                </div>
+            </div>
+
+            <div class="form-group" id="courseField">
+                <label class="form-label">Course <span class="text-muted text-sm">(required for Course type)</span></label>
+                <select name="course_id" class="form-input">
+                    <option value="">— No course —</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Product Image</label>
+                <input type="file" name="image" class="form-file" accept="image/*">
+            </div>
+
+            <div class="form-actions mt-24">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-plus"></i> Create Product
+                </button>
+                <a href="{% url 'product_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.querySelectorAll('.product-type-option input').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.product-type-option').forEach(o => o.classList.remove('selected'));
+        radio.closest('.product-type-option').classList.add('selected');
+    });
+});
+document.querySelector('.product-type-option input:checked')
+    ?.closest('.product-type-option')?.classList.add('selected');
+</script>
+{% endblock %}

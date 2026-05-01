@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ lesson.title }} — StudyPeak{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/materials.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <a href="{% url 'subject_detail' subject.id %}" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <p class="page-header-sub">
+                    <a href="{% url 'subject_detail' subject.id %}" class="breadcrumb-link">
+                        {{ subject.title }}
+                    </a>
+                </p>
+                <h1 class="page-title">{{ lesson.title }}</h1>
+            </div>
+        </div>
+        <div class="page-header-right">
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'lesson_update' subject.id lesson.id %}" class="btn btn-ghost btn-sm">
+                <i class="fa-solid fa-pen"></i> Edit
+            </a>
+            <form method="post" action="{% url 'lesson_delete' subject.id lesson.id %}" class="d-inline" onsubmit="return confirm('Delete this lesson and all its materials?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="messages-list">
+        {% for message in messages %}
+        <div class="message message-{{ message.tags }}">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="lesson-layout">
+
+        <div class="lesson-main">
+
+            {% if lesson.description %}
+            <div class="lesson-desc card">
+                <p class="lesson-desc-text">{{ lesson.description }}</p>
+            </div>
+            {% endif %}
+
+            <div class="materials-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fa-solid fa-paperclip"></i> Materials
+                        <span class="badge badge-gray">{{ materials|length }}</span>
+                    </h2>
+                    {% if user.is_teacher or user.is_admin_role %}
+                    <a href="{% url 'material_create' subject.id lesson.id %}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-plus"></i> Add Material
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% if materials %}
+                <div class="materials-list">
+                    {% for material in materials %}
+                    <div class="material-card card">
+
+                        <div class="material-card-left">
+                            <div class="material-icon
+                                {% if material.type == 'pdf' %}material-icon-pdf
+                                {% elif material.type == 'link' %}material-icon-link
+                                {% elif material.type == 'text' %}material-icon-text
+                                {% elif material.type == 'image' %}material-icon-image
+                                {% elif material.type == 'video' %}material-icon-video
+                                {% endif %}
+                            ">
+                                {% if material.type == 'pdf' %}
+                                <i class="fa-solid fa-file-pdf"></i>
+                                {% elif material.type == 'link' %}
+                                <i class="fa-solid fa-link"></i>
+                                {% elif material.type == 'text' %}
+                                <i class="fa-solid fa-file-lines"></i>
+                                {% elif material.type == 'image' %}
+                                <i class="fa-solid fa-image"></i>
+                                {% elif material.type == 'video' %}
+                                <i class="fa-solid fa-circle-play"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="material-card-body">
+                            <div class="material-card-top">
+                                <p class="material-title">{{ material.title }}</p>
+                                <span class="badge
+                                    {% if material.type == 'pdf' %}badge-red
+                                    {% elif material.type == 'link' %}badge-blue
+                                    {% elif material.type == 'text' %}badge-gray
+                                    {% elif material.type == 'image' %}badge-green
+                                    {% elif material.type == 'video' %}badge-yellow
+                                    {% endif %}
+                                ">
+                                    {{ material.get_type_display }}
+                                </span>
+                            </div>
+
+                            {% if material.type == 'text' and material.content %}
+                            <p class="material-preview text-sm text-muted">
+                                {{ material.content|truncatewords:20 }}
+                            </p>
+                            {% endif %}
+
+                            <div class="material-card-actions">
+                                {% if material.type == 'link' and material.url %}
+                                <a href="{{ material.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-xs">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Link
+                                </a>
+                                {% elif material.type == 'pdf' and material.file %}
+                                <a href="{{ material.file.url }}" target="_blank" class="btn btn-ghost btn-xs">
+                                    <i class="fa-solid fa-eye"></i> View PDF
+                                </a>
+                                <a href="{{ material.file.url }}" download class="btn btn-ghost btn-xs">
+                                    <i class="fa-solid fa-download"></i> Download
+                                </a>
+                                {% elif material.type == 'image' and material.file %}
+                                <a href="{{ material.file.url }}" target="_blank" class="btn btn-ghost btn-xs">
+                                    <i class="fa-solid fa-eye"></i> View Image
+                                </a>
+                                {% elif material.type == 'video' and material.file %}
+                                <a href="{{ material.file.url }}" target="_blank" class="btn btn-ghost btn-xs">
+                                    <i class="fa-solid fa-play"></i> Watch Video
+                                </a>
+                                {% endif %}
+
+                                {% if user.is_teacher or user.is_admin_role %}
+                                <a href="{% url 'material_update' subject.id lesson.id material.id %}" class="btn btn-ghost btn-xs">
+                                    <i class="fa-solid fa-pen"></i> Edit
+                                </a>
+                                <form method="post" action="{% url 'material_delete' subject.id lesson.id material.id %}" class="d-inline" onsubmit="return confirm('Delete this material?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-xs">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% else %}
+                <div class="empty-state card">
+                    <i class="fa-solid fa-box-open empty-state-icon"></i>
+                    <p class="empty-state-title">No materials yet</p>
+                    {% if user.is_teacher or user.is_admin_role %}
+                    <p class="text-sm text-muted">Add your first material to this lesson.</p>
+                    <a href="{% url 'material_create' subject.id lesson.id %}" class="btn btn-primary mt-16">
+                        <i class="fa-solid fa-plus"></i> Add Material
+                    </a>
+                    {% else %}
+                    <p class="text-sm text-muted">Your teacher hasn't added any materials yet.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <div class="lesson-side">
+
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-circle-info"></i> Lesson Info
+                </p>
+                <div class="side-info-list">
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Order</span>
+                        <span class="badge badge-gray"># {{ lesson.order }}</span>
+                    </div>
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Materials</span>
+                        <span class="badge badge-blue">{{ materials|length }}</span>
+                    </div>
+                    <div class="side-info-row">
+                        <span class="text-sm text-muted">Created</span>
+                        <span class="text-sm">{{ lesson.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-book-open"></i> Subject
+                </p>
+                <a href="{% url 'subject_detail' subject.id %}" class="side-card-link">
+                    {{ subject.title }}
+                </a>
+                {% if subject.teacher %}
+                <p class="text-sm text-muted mt-8">
+                    <i class="fa-solid fa-user"></i> {{ subject.teacher.get_full_name|default:subject.teacher.username }}
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="side-card card">
+                <p class="side-card-title">
+                    <i class="fa-solid fa-layer-group"></i> Material Types
+                </p>
+                <div class="material-type-stats">
+                    {% for material in materials %}
+                    {% if forloop.first or material.type != materials|dictsort:"type"|first %}
+                    {% endif %}
+                    {% endfor %}
+                    <div class="type-stat-row">
+                        <span class="text-sm"><i class="fa-solid fa-file-pdf text-red"></i> PDF</span>
+                        <span class="text-sm text-muted">{{ materials|dictsortreversed:"type"|length }}</span>
+                    </div>
+                </div>
+                <div class="material-types-grid">
+                    {% for material in materials %}
+                    <span class="badge
+                        {% if material.type == 'pdf' %}badge-red
+                        {% elif material.type == 'link' %}badge-blue
+                        {% elif material.type == 'text' %}badge-gray
+                        {% elif material.type == 'image' %}badge-green
+                        {% elif material.type == 'video' %}badge-yellow
+                        {% endif %}
+                    ">
+                        {{ material.get_type_display }}
+                    </span>
+                    {% empty %}
+                    <p class="text-sm text-muted">No materials</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

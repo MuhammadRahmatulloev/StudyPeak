@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subjects — StudyPeak{% endblock %}
+{% block nav_materials %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/materials.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1 class="page-title">
+                <i class="fa-solid fa-book-open"></i> Subjects
+            </h1>
+        </div>
+        <div class="page-header-right">
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'subject_create' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> New Subject
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="messages-list">
+        {% for message in messages %}
+        <div class="message message-{{ message.tags }}">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if subjects %}
+    <div class="subjects-grid">
+        {% for subject in subjects %}
+        <a href="{% url 'subject_detail' subject.id %}" class="subject-card card">
+
+            <div class="subject-card-cover">
+                {% if subject.cover %}
+                <img src="{{ subject.cover.url }}" alt="{{ subject.title }}" class="subject-cover-img">
+                {% else %}
+                <div class="subject-cover-placeholder">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                {% endif %}
+                {% if not subject.is_active %}
+                <span class="subject-inactive-badge">Inactive</span>
+                {% endif %}
+            </div>
+
+            <div class="subject-card-body">
+                <h3 class="subject-card-title">{{ subject.title }}</h3>
+                {% if subject.description %}
+                <p class="subject-card-desc text-sm text-muted">
+                    {{ subject.description|truncatewords:12 }}
+                </p>
+                {% endif %}
+                <div class="subject-card-meta">
+                    <span class="text-sm text-muted">
+                        <i class="fa-solid fa-user"></i>
+                        {{ subject.teacher.get_full_name|default:subject.teacher.username }}
+                    </span>
+                    <span class="text-sm text-muted">
+                        <i class="fa-solid fa-layer-group"></i>
+                        {{ subject.lessons.count }} lesson{{ subject.lessons.count|pluralize }}
+                    </span>
+                </div>
+                {% if subject.group %}
+                <div class="subject-card-group">
+                    <span class="badge badge-blue">
+                        <i class="fa-solid fa-users"></i> {{ subject.group.name }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+
+        </a>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state card">
+        <i class="fa-solid fa-book-open empty-state-icon"></i>
+        <p class="empty-state-title">No subjects yet</p>
+        {% if user.is_teacher or user.is_admin_role %}
+        <p class="text-sm text-muted">Create your first subject to get started.</p>
+        <a href="{% url 'subject_create' %}" class="btn btn-primary mt-16">
+            <i class="fa-solid fa-plus"></i> Create Subject
+        </a>
+        {% else %}
+        <p class="text-sm text-muted">You are not enrolled in any subjects yet.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ assignment.title }} — StudyPeak{% endblock %}
+{% block nav_assignments %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">{{ assignment.title }}</h1>
+            <p class="page-subtitle">
+                <span class="badge
+                    {% if assignment.type == 'quiz' %}badge-yellow
+                    {% elif assignment.type == 'test' %}badge-blue
+                    {% else %}badge-gray{% endif %}">
+                    {{ assignment.get_type_display|upper }}
+                </span>
+                <span class="text-muted" style="margin-left:8px">
+                    {{ assignment.subject.title }} · {{ assignment.group.name }}
+                </span>
+            </p>
+        </div>
+        <div class="flex gap-8">
+            {% if user.is_teacher and assignment.teacher == user or user.is_admin_role %}
+            <form method="post" action="{% url 'assignment_publish' assignment.id %}">
+                {% csrf_token %}
+                <button class="btn {% if assignment.is_published %}btn-secondary{% else %}btn-success{% endif %}">
+                    {% if assignment.is_published %}
+                    <i class="fa-solid fa-eye-slash"></i> Unpublish
+                    {% else %}
+                    <i class="fa-solid fa-paper-plane"></i> Publish
+                    {% endif %}
+                </button>
+            </form>
+            <a href="{% url 'assignment_update' assignment.id %}" class="btn btn-secondary">
+                <i class="fa-solid fa-pen"></i> Edit
+            </a>
+            {% endif %}
+            <a href="{% url 'assignment_list' %}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="assignment-detail-grid">
+
+        <div class="assignment-detail-main">
+
+            {% if assignment.description %}
+            <div class="card mb-16">
+                <div class="card-title">
+                    <i class="fa-solid fa-circle-info"></i> Description
+                </div>
+                <p class="text-muted">{{ assignment.description }}</p>
+            </div>
+            {% endif %}
+
+            <div class="card mb-16">
+                <div class="flex-between mb-16">
+                    <div class="card-title" style="margin-bottom:0">
+                        <i class="fa-solid fa-list-check"></i>
+                        Questions
+                        <span class="badge badge-blue" style="margin-left:6px">{{ questions|length }}</span>
+                    </div>
+                    {% if user.is_teacher and assignment.teacher == user or user.is_admin_role %}
+                    <a href="{% url 'question_create' assignment.id %}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-plus"></i> Add Question
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% if questions %}
+                <div class="question-list">
+                    {% for question in questions %}
+                    <div class="question-item">
+                        <div class="question-item-left">
+                            <div class="question-num">{{ forloop.counter }}</div>
+                            <div class="question-info">
+                                <p class="question-text">{{ question.text|truncatechars:100 }}</p>
+                                <div class="flex gap-8 mt-8">
+                                    <span class="badge badge-gray text-sm">
+                                        {{ question.get_type_display }}
+                                    </span>
+                                    <span class="badge badge-blue text-sm">
+                                        {{ question.score }} pts
+                                    </span>
+                                    {% if question.type == 'mcq' or question.type == 'true_false' %}
+                                    <span class="badge badge-gray text-sm">
+                                        {{ question.choices.count }} choices
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% if user.is_teacher and assignment.teacher == user or user.is_admin_role %}
+                        <div class="question-actions flex gap-8">
+                            <a href="{% url 'question_detail' assignment.id question.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            <a href="{% url 'question_update' assignment.id question.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            <form method="post" action="{% url 'question_delete' assignment.id question.id %}">
+                                {% csrf_token %}
+                                <button
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Delete this question?')"
+                                >
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-circle-question"></i>
+                    <p>No questions yet</p>
+                    {% if user.is_teacher and assignment.teacher == user or user.is_admin_role %}
+                    <a href="{% url 'question_create' assignment.id %}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-plus"></i> Add first question
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if user.is_teacher and assignment.teacher == user or user.is_admin_role %}
+            {% if submissions %}
+            <div class="card">
+                <div class="flex-between mb-16">
+                    <div class="card-title" style="margin-bottom:0">
+                        <i class="fa-solid fa-inbox"></i>
+                        Submissions
+                        <span class="badge badge-blue" style="margin-left:6px">{{ submissions|length }}</span>
+                    </div>
+                    <a href="{% url 'submission_list' assignment.id %}" class="btn btn-secondary btn-sm">
+                        View all <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="submission-preview-list">
+                    {% for sub in submissions|slice:":5" %}
+                    <a href="{% url 'submission_detail' sub.id %}" class="submission-preview-item">
+                        <div class="submission-avatar">
+                            {% if sub.student.profile.avatar %}
+                                <img src="{{ sub.student.profile.avatar.url }}" alt="{{ sub.student.username }}">
+                            {% else %}
+                                <span>{{ sub.student.username|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="submission-preview-info">
+                            <p class="submission-preview-name">{{ sub.student.username }}</p>
+                            <p class="text-sm text-muted">
+                                {% if sub.submitted_at %}{{ sub.submitted_at|date:"M d, H:i" }}{% else %}In progress{% endif %}
+                            </p>
+                        </div>
+                        <div class="submission-preview-right">
+                            {% if sub.status == 'graded' %}
+                            <span class="badge badge-green">Graded</span>
+                            {% elif sub.status == 'submitted' %}
+                            <span class="badge badge-blue">Submitted</span>
+                            {% else %}
+                            <span class="badge badge-gray">Pending</span>
+                            {% endif %}
+                            {% if sub.total_score %}
+                            <span class="text-sm text-muted">{{ sub.total_score }} pts</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+        </div>
+
+        <div class="assignment-detail-side">
+
+            <div class="card mb-16">
+                <div class="card-title">
+                    <i class="fa-solid fa-circle-info"></i> Details
+                </div>
+                <div class="assignment-detail-list">
+                    <div class="assignment-detail-item">
+                        <span class="assignment-detail-label">Type</span>
+                        <span class="badge
+                            {% if assignment.type == 'quiz' %}badge-yellow
+                            {% elif assignment.type == 'test' %}badge-blue
+                            {% else %}badge-gray{% endif %}">
+                            {{ assignment.get_type_display }}
+                        </span>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <span class="assignment-detail-label">Status</span>
+                        {% if assignment.is_published %}
+                        <span class="badge badge-green">Published</span>
+                        {% else %}
+                        <span class="badge badge-gray">Draft</span>
+                        {% endif %}
+                    </div>
+                    <div class="assignment-detail-item">
+                        <span class="assignment-detail-label">Subject</span>
+                        <span class="text-sm">{{ assignment.subject.title }}</span>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <span class="assignment-detail-label">Group</span>
+                        <span class="text-sm">{{ assignment.group.name }}</span>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <span class="assignment-detail-label">Teacher</span>
+                        <span class="text-sm">{{ assignment.teacher.username }}</span>
+                    </div>
+                    {% if assignment.deadline %}
+                    <div class="assignment-detail-item">
+                        <span class="assignment-detail-label">Deadline</span>
+                        <span class="text-sm text-danger">
+                            <i class="fa-solid fa-clock"></i>
+                            {{ assignment.deadline|date:"M d, Y — H:i" }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% if assignment.time_limit %}
+                    <div class="assignment-detail-item">
+                        <span class="assignment-detail-label">Time Limit</span>
+                        <span class="badge badge-yellow">
+                            <i class="fa-solid fa-hourglass"></i>
+                            {{ assignment.time_limit }} min
+                        </span>
+                    </div>
+                    {% endif %}
+                    <div class="assignment-detail-item">
+                        <span class="assignment-detail-label">Questions</span>
+                        <span class="badge badge-blue">{{ questions|length }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if user.is_student %}
+            <div class="card mb-16">
+                <div class="card-title">
+                    <i class="fa-solid fa-graduation-cap"></i> My Status
+                </div>
+                {% if submission %}
+                <div class="my-submission-info">
+                    <div class="flex-between mb-8">
+                        <span class="text-sm text-muted">Status</span>
+                        {% if submission.status == 'graded' %}
+                        <span class="badge badge-green">Graded</span>
+                        {% elif submission.status == 'submitted' %}
+                        <span class="badge badge-blue">Submitted</span>
+                        {% else %}
+                        <span class="badge badge-yellow">In Progress</span>
+                        {% endif %}
+                    </div>
+                    {% if submission.total_score is not None %}
+                    <div class="flex-between mb-16">
+                        <span class="text-sm text-muted">Score</span>
+                        <span class="badge badge-blue">{{ submission.total_score }} pts</span>
+                    </div>
+                    {% endif %}
+                    {% if submission.status == 'submitted' or submission.status == 'graded' %}
+                    <a href="{% url 'submission_detail' submission.id %}" class="btn btn-primary btn-block">
+                        <i class="fa-solid fa-eye"></i> View Results
+                    </a>
+                    {% elif submission.status == 'pending' %}
+                    {% if assignment.type == 'quiz' %}
+                    <a href="{% url 'quiz_take' assignment.id %}" class="btn btn-primary btn-block">
+                        <i class="fa-solid fa-play"></i> Continue Quiz
+                    </a>
+                    {% else %}
+                    <a href="{% url 'assignment_take' assignment.id %}" class="btn btn-primary btn-block">
+                        <i class="fa-solid fa-play"></i> Continue
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                {% else %}
+                {% if assignment.is_published %}
+                <p class="text-muted text-sm mb-16">You haven't started this assignment yet.</p>
+                <form method="post" action="{% url 'assignment_start' assignment.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-primary btn-block btn-lg">
+                        {% if assignment.type == 'quiz' %}
+                        <i class="fa-solid fa-stopwatch"></i> Start Quiz
+                        {% else %}
+                        <i class="fa-solid fa-play"></i> Start Assignment
+                        {% endif %}
+                    </button>
+                </form>
+                {% if assignment.time_limit %}
+                <p class="text-sm text-muted mt-8" style="text-align:center">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Timer starts immediately — {{ assignment.time_limit }} minutes
+                </p>
+                {% endif %}
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-lock"></i>
+                    <p>Not published yet</p>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if user.is_teacher and assignment.teacher == user or user.is_admin_role %}
+            <div class="card danger-zone">
+                <div class="card-title text-danger">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+                </div>
+                <p class="text-sm text-muted mb-16">Delete this assignment permanently.</p>
+                <form method="post" action="{% url 'assignment_delete' assignment.id %}">
+                    {% csrf_token %}
+                    <button
+                        class="btn btn-danger btn-block"
+                        onclick="return confirm('Delete {{ assignment.title }}? This cannot be undone.')"
+                    >
+                        <i class="fa-solid fa-trash"></i> Delete Assignment
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Coin History — StudyPeak{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Coin History</h1>
+            <p class="page-subtitle">
+                {% if user.is_admin_role %}All transactions{% else %}Your coin transactions{% endif %}
+            </p>
+        </div>
+        {% if profile %}
+        <div class="shop-coins-badge shop-coins-badge-lg">
+            <i class="fa-solid fa-coins"></i>
+            <span>{{ profile.coins }} coins</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if transactions %}
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        {% if user.is_admin_role %}<th>User</th>{% endif %}
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Reason</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr>
+                        <td class="text-muted text-sm">{{ forloop.counter }}</td>
+                        {% if user.is_admin_role %}
+                        <td>
+                            <div class="purchase-user">
+                                <div class="purchase-avatar">
+                                    {% if tx.user.profile.avatar %}
+                                    <img src="{{ tx.user.profile.avatar.url }}" alt="{{ tx.user.username }}">
+                                    {% else %}
+                                    <span>{{ tx.user.username|first|upper }}</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm">{{ tx.user.username }}</span>
+                            </div>
+                        </td>
+                        {% endif %}
+                        <td>
+                            {% if tx.type == 'earn' %}
+                            <span class="badge badge-green">
+                                <i class="fa-solid fa-arrow-up"></i> Earn
+                            </span>
+                            {% else %}
+                            <span class="badge badge-red">
+                                <i class="fa-solid fa-arrow-down"></i> Spend
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="coin-tx-amount {% if tx.type == 'earn' %}coin-earn{% else %}coin-spend{% endif %}">
+                                {% if tx.type == 'earn' %}+{% else %}-{% endif %}{{ tx.amount }}
+                                <i class="fa-solid fa-coins"></i>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-gray text-sm">{{ tx.get_reason_display }}</span>
+                        </td>
+                        <td>
+                            <p class="text-sm text-muted">{{ tx.description|default:"—"|truncatechars:40 }}</p>
+                        </td>
+                        <td>
+                            <span class="text-sm text-muted">{{ tx.created_at|date:"M d, Y" }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-coins"></i>
+            <p>No transactions yet</p>
+            <p class="text-muted text-sm">Earn coins by completing assignments and achieving goals</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

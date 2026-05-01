@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Shop — StudyPeak{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shop.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Shop</h1>
+            <p class="page-subtitle">Spend your coins on rewards and products</p>
+        </div>
+        <div class="flex gap-8">
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'product_create' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> New Product
+            </a>
+            {% endif %}
+            {% if profile %}
+            <div class="shop-coins-badge">
+                <i class="fa-solid fa-coins"></i>
+                <span>{{ profile.coins }} coins</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="shop-nav-tabs mb-16">
+        <a href="{% url 'purchase_list' %}" class="shop-nav-tab">
+            <i class="fa-solid fa-bag-shopping"></i> My Purchases
+        </a>
+        <a href="{% url 'coin_transaction_list' %}" class="shop-nav-tab">
+            <i class="fa-solid fa-coins"></i> Coin History
+        </a>
+        <a href="{% url 'achievement_list' %}" class="shop-nav-tab">
+            <i class="fa-solid fa-medal"></i> Achievements
+        </a>
+        {% if user.is_teacher or user.is_admin_role %}
+        <a href="{% url 'give_coins' %}" class="shop-nav-tab">
+            <i class="fa-solid fa-gift"></i> Give Coins
+        </a>
+        {% endif %}
+    </div>
+
+    {% if products %}
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card card">
+            <div class="product-card-img-wrap">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-card-img">
+                {% else %}
+                <div class="product-card-img-placeholder">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                {% endif %}
+                <div class="product-card-badges">
+                    <span class="badge {% if product.type == 'global' %}badge-blue{% else %}badge-green{% endif %}">
+                        {{ product.get_type_display }}
+                    </span>
+                    {% if not product.is_active %}
+                    <span class="badge badge-red">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="product-card-body">
+                <h3 class="product-card-name">{{ product.name }}</h3>
+                {% if product.description %}
+                <p class="product-card-desc text-sm text-muted">{{ product.description|truncatechars:70 }}</p>
+                {% endif %}
+                <div class="product-card-footer">
+                    <div class="product-price">
+                        <i class="fa-solid fa-coins"></i>
+                        <span>{{ product.price }} coins</span>
+                    </div>
+                    <div class="product-stock text-sm text-muted">
+                        <i class="fa-solid fa-cubes"></i>
+                        {{ product.stock }} left
+                    </div>
+                </div>
+                <a href="{% url 'product_detail' product.id %}" class="btn btn-primary btn-block mt-16">
+                    View Details
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fa-solid fa-store"></i>
+            <p>No products available yet</p>
+            {% if user.is_teacher or user.is_admin_role %}
+            <a href="{% url 'product_create' %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> Add first product
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
