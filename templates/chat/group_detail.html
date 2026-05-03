@@ -9,247 +9,503 @@
 {% endblock %}
 
 {% block content %}
-<div class="chat-page">
+<div class="tg-layout" id="tgLayout" data-group-id="{{ group.id }}">
 
-    <!-- Sidebar — members & info -->
-    <div class="chat-sidebar">
-
-        <div class="chat-sidebar-header">
-            <div class="group-sidebar-avatar">
-                {% if group.avatar %}
-                    <img src="{{ group.avatar.url }}" alt="{{ group.name }}">
-                {% else %}
-                    <span>{{ group.name|first|upper }}</span>
-                {% endif %}
-            </div>
-            <div>
-                <p class="chat-sidebar-title">{{ group.name }}</p>
-                <p class="text-sm text-muted">{{ members|length }} members</p>
-            </div>
-        </div>
-
-        <!-- Pinned messages -->
-        {% if pinned %}
-        <div class="chat-sidebar-section">
-            <p class="chat-sidebar-section-title">
-                <i class="fa-solid fa-thumbtack"></i> Pinned
-            </p>
-            {% for msg in pinned %}
-            <div class="pinned-msg">
-                <p class="text-sm">{{ msg.content|truncatechars:60 }}</p>
-                <p class="text-sm text-muted">{{ msg.sender.username }}</p>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Members -->
-        <div class="chat-sidebar-section">
-            <p class="chat-sidebar-section-title">
-                <i class="fa-solid fa-users"></i> Members
-            </p>
-            <div class="member-list">
-                {% for member in members %}
-                <div class="member-item">
-                    <div class="member-avatar">
-                        {% if member.user.profile.avatar %}
-                            <img src="{{ member.user.profile.avatar.url }}" alt="{{ member.user.username }}">
-                        {% else %}
-                            <span>{{ member.user.username|first|upper }}</span>
-                        {% endif %}
-                        <span class="member-status-dot member-status-{{ member.user.profile.status|default:'offline' }}"></span>
-                    </div>
-                    <div class="member-info">
-                        <p class="member-name">{{ member.user.username }}</p>
-                        <p class="text-sm text-muted">{{ member.get_role_display }}</p>
-                    </div>
-                    {% if membership.role == 'admin' and member.user != user and member.user != group.owner %}
-                    <div class="member-actions">
-                        <form method="post" action="{% url 'group_kick_member' group.id member.user.id %}">
-                            {% csrf_token %}
-                            <button class="btn btn-danger btn-sm" title="Kick" onclick="return confirm('Kick {{ member.user.username }}?')">
-                                <i class="fa-solid fa-user-minus"></i>
-                            </button>
-                        </form>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Admin actions -->
-        {% if membership.role == 'admin' %}
-        <div class="chat-sidebar-section">
-            <p class="chat-sidebar-section-title">
-                <i class="fa-solid fa-gear"></i> Admin
-            </p>
-            <div class="sidebar-admin-actions">
-                <a href="{% url 'group_update' group.id %}" class="btn btn-secondary btn-sm w-full">
-                    <i class="fa-solid fa-pen"></i> Edit Group
-                </a>
-
-                <!-- Invite user form -->
-                <form method="post" action="{% url 'send_group_invitation' group.id %}" class="mt-8">
-                    {% csrf_token %}
-                    <div class="flex gap-8">
-                        <input
-                            type="number"
-                            name="user_id"
-                            class="form-input"
-                            placeholder="User ID to invite"
-                            min="1"
-                            required
-                        >
-                        <button class="btn btn-primary btn-sm" type="submit">
-                            <i class="fa-solid fa-user-plus"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Leave group -->
-        {% if group.owner != user %}
-        <div class="chat-sidebar-section">
-            <form method="post" action="{% url 'group_leave' group.id %}">
-                {% csrf_token %}
-                <button class="btn btn-danger btn-sm w-full" onclick="return confirm('Leave {{ group.name }}?')">
-                    <i class="fa-solid fa-right-from-bracket"></i> Leave Group
-                </button>
-            </form>
-        </div>
-        {% endif %}
-
+  <!-- ── LEFT SIDEBAR ─────────────────────────────────── -->
+  <div class="tg-sidebar">
+    <div class="tg-sidebar-top">
+      <span class="tg-sidebar-title">Messages</span>
+      <a href="{% url 'group_create' %}" class="tg-sidebar-new" title="New group">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </a>
     </div>
+    <div class="tg-sidebar-list">
 
-    <!-- Chat main -->
-    <div class="chat-main">
-
-        <!-- Header -->
-        <div class="chat-header">
-            <div class="flex gap-12" style="align-items:center">
-                <a href="{% url 'group_list' %}" class="btn btn-secondary btn-sm">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </a>
-                <div>
-                    <p class="chat-header-name">{{ group.name }}</p>
-                    {% if group.description %}
-                    <p class="text-sm text-muted">{{ group.description|truncatechars:50 }}</p>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="flex gap-8">
-                {% if group.is_study_group %}
-                <span class="badge badge-blue">Study Group</span>
-                {% endif %}
-                <span class="badge badge-gray">{{ members|length }} members</span>
-            </div>
+      {% for item in sidebar_groups %}
+      <a href="{% url 'group_detail' item.group.id %}"
+         class="tg-chat-row {% if item.group.id == group.id %}tg-chat-row-active{% endif %}">
+        <div class="tg-row-avatar tg-row-avatar-square">
+          {% if item.group.avatar %}
+            <img src="{{ item.group.avatar.url }}" alt="{{ item.group.name }}">
+          {% else %}
+            <span>{{ item.group.name|first|upper }}</span>
+          {% endif %}
         </div>
-
-        <!-- Messages -->
-        <div class="chat-messages" id="chatMessages">
-            {% if messages %}
-                {% for message in messages %}
-                <div class="chat-message {% if message.sender == user %}chat-message-own{% endif %}">
-                    {% if message.sender != user %}
-                    <div class="chat-msg-avatar">
-                        {% if message.sender.profile.avatar %}
-                            <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.username }}">
-                        {% else %}
-                            <span>{{ message.sender.username|first|upper }}</span>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    <div class="chat-msg-body">
-                        {% if message.sender != user %}
-                        <p class="chat-msg-sender text-sm text-muted">{{ message.sender.username }}</p>
-                        {% endif %}
-                        <div class="chat-msg-bubble {% if message.is_pinned %}chat-msg-pinned{% endif %}">
-                            {% if message.is_pinned %}
-                            <span class="pinned-indicator text-sm">
-                                <i class="fa-solid fa-thumbtack"></i>
-                            </span>
-                            {% endif %}
-                            <p>{{ message.content }}</p>
-                        </div>
-                        <div class="chat-msg-meta">
-                            <span class="text-sm text-muted">{{ message.created_at|timesince }} ago</span>
-                            {% if membership.role == 'admin' or message.sender == user %}
-                            <div class="chat-msg-actions">
-                                {% if membership.role == 'admin' %}
-                                <form method="post" action="{% url 'pin_message' message.id %}">
-                                    {% csrf_token %}
-                                    <button class="chat-msg-action-btn {% if message.is_pinned %}active{% endif %}" title="{% if message.is_pinned %}Unpin{% else %}Pin{% endif %}">
-                                        <i class="fa-solid fa-thumbtack"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
-                                {% if membership.role == 'admin' or message.sender == user %}
-                                <form method="post" action="{% url 'delete_message' message.id %}">
-                                    {% csrf_token %}
-                                    <button class="chat-msg-action-btn text-danger" title="Delete" onclick="return confirm('Delete this message?')">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-            <div class="chat-empty">
-                <i class="fa-solid fa-comments"></i>
-                <p>No messages yet. Start the conversation!</p>
-            </div>
+        <div class="tg-row-info">
+          <div class="tg-row-top">
+            <span class="tg-row-name">{{ item.group.name }}</span>
+            {% if item.last_msg %}
+            <span class="tg-row-time">{{ item.last_msg.created_at|date:"H:i" }}</span>
             {% endif %}
+          </div>
+          <p class="tg-row-preview">
+            {% if item.last_msg %}{{ item.last_msg.content|truncatechars:38 }}
+            {% else %}No messages yet{% endif %}
+          </p>
         </div>
+      </a>
+      {% endfor %}
 
-        <!-- Input -->
-        <div class="chat-input-area">
-            <form method="post" action="{% url 'group_detail' group.id %}" class="chat-form">
-                {% csrf_token %}
-                <textarea
-                    name="content"
-                    class="chat-input"
-                    placeholder="Type a message..."
-                    rows="1"
-                    id="chatInput"
-                    required
-                ></textarea>
-                <button type="submit" class="btn btn-primary chat-send-btn">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
-            </form>
+      {% for item in sidebar_convs %}
+      {% if item.conv.id %}
+      <a href="{% url 'conversation_detail' item.conv.id %}" class="tg-chat-row">
+        <div class="tg-row-avatar" style="position:relative">
+          {% if item.other.profile.avatar %}
+            <img src="{{ item.other.profile.avatar.url }}" alt="{{ item.other.username }}">
+          {% else %}
+            <span>{{ item.other.username|first|upper }}</span>
+          {% endif %}
+          <span class="tg-dot tg-dot-{{ item.other.profile.status|default:'offline' }}"></span>
         </div>
+        <div class="tg-row-info">
+          <div class="tg-row-top">
+            <span class="tg-row-name">{{ item.other.username }}</span>
+            {% if item.last_msg %}
+            <span class="tg-row-time">{{ item.last_msg.created_at|date:"H:i" }}</span>
+            {% endif %}
+          </div>
+          <p class="tg-row-preview">
+            {% if item.last_msg %}{{ item.last_msg.content|truncatechars:38 }}
+            {% else %}Say hello!{% endif %}
+          </p>
+        </div>
+      </a>
+      {% endif %}
+      {% endfor %}
 
     </div>
+  </div>
+
+  <!-- ── MAIN CHAT ─────────────────────────────────────── -->
+  <div class="tg-main">
+
+    <div class="tg-header">
+      <div class="tg-header-body" onclick="togglePanel()">
+        <div class="tg-header-avatar tg-header-avatar-square">
+          {% if group.avatar %}
+            <img src="{{ group.avatar.url }}" alt="{{ group.name }}">
+          {% else %}
+            <span>{{ group.name|first|upper }}</span>
+          {% endif %}
+        </div>
+        <div>
+          <p class="tg-header-name">{{ group.name }}</p>
+          <p class="tg-header-sub">{{ members|length }} members{% if group.is_study_group %} · Study Group{% endif %}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tg-messages" id="tgMessages">
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="tg-msg {% if msg.sender == user %}tg-msg-own{% endif %}">
+          <div class="tg-msg-avatar" data-user-id="{{ msg.sender.id }}">
+            {% if msg.sender.profile.avatar %}
+              <img src="{{ msg.sender.profile.avatar.url }}" alt="{{ msg.sender.username }}">
+            {% else %}
+              <span>{{ msg.sender.username|first|upper }}</span>
+            {% endif %}
+          </div>
+          <div class="tg-msg-body">
+            <p class="tg-msg-sender {% if msg.sender == user %}tg-msg-sender-own{% endif %}">{% if msg.sender == user %}You{% else %}{{ msg.sender.username }}{% endif %}</p>          
+            <div class="tg-msg-bubble {% if msg.is_pinned %}tg-msg-pinned{% endif %}">
+              {% if msg.is_pinned %}<span class="tg-pin-badge"><i class="fa-solid fa-thumbtack"></i></span>{% endif %}
+              <p id="msg-text-{{ msg.id }}">{{ msg.content }}</p>
+              <span class="tg-msg-time">{{ msg.created_at|date:"H:i" }}</span>
+            </div>
+          </div>
+          <div class="tg-msg-acts">
+            {% if msg.sender == user %}
+            <button class="tg-act-btn" title="Edit" data-edit-id="{{ msg.id }}" data-edit-text="{{ msg.content|escapejs }}">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            {% endif %}
+            {% if membership.role == 'admin' %}
+            <form method="post" action="{% url 'pin_message' msg.id %}">
+              {% csrf_token %}
+              <button class="tg-act-btn {% if msg.is_pinned %}tg-act-active{% endif %}" title="{% if msg.is_pinned %}Unpin{% else %}Pin{% endif %}">
+                <i class="fa-solid fa-thumbtack"></i>
+              </button>
+            </form>
+            {% endif %}
+            {% if membership.role == 'admin' or msg.sender == user %}
+            <form method="post" action="{% url 'delete_message' msg.id %}">
+              {% csrf_token %}
+              <button class="tg-act-btn tg-act-danger" data-confirm="Delete?">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="tg-empty">
+        <i class="fa-solid fa-comments"></i>
+        <p>No messages yet. Start the conversation!</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="tg-input-wrap">
+      <form method="post" action="{% url 'group_detail' group.id %}" class="tg-form">
+        {% csrf_token %}
+        <textarea name="content" class="tg-textarea" placeholder="Message..." rows="1" id="tgInput" required></textarea>
+        <button type="submit" class="tg-send"><i class="fa-solid fa-paper-plane"></i></button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT INFO PANEL ──────────────────────────────── -->
+  <div class="tg-panel" id="tgPanel">
+    <div class="tg-panel-head">
+      <button class="tg-panel-close" onclick="togglePanel()"><i class="fa-solid fa-xmark"></i></button>
+      <span class="tg-panel-title">Group Info</span>
+      {% if membership.role == 'admin' %}
+      <a href="{% url 'group_update' group.id %}" class="tg-panel-edit"><i class="fa-solid fa-pen"></i></a>
+      {% endif %}
+    </div>
+
+    <div class="tg-panel-body">
+
+      <div class="tg-panel-hero">
+        <div class="tg-panel-big-avatar tg-panel-big-avatar-sq">
+          {% if group.avatar %}
+            <img src="{{ group.avatar.url }}" alt="{{ group.name }}">
+          {% else %}
+            <span>{{ group.name|first|upper }}</span>
+          {% endif %}
+        </div>
+        <h3 class="tg-panel-name">{{ group.name }}</h3>
+        <p class="tg-panel-sub">{{ members|length }} members{% if group.is_study_group %} · Study Group{% endif %}</p>
+        {% if group.description %}
+        <p class="tg-panel-desc">{{ group.description }}</p>
+        {% endif %}
+      </div>
+
+      <div class="tg-panel-actions">
+        {% if membership.role == 'admin' %}
+        <button class="tg-panel-act-btn" onclick="toggleInvite()">
+          <div class="tg-panel-act-icon tg-icon-blue"><i class="fa-solid fa-user-plus"></i></div>
+          <span>Add</span>
+        </button>
+        {% endif %}
+        {% if linked_subject %}
+        <a href="{% url 'subject_detail' subject_id=linked_subject.id %}" class="tg-panel-act-btn">
+          <div class="tg-panel-act-icon tg-icon-green"><i class="fa-solid fa-graduation-cap"></i></div>
+          <span>Course</span>
+        </a>
+        {% endif %}
+        {% if group.owner != user %}
+        <form method="post" action="{% url 'group_leave' group.id %}" style="display:contents">
+          {% csrf_token %}
+          <button class="tg-panel-act-btn" data-confirm="Leave {{ group.name }}?">
+            <div class="tg-panel-act-icon tg-icon-red"><i class="fa-solid fa-right-from-bracket"></i></div>
+            <span>Leave</span>
+          </button>
+        </form>
+        {% endif %}
+        {% if membership.role == 'admin' and group.owner == user %}
+        <form method="post" action="{% url 'group_delete' group.id %}" style="display:contents">
+          {% csrf_token %}
+          <button class="tg-panel-act-btn" data-confirm="Delete this group?">
+            <div class="tg-panel-act-icon tg-icon-red"><i class="fa-solid fa-trash"></i></div>
+            <span>Delete</span>
+          </button>
+        </form>
+        {% endif %}
+      </div>
+
+      {% if membership.role == 'admin' %}
+      <div class="tg-invite-box" id="inviteBox" style="display:none">
+        <div style="position:relative; padding: 0 16px 12px;">
+          <input type="text" id="inviteSearch" class="form-input" placeholder="Search username..." autocomplete="off">
+          <div id="inviteDropdown" class="tg-invite-dropdown" style="display:none;"></div>
+        </div>
+        <form method="post" action="{% url 'send_group_invitation' group.id %}" id="inviteForm" style="display:none;">
+          {% csrf_token %}
+          <input type="hidden" name="user_id" id="inviteUserId">
+        </form>
+      </div>
+      {% endif %}
+
+      {% if pinned %}
+      <div class="tg-panel-section">
+        <p class="tg-panel-section-label"><i class="fa-solid fa-thumbtack"></i> Pinned</p>
+        {% for pmsg in pinned %}
+        <div class="tg-pinned-item">
+          <p class="tg-pinned-text">{{ pmsg.content|truncatechars:70 }}</p>
+          <p class="tg-pinned-author">{{ pmsg.sender.username }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="tg-panel-section">
+        <p class="tg-panel-section-label"><i class="fa-solid fa-users"></i> {{ members|length }} Members</p>
+        <div class="tg-member-list">
+          {% for member in members %}
+          <div class="tg-member-row" data-user-id="{{ member.user.id }}">
+            <div class="tg-member-av" style="position:relative">
+              {% if member.user.profile.avatar %}
+                <img src="{{ member.user.profile.avatar.url }}" alt="{{ member.user.username }}">
+              {% else %}
+                <span>{{ member.user.username|first|upper }}</span>
+              {% endif %}
+              <span class="tg-dot tg-dot-{{ member.user.profile.status|default:'offline' }}"></span>
+            </div>
+            <div class="tg-member-info">
+              <p class="tg-member-name">{{ member.user.username }}</p>
+              <p class="tg-member-role">{{ member.get_role_display }}{% if member.user == group.owner %} · Owner{% endif %}</p>
+            </div>
+            {% if membership.role == 'admin' and member.user != user and member.user != group.owner %}
+            <form method="post" action="{% url 'group_kick_member' group.id member.user.id %}" onclick="event.stopPropagation()">
+              {% csrf_token %}
+              <button class="tg-kick-btn" title="Kick" data-confirm="Kick {{ member.user.username }}?">
+                <i class="fa-solid fa-user-minus"></i>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>
+
+<!-- ── USER MODAL ──────────────────────────────────────────── -->
+<div class="tg-overlay" id="tgOverlay"></div>
+<div class="tg-user-modal" id="tgUserModal">
+  <button class="tg-modal-x" id="tgModalClose"><i class="fa-solid fa-xmark"></i></button>
+  <div id="tgModalBody"><div class="tg-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i></div></div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-const chatMessages = document.getElementById('chatMessages');
-if (chatMessages) {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+const CSRF = '{{ csrf_token }}';
+const GROUP_ID = document.querySelector('[data-group-id]').dataset.groupId;
+
+// ── Confirm buttons ─────────────────────────────────────────
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-confirm]');
+  if (btn) {
+    if (!confirm(btn.dataset.confirm)) e.preventDefault();
+  }
+});
+
+// ── Avatar click → open modal ───────────────────────────────
+document.addEventListener('click', function(e) {
+  const av = e.target.closest('[data-user-id]');
+  if (av && !av.classList.contains('tg-kick-btn') && !av.closest('form')) {
+    openUserModal(av.dataset.userId);
+  }
+});
+
+// ── Edit button ─────────────────────────────────────────────
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-edit-id]');
+  if (btn) {
+    const msgId = btn.dataset.editId;
+    const current = btn.dataset.editText;
+    const newText = prompt('Edit message:', current);
+    if (newText && newText.trim() && newText.trim() !== current) {
+      const form = document.createElement('form');
+      form.method = 'post';
+      form.action = `/chat/messages/${msgId}/edit/`;
+      form.innerHTML = `
+        <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF}">
+        <input type="hidden" name="content" value="${newText.trim()}">
+      `;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+});
+
+// ── Panel toggle ────────────────────────────────────────────
+function togglePanel() {
+  document.getElementById('tgLayout').classList.toggle('panel-open');
 }
 
-const chatInput = document.getElementById('chatInput');
-if (chatInput) {
-    chatInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            this.closest('form').submit();
+// ── Invite ──────────────────────────────────────────────────
+// В group_detail.html найди блок "── Invite ──" в <script> и ЗАМЕНИ его полностью на этот:
+
+// ── Invite ──────────────────────────────────────────────────
+function toggleInvite() {
+  const box = document.getElementById('inviteBox');
+  if (box) {
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('inviteSearch').focus();
+  }
+}
+
+const inviteSearch   = document.getElementById('inviteSearch');
+const inviteDropdown = document.getElementById('inviteDropdown');
+
+if (inviteSearch) {
+  let timer;
+  inviteSearch.addEventListener('input', function () {
+    clearTimeout(timer);
+    const q = this.value.trim();
+    if (q.length < 2) { inviteDropdown.style.display = 'none'; return; }
+    timer = setTimeout(() => {
+      fetch(`/chat/groups/${GROUP_ID}/search-users/?q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(data => {
+          inviteDropdown.innerHTML = '';
+          if (!data.users.length) {
+            inviteDropdown.innerHTML = '<div class="tg-invite-empty">No users found</div>';
+          } else {
+            data.users.forEach(u => {
+              const el = document.createElement('div');
+              el.className = 'tg-invite-item';
+              el.innerHTML = `
+                <div class="tg-invite-av">${u.username[0].toUpperCase()}</div>
+                <div>
+                  <div class="tg-invite-name">${u.username}</div>
+                  <div class="tg-invite-role">${u.role}</div>
+                </div>
+                <button class="btn btn-primary btn-xs" style="margin-left:auto" id="inv-btn-${u.id}">
+                  <i class="fa-solid fa-user-plus"></i> Invite
+                </button>`;
+
+              // Клик — AJAX без редиректа
+              el.querySelector(`#inv-btn-${u.id}`).addEventListener('click', function(e) {
+                e.stopPropagation();
+                const btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+                const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', CSRF);
+                formData.append('user_id', u.id);
+
+                fetch(`/chat/groups/${GROUP_ID}/invite/`, {
+                  method: 'POST',
+                  headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                  body: formData,
+                })
+                .then(r => r.json())
+                .then(data => {
+                  if (data.status === 'ok') {
+                    btn.className = 'btn btn-xs';
+                    btn.style.cssText = 'margin-left:auto;background:rgba(52,211,153,0.1);color:#34d399;border:1px solid rgba(52,211,153,0.3);cursor:default';
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent';
+                    showToast(data.message, 'success');
+                  } else {
+                    btn.className = 'btn btn-xs';
+                    btn.style.cssText = 'margin-left:auto;background:var(--bg-3);color:var(--text-3);border:1px solid var(--border);cursor:default';
+                    btn.innerHTML = '<i class="fa-solid fa-clock"></i> Already';
+                    showToast(data.message, 'warning');
+                  }
+                })
+                .catch(() => {
+                  btn.disabled = false;
+                  btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Invite';
+                  showToast('Something went wrong.', 'error');
+                });
+              });
+
+              inviteDropdown.appendChild(el);
+            });
+          }
+          inviteDropdown.style.display = 'block';
+        });
+    }, 300);
+  });
+
+  document.addEventListener('click', e => {
+    if (!inviteSearch.contains(e.target) && !inviteDropdown.contains(e.target))
+      inviteDropdown.style.display = 'none';
+  });
+}
+
+// ── User modal ──────────────────────────────────────────────
+function openUserModal(userId) {
+  document.getElementById('tgOverlay').classList.add('active');
+  document.getElementById('tgUserModal').classList.add('active');
+  document.getElementById('tgModalBody').innerHTML =
+    '<div class="tg-modal-loading"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+
+  fetch(`/chat/users/${userId}/profile/`)
+    .then(r => r.json())
+    .then(d => {
+      const avatarHtml = d.avatar
+        ? `<img src="${d.avatar}" alt="${d.username}">`
+        : `<span>${d.username[0].toUpperCase()}</span>`;
+      const statusColor = {active:'#22c55e',online:'#22c55e',away:'#f59e0b',busy:'#ef4444',offline:'#6b7280'}[d.status] || '#6b7280';
+
+      let btns = '';
+      if (!d.is_self) {
+        const convUrl = d.conversation_id
+          ? `/chat/conversations/${d.conversation_id}/`
+          : `/chat/conversations/start/${d.id}/`;
+        btns += `<a href="${convUrl}" class="tg-modal-btn">
+          <div class="tg-modal-btn-icon tg-icon-blue"><i class="fa-solid fa-comment"></i></div>
+          <span>Chat</span></a>`;
+        if (d.is_friend) {
+          btns += `<form method="post" action="/chat/friends/remove/${d.id}/" style="display:contents">
+            <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF}">
+            <button class="tg-modal-btn" onclick="return confirm('Remove from friends?')">
+              <div class="tg-modal-btn-icon tg-icon-green"><i class="fa-solid fa-user-check"></i></div>
+              <span>Friends</span></button></form>`;
+        } else {
+          btns += `<form method="post" action="/chat/friends/add/${d.id}/" style="display:contents">
+            <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF}">
+            <button class="tg-modal-btn">
+              <div class="tg-modal-btn-icon tg-icon-blue"><i class="fa-solid fa-user-plus"></i></div>
+              <span>Add Friend</span></button></form>`;
         }
-    });
-    chatInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        btns += `<a href="/accounts/profile/${d.id}/" class="tg-modal-btn">
+          <div class="tg-modal-btn-icon tg-icon-gray"><i class="fa-solid fa-user"></i></div>
+          <span>Profile</span></a>`;
+      }
+
+      let info = '';
+      if (d.phone) info += `<div class="tg-modal-info-row"><i class="fa-solid fa-phone"></i><div><p>${d.phone}</p><p class="tg-modal-info-label">Phone</p></div></div>`;
+      if (d.bio)   info += `<div class="tg-modal-info-row"><i class="fa-solid fa-circle-info"></i><div><p>${d.bio}</p><p class="tg-modal-info-label">Bio</p></div></div>`;
+      info += `<div class="tg-modal-info-row"><i class="fa-solid fa-tag"></i><div><p style="text-transform:capitalize">${d.role}</p><p class="tg-modal-info-label">Role</p></div></div>`;
+      if (d.coins !== undefined) info += `<div class="tg-modal-info-row"><i class="fa-solid fa-coins"></i><div><p>${d.coins} coins</p><p class="tg-modal-info-label">Balance</p></div></div>`;
+
+      document.getElementById('tgModalBody').innerHTML = `
+        <div class="tg-modal-hero">
+          <div class="tg-modal-avatar">${avatarHtml}</div>
+          <h3 class="tg-modal-name">${d.username}</h3>
+          <p class="tg-modal-status"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${statusColor};margin-right:5px;"></span>${d.status}</p>
+        </div>
+        <div class="tg-modal-btns">${btns}</div>
+        ${info ? `<div class="tg-modal-info">${info}</div>` : ''}
+      `;
     });
 }
+
+function closeUserModal() {
+  document.getElementById('tgOverlay').classList.remove('active');
+  document.getElementById('tgUserModal').classList.remove('active');
+}
+
+document.getElementById('tgOverlay').addEventListener('click', closeUserModal);
+document.getElementById('tgModalClose').addEventListener('click', closeUserModal);
+
+// ── Input ───────────────────────────────────────────────────
+const tgInput = document.getElementById('tgInput');
+if (tgInput) {
+  tgInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.closest('form').submit(); }
+  });
+  tgInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+}
+
+const msgs = document.getElementById('tgMessages');
+if (msgs) msgs.scrollTop = msgs.scrollHeight;
 </script>
 {% endblock %}

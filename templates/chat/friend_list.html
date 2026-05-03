@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Friends — StudyPeak{% endblock %}
-{% block nav_chat %}active{% endblock %}
+{% block nav_friends %}active{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/chat.css' %}">
@@ -16,9 +16,39 @@
             <h1 class="page-title">Friends</h1>
             <p class="page-subtitle">Manage your connections</p>
         </div>
-        <a href="{% url 'conversation_list' %}" class="btn btn-secondary">
-            <i class="fa-solid fa-comment"></i> Messages
-        </a>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-primary" id="toggleAddFriends">
+                <i class="fa-solid fa-user-plus"></i> Add Friends
+            </button>
+            <a href="{% url 'conversation_list' %}" class="btn btn-secondary">
+                <i class="fa-solid fa-comment"></i> Messages
+            </a>
+        </div>
+    </div>
+
+    <!-- ── ADD FRIENDS PANEL ─────────────────────────── -->
+    <div class="add-friends-panel" id="addFriendsPanel" style="display:none;">
+        <div class="card mb-16">
+            <div class="card-title">
+                <i class="fa-solid fa-user-plus"></i> Find People
+            </div>
+            <div class="add-friends-search-wrap">
+                <i class="fa-solid fa-magnifying-glass add-friends-search-icon"></i>
+                <input
+                    type="text"
+                    id="addFriendsInput"
+                    class="form-input add-friends-input"
+                    placeholder="Search by username..."
+                    autocomplete="off"
+                >
+            </div>
+            <div id="addFriendsResults" class="add-friends-results">
+                <div class="friends-search-hint">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <p>Type at least 2 characters to search</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="friends-grid">
@@ -93,7 +123,7 @@
         </div>
         {% endif %}
 
-        <!-- Friends -->
+        <!-- Friends list -->
         <div class="card">
             <div class="card-title">
                 <i class="fa-solid fa-user-group"></i>
@@ -128,7 +158,8 @@
                         </form>
                         <form method="post" action="{% url 'remove_friend' friend.id %}">
                             {% csrf_token %}
-                            <button class="btn btn-danger btn-sm" onclick="return confirm('Remove {{ friend.username }} from friends?')">
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Remove {{ friend.username }} from friends?')">
                                 <i class="fa-solid fa-user-minus"></i>
                             </button>
                         </form>
@@ -145,6 +176,126 @@
         </div>
 
     </div>
-
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+// ── Toggle Add Friends Panel ──────────────────────────────
+const toggleBtn   = document.getElementById('toggleAddFriends');
+const panel       = document.getElementById('addFriendsPanel');
+const searchInput = document.getElementById('addFriendsInput');
+
+toggleBtn.addEventListener('click', function() {
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    this.innerHTML = isOpen
+        ? '<i class="fa-solid fa-user-plus"></i> Add Friends'
+        : '<i class="fa-solid fa-xmark"></i> Close';
+    if (!isOpen) setTimeout(() => searchInput.focus(), 100);
+});
+
+// ── Search ────────────────────────────────────────────────
+let searchTimer;
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    const q = this.value.trim();
+    const results = document.getElementById('addFriendsResults');
+
+    if (q.length < 2) {
+        results.innerHTML = `
+            <div class="friends-search-hint">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <p>Type at least 2 characters to search</p>
+            </div>`;
+        return;
+    }
+
+    results.innerHTML = `
+        <div class="friends-search-hint">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Searching...</p>
+        </div>`;
+
+    searchTimer = setTimeout(() => {
+        fetch(`/chat/friends/search/?q=${encodeURIComponent(q)}`)
+            .then(r => r.json())
+            .then(data => renderResults(data.users, q));
+    }, 300);
+});
+
+function renderResults(users, q) {
+    const results = document.getElementById('addFriendsResults');
+
+    if (!users.length) {
+        results.innerHTML = `
+            <div class="friends-search-hint">
+                <i class="fa-solid fa-user-slash"></i>
+                <p>No users found for "${q}"</p>
+            </div>`;
+        return;
+    }
+
+    results.innerHTML = '';
+    users.forEach(u => {
+        const item = document.createElement('div');
+        item.className = 'friend-item';
+
+        const avatarHtml = u.avatar
+            ? `<img src="${u.avatar}" alt="${u.username}">`
+            : `<span>${u.username[0].toUpperCase()}</span>`;
+
+        let btnHtml = '';
+        if (u.friendship_status === 'friends') {
+            btnHtml = `<span class="badge badge-green"><i class="fa-solid fa-user-check"></i> Friends</span>`;
+        } else if (u.friendship_status === 'pending') {
+            btnHtml = `<span class="badge badge-yellow"><i class="fa-solid fa-clock"></i> Pending</span>`;
+        } else {
+            btnHtml = `<button class="btn btn-primary btn-sm" onclick="sendReq(${u.id}, this)">
+                <i class="fa-solid fa-user-plus"></i> Add
+            </button>`;
+        }
+
+        item.innerHTML = `
+            <div class="friend-avatar"><span>${avatarHtml}</span></div>
+            <div class="friend-info">
+                <p class="friend-name">${u.username}</p>
+                <p class="text-sm text-muted" style="text-transform:capitalize">${u.role}</p>
+            </div>
+            <div class="friend-actions">${btnHtml}</div>
+        `;
+        results.appendChild(item);
+    });
+}
+
+function sendReq(userId, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    fetch(`/chat/friends/ajax/add/${userId}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'ok' || data.status === 'already') {
+            // Меняем кнопку на Pending — НЕ выходим из поиска
+            btn.closest('.friend-actions').innerHTML =
+                `<span class="badge badge-yellow"><i class="fa-solid fa-clock"></i> Pending</span>`;
+            showToast(data.message, data.status === 'ok' ? 'success' : 'warning');
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Add';
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Add';
+        showToast('Something went wrong.', 'error');
+    });
+}
+</script>
 {% endblock %}

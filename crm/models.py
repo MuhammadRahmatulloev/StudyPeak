@@ -93,16 +93,14 @@ class WeeklyJournal(models.Model):
 class Grade(models.Model):
     student = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='grades')
     period = models.ForeignKey(CoursePeriod, on_delete=models.CASCADE, related_name='grades')
-    assignment = models.ForeignKey('assignments.AssignmentSubmission', on_delete=models.CASCADE, related_name='grades')
+    title = models.CharField(max_length=200, default='Grade')        
     score = models.PositiveIntegerField(default=0)
+    max_score = models.PositiveIntegerField(default=100)
     teacher_comment = models.TextField(null=True, blank=True)
     graded_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ('student', 'assignment')
-
     def __str__(self):
-        return f'{self.student.username} | {self.score} баллов'
+        return f'{self.student.username} | {self.title} | {self.score}/{self.max_score}'
 
 
 class Attendance(models.Model):
@@ -126,3 +124,17 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f'{self.student.username} | {self.date} [{self.status}]'
+    
+
+class StudentPeriodSummary(models.Model):
+    student = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='period_summaries')
+    period = models.ForeignKey(CoursePeriod, on_delete=models.CASCADE, related_name='student_summaries')
+    bonus_score = models.PositiveIntegerField(default=0)
+    exam_score = models.PositiveIntegerField(default=0)
+    comment = models.TextField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('student', 'period')
+
+    def __str__(self):
+        return f'{self.student.username} | {self.period.name} | exam: {self.exam_score}'

@@ -8,6 +8,10 @@ import random
 from .models import UserModel, Profile, Notification
 
 
+# ─────────────────────────────────────────
+#  HELPERS
+# ─────────────────────────────────────────
+
 def get_current_user(request):
     user_id = request.session.get('user_id')
     if not user_id:
@@ -35,6 +39,27 @@ def send_otp_email(email, otp, username='', subject='StudyPeak — Verification 
         fail_silently=False,
     )
 
+
+# ─────────────────────────────────────────
+#  MIXIN — замена Django's LoginRequiredMixin для сессионной авторизации
+# ─────────────────────────────────────────
+
+class SessionLoginRequiredMixin:
+    """
+    Используй как первый базовый класс для CBV:
+        class MyView(SessionLoginRequiredMixin, View): ...
+    """
+    def dispatch(self, request, *args, **kwargs):
+        user = get_current_user(request)
+        if not user:
+            messages.error(request, 'Please login first!')
+            return redirect('login')
+        return super().dispatch(request, *args, **kwargs)
+
+
+# ─────────────────────────────────────────
+#  AUTH VIEWS
+# ─────────────────────────────────────────
 
 def register_view(request):
     if request.method == 'POST':
@@ -229,13 +254,38 @@ def reset_new_password_view(request):
     return render(request, 'accounts/reset_confirm.html')
 
 
-class ProfileView(View):
+# ─────────────────────────────────────────
+#  NOTIFICATION VIEW
+# ─────────────────────────────────────────
+
+class NotificationListView(SessionLoginRequiredMixin, View):
     def get(self, request):
         user = get_current_user(request)
-        if not user:
-            messages.error(request, 'Please login first!')
-            return redirect('login')
+        notifications = user.notifications.all().order_by('-created_at')
+        notifications.filter(is_read=False).update(is_read=True)
 
+        from chat.models import Friendship, GroupInvitation
+        friend_requests = Friendship.objects.filter(
+            receiver=user, status=Friendship.PENDING
+        ).order_by('-id')
+        group_invitations = GroupInvitation.objects.filter(
+            receiver=user, status=GroupInvitation.PENDING
+        ).order_by('-id')
+
+        return render(request, 'accounts/notifications.html', {
+            'notifications': notifications,
+            'friend_requests': friend_requests,
+            'group_invitations': group_invitations,
+        })
+
+
+# ─────────────────────────────────────────
+#  PROFILE VIEWS
+# ─────────────────────────────────────────
+
+class ProfileView(SessionLoginRequiredMixin, View):
+    def get(self, request):
+        user = get_current_user(request)
         profile = Profile.objects.filter(user=user).first()
         notifications = Notification.objects.filter(user=user).order_by('-created_at')[:20]
 
@@ -246,11 +296,9 @@ class ProfileView(View):
         })
 
 
-class ProfileUpdateView(View):
+class ProfileUpdateView(SessionLoginRequiredMixin, View):
     def get(self, request):
         user = get_current_user(request)
-        if not user:
-            return redirect('login')
         profile = Profile.objects.filter(user=user).first()
         return render(request, 'accounts/profile_update.html', {
             'user': user,
@@ -259,9 +307,6 @@ class ProfileUpdateView(View):
 
     def post(self, request):
         user = get_current_user(request)
-        if not user:
-            return redirect('login')
-
         profile = Profile.objects.filter(user=user).first()
 
         user.first_name = request.POST.get('first_name', user.first_name).strip()
@@ -281,17 +326,13 @@ class ProfileUpdateView(View):
         return redirect('profile')
 
 
-class ChangePasswordView(View):
+class ChangePasswordView(SessionLoginRequiredMixin, View):
     def get(self, request):
         user = get_current_user(request)
-        if not user:
-            return redirect('login')
         return render(request, 'accounts/change_password.html')
 
     def post(self, request):
         user = get_current_user(request)
-        if not user:
-            return redirect('login')
 
         old = request.POST.get('old_password', '')
         new = request.POST.get('new_password', '')

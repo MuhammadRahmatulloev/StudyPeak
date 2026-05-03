@@ -11,7 +11,7 @@
 {% block content %}
 <div class="chat-page">
 
-    <!-- Sidebar -->
+    <!-- ── Sidebar ── -->
     <div class="chat-sidebar">
         <div class="chat-sidebar-header">
             <h2 class="chat-sidebar-title">Messages</h2>
@@ -20,96 +20,135 @@
             </a>
         </div>
 
-        <div class="conversation-list chat-sidebar-list">
-            {% for conv in conversations %}
-            {% for participant in conv.participants.all %}
-            {% if participant != user %}
-            <a href="{% url 'conversation_detail' conv.id %}"
-               class="conversation-item {% if conv == conversation %}conv-active{% endif %}">
-                <div class="conv-avatar conv-avatar-sm">
-                    {% if participant.profile.avatar %}
-                        <img src="{{ participant.profile.avatar.url }}" alt="{{ participant.username }}">
+        <div class="chat-sidebar-list">
+
+            {% for item in sidebar_groups %}
+            <a href="{% url 'group_detail' item.group.id %}" class="conversation-item">
+                <div class="conv-avatar conv-avatar-sm" style="border-radius: 10px;">
+                    {% if item.group.avatar %}
+                        <img src="{{ item.group.avatar.url }}" alt="{{ item.group.name }}" style="border-radius:10px;">
                     {% else %}
-                        <span>{{ participant.username|first|upper }}</span>
+                        <span>{{ item.group.name|first|upper }}</span>
                     {% endif %}
                 </div>
                 <div class="conv-info">
-                    <span class="conv-name">{{ participant.username }}</span>
-                    {% with last=conv.messages.last %}
-                    {% if last and not last.is_deleted %}
-                    <p class="conv-preview text-muted text-sm">{{ last.content|truncatechars:30 }}</p>
-                    {% endif %}
-                    {% endwith %}
+                    <div class="conv-top">
+                        <span class="conv-name">{{ item.group.name }}</span>
+                        {% if item.last_msg %}
+                        <span class="conv-time">{{ item.last_msg.created_at|date:"H:i" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="conv-bottom">
+                        <p class="conv-preview">
+                            {% if item.last_msg %}{{ item.last_msg.content|truncatechars:28 }}{% else %}No messages yet{% endif %}
+                        </p>
+                    </div>
                 </div>
             </a>
-            {% endif %}
             {% endfor %}
+
+            {% for item in sidebar_convs %}
+            <a href="{% url 'conversation_detail' item.conv.id %}"
+               class="conversation-item {% if item.conv == conversation %}conv-active{% endif %}">
+                <div class="conv-avatar conv-avatar-sm">
+                    {% if item.other.profile.avatar %}
+                        <img src="{{ item.other.profile.avatar.url }}" alt="{{ item.other.username }}">
+                    {% else %}
+                        <span>{{ item.other.username|first|upper }}</span>
+                    {% endif %}
+                    <span class="conv-status-dot conv-status-{{ item.other.profile.status|default:'offline' }}"></span>
+                </div>
+                <div class="conv-info">
+                    <div class="conv-top">
+                        <span class="conv-name">{{ item.other.username }}</span>
+                        {% if item.last_msg %}
+                        <span class="conv-time">{{ item.last_msg.created_at|date:"H:i" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="conv-bottom">
+                        <p class="conv-preview">
+                            {% if item.last_msg %}{{ item.last_msg.content|truncatechars:28 }}{% else %}No messages yet{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </a>
             {% endfor %}
+
         </div>
     </div>
 
-    <!-- Chat area -->
+    <!-- ── Chat Main ── -->
     <div class="chat-main">
 
-        <!-- Chat header -->
-        {% for participant in conversation.participants.all %}
-        {% if participant != user %}
+        <!-- Header -->
         <div class="chat-header">
             <div class="chat-header-user">
-                <div class="conv-avatar">
-                    {% if participant.profile.avatar %}
-                        <img src="{{ participant.profile.avatar.url }}" alt="{{ participant.username }}">
+                {% if other_user %}
+                <div class="conv-avatar conv-avatar-sm">
+                    {% if other_user.profile.avatar %}
+                        <img src="{{ other_user.profile.avatar.url }}" alt="{{ other_user.username }}">
                     {% else %}
-                        <span>{{ participant.username|first|upper }}</span>
+                        <span>{{ other_user.username|first|upper }}</span>
                     {% endif %}
-                    <span class="conv-status-dot conv-status-{{ participant.profile.status|default:'offline' }}"></span>
+                    <span class="conv-status-dot conv-status-{{ other_user.profile.status|default:'offline' }}"></span>
                 </div>
                 <div>
-                    <p class="chat-header-name">{{ participant.username }}</p>
-                    <p class="text-sm text-muted">{{ participant.profile.get_status_display|default:'Offline' }}</p>
+                    <p class="chat-header-name">{{ other_user.username }}</p>
+                    <p class="text-sm text-muted">{{ other_user.profile.get_status_display|default:'Offline' }}</p>
                 </div>
+                {% endif %}
             </div>
-            <form method="post" action="{% url 'start_conversation' participant.id %}">
-                {% csrf_token %}
-            </form>
         </div>
-        {% endif %}
-        {% endfor %}
 
         <!-- Messages -->
         <div class="chat-messages" id="chatMessages">
             {% if messages %}
                 {% for message in messages %}
-                <div class="chat-message {% if message.sender == user %}chat-message-own{% endif %}">
-                    {% if message.sender != user %}
-                    <div class="chat-msg-avatar">
+                <div class="tg-msg">
+
+                    <!-- Аватар -->
+                    <div class="tg-msg-avatar">
                         {% if message.sender.profile.avatar %}
                             <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.username }}">
                         {% else %}
                             <span>{{ message.sender.username|first|upper }}</span>
                         {% endif %}
                     </div>
-                    {% endif %}
-                    <div class="chat-msg-body">
-                        <div class="chat-msg-bubble">
-                            <p>{{ message.content }}</p>
-                        </div>
-                        <div class="chat-msg-meta">
-                            <span class="text-sm text-muted">{{ message.created_at|timesince }} ago</span>
-                            {% if message.sender == user %}
-                            <form method="post" action="{% url 'delete_message' message.id %}" class="chat-msg-action">
-                                {% csrf_token %}
-                                <button class="chat-msg-delete" title="Delete">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </form>
-                            {% endif %}
+
+                    <!-- Bubble -->
+                    <div class="tg-msg-body">
+                        <!-- Имя над сообщением -->
+                        <p class="tg-msg-sender {% if message.sender == user %}tg-msg-sender-own{% endif %}">
+                            {% if message.sender == user %}You{% else %}{{ message.sender.username }}{% endif %}
+                        </p>
+                        <div class="tg-msg-bubble {% if message.sender == user %}dm-msg-own{% endif %}">
+                            <p id="msg-text-{{ message.id }}">{{ message.content }}</p>
+                            <span class="tg-msg-time">{{ message.created_at|date:"H:i" }}</span>
                         </div>
                     </div>
+
+                    <!-- Кнопки edit/delete (только свои) -->
+                    {% if message.sender == user %}
+                    <div class="tg-msg-acts">
+                        <button class="tg-act-btn" title="Edit"
+                                data-edit-id="{{ message.id }}"
+                                data-edit-text="{{ message.content|escapejs }}">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <form method="post" action="{% url 'delete_message' message.id %}">
+                            {% csrf_token %}
+                            <button class="tg-act-btn tg-act-danger" title="Delete"
+                                    data-confirm="Delete this message?">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+
                 </div>
                 {% endfor %}
             {% else %}
-            <div class="chat-empty">
+            <div class="tg-empty">
                 <i class="fa-solid fa-comments"></i>
                 <p>Start the conversation!</p>
             </div>
@@ -128,7 +167,7 @@
                     id="chatInput"
                     required
                 ></textarea>
-                <button type="submit" class="btn btn-primary chat-send-btn">
+                <button type="submit" class="chat-send-btn">
                     <i class="fa-solid fa-paper-plane"></i>
                 </button>
             </form>
@@ -140,10 +179,10 @@
 
 {% block extra_js %}
 <script>
+const CSRF = '{{ csrf_token }}';
+
 const chatMessages = document.getElementById('chatMessages');
-if (chatMessages) {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
 
 const chatInput = document.getElementById('chatInput');
 if (chatInput) {
@@ -158,5 +197,32 @@ if (chatInput) {
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
     });
 }
+
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-confirm]');
+    if (btn) {
+        if (!confirm(btn.dataset.confirm)) e.preventDefault();
+    }
+});
+
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-edit-id]');
+    if (btn) {
+        const msgId   = btn.dataset.editId;
+        const current = btn.dataset.editText;
+        const newText = prompt('Edit message:', current);
+        if (newText && newText.trim() && newText.trim() !== current) {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = `/chat/messages/${msgId}/edit/`;
+            form.innerHTML = `
+                <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF}">
+                <input type="hidden" name="content" value="${newText.trim()}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+});
 </script>
 {% endblock %}

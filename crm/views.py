@@ -3,7 +3,7 @@ from django.views.generic import View
 from django.contrib import messages
 from accounts.permissions import SessionLoginRequiredMixin, TeacherRequiredMixin, AdminRequiredMixin, TeacherOrAdminRequiredMixin, get_current_user
 from accounts.models import UserModel
-from .models import Course, CoursePeriod, Enrollment, WeeklyJournal, Grade, Attendance
+from .models import Course, CoursePeriod, Enrollment, WeeklyJournal, Grade, Attendance, StudentPeriodSummary
 
 
 class CourseListView(SessionLoginRequiredMixin, View):
@@ -11,11 +11,21 @@ class CourseListView(SessionLoginRequiredMixin, View):
         user = get_current_user(request)
         if user.is_teacher:
             courses = Course.objects.filter(teacher=user)
+            available = None
         elif user.is_student:
-            courses = Course.objects.filter(enrollments__student=user, enrollments__status=Enrollment.APPROVED)
+            courses = Course.objects.filter(
+                enrollments__student=user,
+                enrollments__status=Enrollment.APPROVED
+            )
+            enrolled_ids = Enrollment.objects.filter(student=user).values_list('course_id', flat=True)
+            available = Course.objects.filter(is_active=True).exclude(id__in=enrolled_ids)
         else:
             courses = Course.objects.all()
-        return render(request, 'crm/course_list.html', {'courses': courses})
+            available = None
+        return render(request, 'crm/course_list.html', {
+            'courses': courses,
+            'available': available,
+        })
 
 
 class CourseCreateView(TeacherOrAdminRequiredMixin, View):
@@ -249,6 +259,8 @@ class CoursePeriodDeleteView(TeacherOrAdminRequiredMixin, View):
         return redirect('course_detail', course_id=course_id)
 
 
+JOURNAL_WEEKS = [1, 2, 3, 4]
+
 class WeeklyJournalView(TeacherOrAdminRequiredMixin, View):
     def get(self, request, period_id):
         user = get_current_user(request)
@@ -262,15 +274,23 @@ class WeeklyJournalView(TeacherOrAdminRequiredMixin, View):
             enrollments__course=period.course,
             enrollments__status=Enrollment.APPROVED
         )
-        week = request.GET.get('week', 1)
-        journals = WeeklyJournal.objects.filter(period=period, week_number=week)
-        journal_map = {j.student_id: j for j in journals}
+
+        journals = WeeklyJournal.objects.filter(period=period)
+        journal_map = {}
+        for j in journals:
+            if j.student_id not in journal_map:
+                journal_map[j.student_id] = {}
+            journal_map[j.student_id][j.week_number] = j
+
+        summaries = StudentPeriodSummary.objects.filter(period=period)
+        summary_map = {s.student_id: s for s in summaries}
 
         return render(request, 'crm/weekly_journal.html', {
             'period': period,
             'students': students,
-            'week': int(week),
             'journal_map': journal_map,
+            'summary_map': summary_map,
+            'weeks': JOURNAL_WEEKS,
         })
 
     def post(self, request, period_id):
@@ -281,7 +301,6 @@ class WeeklyJournalView(TeacherOrAdminRequiredMixin, View):
             messages.error(request, 'Access denied.')
             return redirect('course_list')
 
-        week = int(request.POST.get('week', 1))
         student_ids = request.POST.getlist('student_ids')
 
         for student_id in student_ids:
@@ -289,22 +308,29 @@ class WeeklyJournalView(TeacherOrAdminRequiredMixin, View):
             if not student:
                 continue
 
-            base_score = int(request.POST.get(f'base_{student_id}', 0))
-            bonus_score = int(request.POST.get(f'bonus_{student_id}', 0))
-            comment = request.POST.get(f'comment_{student_id}', '')
+            for week in JOURNAL_WEEKS:
+                score = int(request.POST.get(f'score_{student_id}_{week}') or 0)
+                comment = request.POST.get(f'comment_{student_id}_{week}', '')
 
-            journal, _ = WeeklyJournal.objects.get_or_create(
-                student=student,
-                period=period,
-                week_number=week,
+                journal, _ = WeeklyJournal.objects.get_or_create(
+                    student=student, period=period, week_number=week
+                )
+                journal.base_score = min(score, 100)
+                journal.teacher_comment = comment
+                journal.save()
+
+            bonus = int(request.POST.get(f'bonus_{student_id}') or 0)
+            exam = int(request.POST.get(f'exam_{student_id}') or 0)
+
+            summary, _ = StudentPeriodSummary.objects.get_or_create(
+                student=student, period=period
             )
-            journal.base_score = base_score
-            journal.bonus_score = bonus_score
-            journal.teacher_comment = comment
-            journal.save()
+            summary.bonus_score = min(bonus, 20)
+            summary.exam_score = min(exam, 100)
+            summary.save()
 
-        messages.success(request, f'Week {week} journal saved.')
-        return redirect(f'/crm/period/{period_id}/journal/?week={week}')
+        messages.success(request, 'Journal saved.')
+        return redirect('weekly_journal', period_id=period_id)
 
 
 class StudentJournalView(SessionLoginRequiredMixin, View):
@@ -336,25 +362,26 @@ class GradeListView(TeacherOrAdminRequiredMixin, View):
             messages.error(request, 'Access denied.')
             return redirect('course_list')
 
-        grades = Grade.objects.filter(period=period).select_related('student', 'assignment')
+        grades = Grade.objects.filter(period=period).select_related('student')
         return render(request, 'crm/grade_list.html', {'period': period, 'grades': grades})
 
 
 class GradeCreateView(TeacherOrAdminRequiredMixin, View):
     def get(self, request, period_id):
+        user = get_current_user(request)
         period = get_object_or_404(CoursePeriod, id=period_id)
+
+        if user.is_teacher and period.course.teacher != user:
+            messages.error(request, 'Access denied.')
+            return redirect('course_list')
+
         students = UserModel.objects.filter(
             enrollments__course=period.course,
             enrollments__status=Enrollment.APPROVED
         )
-        from assignments.models import AssignmentSubmission
-        submissions = AssignmentSubmission.objects.filter(
-            assignment__group__subjects__subject__course=period.course
-        )
         return render(request, 'crm/grade_create.html', {
             'period': period,
             'students': students,
-            'submissions': submissions,
         })
 
     def post(self, request, period_id):
@@ -365,27 +392,28 @@ class GradeCreateView(TeacherOrAdminRequiredMixin, View):
             messages.error(request, 'Access denied.')
             return redirect('course_list')
 
-        from assignments.models import AssignmentSubmission
         student_id = request.POST.get('student_id')
-        submission_id = request.POST.get('submission_id')
-        score = int(request.POST.get('score', 0))
+        title = request.POST.get('title', '').strip()
+        score = int(request.POST.get('score', 0) or 0)
+        max_score = int(request.POST.get('max_score', 100) or 100)
         comment = request.POST.get('teacher_comment', '')
 
-        student = get_object_or_404(UserModel, id=student_id)
-        submission = get_object_or_404(AssignmentSubmission, id=submission_id)
+        if not title:
+            messages.error(request, 'Title is required.')
+            return redirect('grade_create', period_id=period_id)
 
-        grade, created = Grade.objects.get_or_create(
+        student = get_object_or_404(UserModel, id=student_id)
+
+        Grade.objects.create(
             student=student,
-            assignment=submission,
-            defaults={'period': period, 'score': score, 'teacher_comment': comment}
+            period=period,
+            title=title,
+            score=score,
+            max_score=max_score,
+            teacher_comment=comment,
         )
 
-        if not created:
-            grade.score = score
-            grade.teacher_comment = comment
-            grade.save()
-
-        messages.success(request, 'Grade saved.')
+        messages.success(request, f'Grade "{title}" saved for {student.username}.')
         return redirect('grade_list', period_id=period_id)
 
 

@@ -639,3 +639,375 @@ a.progress-link:hover {
         font-size: 1.4rem;
     }
 }
+/* =============================================
+   DASHBOARD.CSS — StudyPeak
+   ============================================= */
+
+/* ─── Wrapper ─── */
+
+.dashboard-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ─── Header Card ─── */
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), rgba(79,142,247,0.3));
+}
+
+.dashboard-user {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.dashboard-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.dashboard-avatar-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.dashboard-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.dashboard-username {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.dashboard-role {
+    font-size: 12px;
+    color: var(--text-2);
+    text-transform: capitalize;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(79,142,247,0.2);
+    width: fit-content;
+}
+
+.dashboard-streak {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 999px;
+    padding: 8px 18px;
+}
+
+.streak-icon {
+    font-size: 18px;
+}
+
+.streak-count {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+/* ─── Stat Cards ─── */
+
+.dashboard-stats,
+.progress-stats,
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+.stat-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.stat-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.stat-card:hover::after {
+    opacity: 1;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+}
+
+/* ─── Dashboard Grid & Sections ─── */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.dashboard-section {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+/* ─── Activity List ─── */
+
+.activity-list,
+.lesson-view-list,
+.assignment-list,
+.enrollment-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.activity-item,
+.lesson-view-item,
+.assignment-item,
+.enrollment-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-3);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    transition: border-color 0.15s;
+}
+
+.activity-item:hover,
+.lesson-view-item:hover,
+.assignment-item:hover,
+.enrollment-item:hover {
+    border-color: var(--accent);
+}
+
+.activity-action {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 12px;
+    background: var(--accent-soft);
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.activity-desc {
+    color: var(--text);
+    flex: 1;
+    font-size: 13px;
+}
+
+.activity-date,
+.lesson-view-date,
+.assignment-deadline {
+    color: var(--text-2);
+    font-size: 11px;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+/* ─── Lesson View ─── */
+
+.lesson-view-item {
+    justify-content: space-between;
+}
+
+.lesson-view-link {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.lesson-view-link:hover {
+    color: var(--accent);
+}
+
+/* ─── Assignment ─── */
+
+.assignment-link {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    flex: 1;
+    transition: color 0.2s;
+}
+
+.assignment-link:hover {
+    color: var(--accent);
+}
+
+/* ─── Enrollment ─── */
+
+.enrollment-link {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+    transition: color 0.2s;
+}
+
+.enrollment-link:hover {
+    color: var(--accent);
+}
+
+.enrollment-teacher {
+    color: var(--text-2);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* ─── Empty state ─── */
+
+.empty-text {
+    color: var(--text-2);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px 0;
+    margin: 0;
+}
+
+/* ─── Actions row ─── */
+
+.dashboard-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 640px) {
+    .dashboard-wrapper {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .dashboard-header {
+        padding: 16px;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}

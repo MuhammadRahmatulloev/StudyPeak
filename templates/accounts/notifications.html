@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications — StudyPeak{% endblock %}
+
+{% block content %}
+<div class="container-md">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="fa-solid fa-bell"></i> Notifications
+      </h1>
+      <p class="page-subtitle">All your activity and requests</p>
+    </div>
+  </div>
+
+  {# ── FRIEND REQUESTS ── #}
+  {% if friend_requests %}
+  <div class="card mb-16">
+    <p class="card-title">
+      <i class="fa-solid fa-user-plus"></i> Friend Requests
+      <span class="badge badge-blue" style="margin-left: 6px;">{{ friend_requests.count }}</span>
+    </p>
+    {% for f in friend_requests %}
+    <div class="notif-row">
+      <div class="notif-icon stat-icon-blue">
+        <i class="fa-solid fa-user-plus"></i>
+      </div>
+      <div class="notif-body">
+        <p class="notif-text">
+          <strong>{{ f.sender.username }}</strong> sent you a friend request
+        </p>
+        <p class="notif-time">
+          <i class="fa-regular fa-clock"></i> {{ f.created_at|date:"d M Y, H:i" }}
+        </p>
+      </div>
+      <div class="notif-actions">
+        <form method="post" action="{% url 'accept_friend_request' f.id %}">
+          {% csrf_token %}
+          <button class="btn btn-success btn-sm">
+            <i class="fa-solid fa-check"></i> Accept
+          </button>
+        </form>
+        <form method="post" action="{% url 'reject_friend_request' f.id %}">
+          {% csrf_token %}
+          <button class="btn btn-danger btn-sm">
+            <i class="fa-solid fa-xmark"></i> Reject
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ── GROUP INVITATIONS ── #}
+  {% if group_invitations %}
+  <div class="card mb-16">
+    <p class="card-title">
+      <i class="fa-solid fa-users"></i> Group Invitations
+      <span class="badge badge-green" style="margin-left: 6px;">{{ group_invitations.count }}</span>
+    </p>
+    {% for inv in group_invitations %}
+    <div class="notif-row">
+      <div class="notif-icon stat-icon-green">
+        <i class="fa-solid fa-users"></i>
+      </div>
+      <div class="notif-body">
+        <p class="notif-text">
+          <strong>{{ inv.sender.username }}</strong> invited you to
+          <strong>{{ inv.group.name }}</strong>
+        </p>
+        <p class="notif-time">
+          <i class="fa-regular fa-clock"></i> {{ inv.created_at|date:"d M Y, H:i" }}
+        </p>
+      </div>
+      <div class="notif-actions">
+        <form method="post" action="{% url 'accept_group_invitation' inv.id %}">
+          {% csrf_token %}
+          <button class="btn btn-success btn-sm">
+            <i class="fa-solid fa-check"></i> Join
+          </button>
+        </form>
+        <form method="post" action="{% url 'reject_group_invitation' inv.id %}">
+          {% csrf_token %}
+          <button class="btn btn-danger btn-sm">
+            <i class="fa-solid fa-xmark"></i> Decline
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ── SYSTEM NOTIFICATIONS ── #}
+  {% if notifications %}
+  <div class="card">
+    <p class="card-title">
+      <i class="fa-solid fa-bell"></i> System Notifications
+    </p>
+    {% for notif in notifications %}
+    <div class="notif-row {% if not notif.is_read %}notif-unread{% endif %}">
+
+      {# Иконка зависит от типа уведомления #}
+      {% if notif.type == 'enrollment_approved' %}
+        <div class="notif-icon stat-icon-green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+      {% elif notif.type == 'enrollment_rejected' %}
+        <div class="notif-icon stat-icon-red">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+      {% elif notif.type == 'enrollment_request' %}
+        <div class="notif-icon stat-icon-yellow">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+      {% elif notif.type == 'enrollment_invite' %}
+        <div class="notif-icon stat-icon-blue">
+          <i class="fa-solid fa-envelope-open-text"></i>
+        </div>
+      {% else %}
+        <div class="notif-icon stat-icon-blue">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+      {% endif %}
+
+      <div class="notif-body">
+        <p class="notif-text">{{ notif.message }}</p>
+        <p class="notif-time">
+          <i class="fa-regular fa-clock"></i> {{ notif.created_at|date:"d M Y, H:i" }}
+        </p>
+      </div>
+
+      {% if not notif.is_read %}
+      <span class="badge badge-blue">New</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ── EMPTY STATE ── #}
+  {% if not notifications and not friend_requests and not group_invitations %}
+  <div class="empty-state">
+    <i class="fa-solid fa-bell-slash"></i>
+    <p>No notifications yet</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

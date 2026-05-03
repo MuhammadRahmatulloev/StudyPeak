@@ -43,7 +43,7 @@
                 <div>
                     <p class="stat-value">
                         {% with cnt=0 %}
-                        {% for r in records %}{% if r.status == 'present' %}{% endfor %}
+                        {% for r in records %}{% if r.status == 'present' %}{% with cnt=cnt|add:1 %}{% endwith %}{% endif %}{% endfor %}
                         —
                         {% endwith %}
                     </p>

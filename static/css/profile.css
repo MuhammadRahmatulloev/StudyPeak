@@ -1,0 +1,1184 @@
+/* ═══════════════════════════════════════════
+   STUDYPEAK — profile.css
+   Profile view & Profile update
+   Covers: profile.html, profile_update.html
+═══════════════════════════════════════════ */
+
+
+/* ─────────────────────────────────────────
+   PROFILE PAGE WRAPPER
+───────────────────────────────────────── */
+.profile-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+
+/* ─────────────────────────────────────────
+   PROFILE TOP CARD
+───────────────────────────────────────── */
+.profile-top {
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+
+/* ─────────────────────────────────────────
+   PROFILE COVER
+───────────────────────────────────────── */
+.profile-cover {
+    width: 100%;
+    height: 140px;
+    background: linear-gradient(
+        135deg,
+        rgba(79, 142, 247, 0.18) 0%,
+        rgba(52, 211, 153, 0.08) 50%,
+        rgba(251, 191, 36, 0.06) 100%
+    );
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.profile-cover::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    pointer-events: none;
+}
+
+.profile-cover::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: 20%;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(52, 211, 153, 0.06);
+    pointer-events: none;
+}
+
+.profile-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 40%,
+        rgba(13, 15, 20, 0.45) 100%
+    );
+}
+
+[data-theme="light"] .profile-cover-overlay {
+    background: linear-gradient(
+        to bottom,
+        transparent 40%,
+        rgba(240, 242, 248, 0.5) 100%
+    );
+}
+
+
+/* ─────────────────────────────────────────
+   PROFILE HEADER — avatar + info + actions
+───────────────────────────────────────── */
+.profile-header {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    padding: 0 28px 24px;
+    margin-top: -52px;
+    position: relative;
+    z-index: 2;
+    flex-wrap: wrap;
+}
+
+
+/* ─────────────────────────────────────────
+   PROFILE AVATAR
+───────────────────────────────────────── */
+.profile-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    border: 3px solid var(--bg-2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.profile-avatar:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+.profile-avatar-placeholder {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+    border: 3px solid var(--bg-2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    transition: transform var(--transition);
+}
+
+.profile-avatar-placeholder:hover {
+    transform: scale(1.03);
+}
+
+/* Status indicator dot on avatar */
+.profile-status-dot {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2.5px solid var(--bg-2);
+    transition: transform var(--transition);
+    z-index: 1;
+}
+
+.profile-avatar-wrap:hover .profile-status-dot {
+    transform: scale(1.1);
+}
+
+.profile-status-active  { background: var(--success); }
+.profile-status-busy    { background: var(--danger);  }
+.profile-status-away    { background: var(--warning); }
+.profile-status-offline { background: var(--text-3);  }
+
+
+/* ─────────────────────────────────────────
+   PROFILE INFO
+───────────────────────────────────────── */
+.profile-info {
+    flex: 1;
+    min-width: 0;
+    padding-top: 52px;
+}
+
+.profile-name-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.profile-name {
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-username {
+    font-size: 0.875rem;
+    color: var(--text-3);
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+/* Inline status label under username */
+.profile-status-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+.profile-status-dot-inline {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.profile-status-active  .profile-status-dot-inline,
+.profile-status-label.profile-status-active  .profile-status-dot-inline { background: var(--success); }
+.profile-status-busy    .profile-status-dot-inline,
+.profile-status-label.profile-status-busy    .profile-status-dot-inline { background: var(--danger);  }
+.profile-status-away    .profile-status-dot-inline,
+.profile-status-label.profile-status-away    .profile-status-dot-inline { background: var(--warning); }
+.profile-status-offline .profile-status-dot-inline,
+.profile-status-label.profile-status-offline .profile-status-dot-inline { background: var(--text-3);  }
+
+.profile-status-label.profile-status-active  { color: var(--success); }
+.profile-status-label.profile-status-busy    { color: var(--danger);  }
+.profile-status-label.profile-status-away    { color: var(--warning); }
+.profile-status-label.profile-status-offline { color: var(--text-3);  }
+
+
+/* ─────────────────────────────────────────
+   PROFILE ACTIONS (top-right buttons)
+───────────────────────────────────────── */
+.profile-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding-top: 52px;
+    flex-wrap: wrap;
+}
+
+
+/* ─────────────────────────────────────────
+   POST TEXT (instagram-style status)
+───────────────────────────────────────── */
+.profile-post-text {
+    margin: 0 28px 20px;
+    padding: 16px 20px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    position: relative;
+    transition: border-color var(--transition);
+}
+
+.profile-post-text:hover {
+    border-color: var(--border-2);
+}
+
+.profile-quote-icon {
+    color: var(--accent);
+    font-size: 0.9rem;
+    opacity: 0.5;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.profile-post-text p {
+    font-size: 0.9rem;
+    color: var(--text-2);
+    line-height: 1.65;
+    font-style: italic;
+    word-break: break-word;
+}
+
+
+/* ─────────────────────────────────────────
+   PROFILE STATS ROW
+───────────────────────────────────────── */
+.profile-stats-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 28px 20px;
+    border-top: 1px solid var(--border);
+    gap: 0;
+    flex-wrap: wrap;
+}
+
+.profile-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 100px;
+    padding: 8px 12px;
+    transition: background var(--transition);
+    border-radius: var(--radius);
+    cursor: default;
+}
+
+.profile-stat-item:hover {
+    background: var(--bg-3);
+}
+
+.profile-stat-value {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.2;
+}
+
+.profile-stat-value i {
+    font-size: 0.9rem;
+    color: var(--warning);
+}
+
+.profile-stat-label {
+    font-size: 0.72rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+
+.profile-stat-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border);
+    flex-shrink: 0;
+    margin: 0 4px;
+}
+
+
+/* ─────────────────────────────────────────
+   PROFILE BODY — two-column grid
+───────────────────────────────────────── */
+.profile-body {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.profile-left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: calc(var(--nav-h) + 24px);
+}
+
+.profile-right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+
+/* ─────────────────────────────────────────
+   PROFILE DETAIL LIST (About section)
+───────────────────────────────────────── */
+.profile-detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border);
+    transition: background var(--transition);
+    border-radius: var(--radius);
+}
+
+.profile-detail-item:last-child {
+    border-bottom: none;
+    padding-bottom: 4px;
+}
+
+.profile-detail-item:hover {
+    background: var(--bg-3);
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: -6px;
+    margin-right: -6px;
+}
+
+.profile-detail-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: var(--text-3);
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all var(--transition);
+}
+
+.profile-detail-item:hover .profile-detail-icon {
+    background: var(--accent-soft);
+    border-color: rgba(79, 142, 247, 0.3);
+    color: var(--accent);
+}
+
+.profile-detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-detail-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.profile-detail-value {
+    font-size: 0.875rem;
+    color: var(--text);
+    font-weight: 500;
+    word-break: break-word;
+    line-height: 1.5;
+}
+
+.profile-detail-bio .profile-detail-value {
+    line-height: 1.65;
+    color: var(--text-2);
+}
+
+
+/* ─────────────────────────────────────────
+   PROFILE QUICK LINKS
+───────────────────────────────────────── */
+.profile-quick-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-quick-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: all var(--transition);
+    color: var(--text-2);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+
+.profile-quick-link i:first-child {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: var(--text-3);
+    flex-shrink: 0;
+    transition: all var(--transition);
+}
+
+.profile-quick-link:hover {
+    background: var(--bg-3);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.profile-quick-link:hover i:first-child {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.profile-quick-link span {
+    flex: 1;
+}
+
+.profile-quick-arrow {
+    font-size: 0.7rem;
+    color: var(--text-3);
+    transition: transform var(--transition), color var(--transition);
+    flex-shrink: 0;
+}
+
+.profile-quick-link:hover .profile-quick-arrow {
+    transform: translateX(3px);
+    color: var(--accent);
+}
+
+
+/* ─────────────────────────────────────────
+   NOTIFICATION LIST (profile right column)
+───────────────────────────────────────── */
+.notif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: all var(--transition);
+    position: relative;
+}
+
+.notif-item:hover {
+    border-color: var(--border-2);
+    transform: translateX(2px);
+}
+
+.notif-item-unread {
+    background: var(--accent-soft);
+    border-color: rgba(79, 142, 247, 0.2);
+}
+
+.notif-item-unread:hover {
+    border-color: var(--accent);
+}
+
+/* Notification type icon */
+.notif-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    border: 1px solid;
+}
+
+.notif-icon-success {
+    background: var(--success-soft);
+    color: var(--success);
+    border-color: rgba(52, 211, 153, 0.25);
+}
+
+.notif-icon-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: rgba(248, 113, 113, 0.25);
+}
+
+.notif-icon-accent {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: rgba(79, 142, 247, 0.25);
+}
+
+.notif-icon-default {
+    background: var(--bg-4);
+    color: var(--text-2);
+    border-color: var(--border);
+}
+
+/* Notification body */
+.notif-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-message {
+    font-size: 0.875rem;
+    color: var(--text);
+    line-height: 1.5;
+    word-break: break-word;
+    font-weight: 500;
+}
+
+.notif-item-unread .notif-message {
+    font-weight: 600;
+}
+
+.notif-time {
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--text-3);
+}
+
+/* Mark as read button */
+.notif-read-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all var(--transition);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.notif-read-btn:hover {
+    background: var(--success-soft);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+
+/* ─────────────────────────────────────────
+   PROFILE UPDATE — grid layout
+───────────────────────────────────────── */
+.profile-update-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.profile-update-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.profile-update-left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: calc(var(--nav-h) + 24px);
+}
+
+.profile-update-right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+
+/* ─────────────────────────────────────────
+   AVATAR PREVIEW (update page)
+───────────────────────────────────────── */
+.avatar-preview-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.avatar-preview {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent);
+    box-shadow: 0 4px 20px var(--accent-glow);
+    display: block;
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.avatar-preview:hover {
+    transform: scale(1.04);
+    box-shadow: 0 6px 28px var(--accent-glow);
+}
+
+.avatar-preview-placeholder {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+    border: 3px solid var(--accent);
+    box-shadow: 0 4px 20px var(--accent-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    transition: transform var(--transition);
+}
+
+.avatar-preview-placeholder:hover {
+    transform: scale(1.04);
+}
+
+#avatarLetter {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+.avatar-upload-hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-3);
+    margin-top: 6px;
+}
+
+/* Avatar upload button — extends main.css .avatar-upload-btn */
+.avatar-upload-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+}
+
+
+/* ─────────────────────────────────────────
+   STATUS SELECTOR (update page)
+───────────────────────────────────────── */
+.status-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.status-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 0.875rem;
+    color: var(--text-2);
+    font-weight: 500;
+    user-select: none;
+}
+
+.status-option:hover {
+    border-color: var(--border-2);
+    color: var(--text);
+    background: var(--bg-4);
+}
+
+.status-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--text);
+}
+
+/* Status dots inside selector */
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-dot-active  { background: var(--success); }
+.status-dot-busy    { background: var(--danger);  }
+.status-dot-away    { background: var(--warning); }
+.status-dot-offline { background: var(--text-3);  }
+
+/* Per-option selected border colors */
+.status-option-active.selected  {
+    border-color: var(--success);
+    background: var(--success-soft);
+}
+
+.status-option-busy.selected {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+}
+
+.status-option-away.selected {
+    border-color: var(--warning);
+    background: var(--warning-soft);
+}
+
+.status-option-offline.selected {
+    border-color: var(--text-3);
+    background: var(--bg-4);
+}
+
+
+/* ─────────────────────────────────────────
+   FORM LABEL BADGE (e.g. "Instagram-style")
+───────────────────────────────────────── */
+.form-label-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    background: var(--warning-soft);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--warning);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+
+/* ─────────────────────────────────────────
+   CHAR COUNT (post_text textarea)
+───────────────────────────────────────── */
+.text-danger {
+    color: var(--danger) !important;
+}
+
+
+/* ─────────────────────────────────────────
+   LIGHT THEME OVERRIDES
+───────────────────────────────────────── */
+[data-theme="light"] .profile-cover {
+    background: linear-gradient(
+        135deg,
+        rgba(37, 99, 235, 0.12) 0%,
+        rgba(52, 211, 153, 0.07) 50%,
+        rgba(251, 191, 36, 0.05) 100%
+    );
+}
+
+[data-theme="light"] .profile-cover::before {
+    background: rgba(37, 99, 235, 0.08);
+}
+
+[data-theme="light"] .profile-avatar,
+[data-theme="light"] .profile-avatar-placeholder {
+    border-color: #ffffff;
+}
+
+[data-theme="light"] .notif-item-unread {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.18);
+}
+
+[data-theme="light"] .profile-post-text {
+    background: #f5f7fd;
+    border-color: var(--border);
+}
+
+[data-theme="light"] .avatar-preview-placeholder {
+    border-color: var(--accent);
+}
+
+[data-theme="light"] .avatar-preview {
+    border-color: var(--accent);
+}
+
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
+
+/* 1100px — compress sidebar */
+@media (max-width: 1100px) {
+    .profile-body {
+        grid-template-columns: 300px 1fr;
+    }
+
+    .profile-update-grid {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+/* 900px — stack to single column */
+@media (max-width: 900px) {
+    .profile-body {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-left {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .profile-update-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-update-left {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .profile-cover {
+        height: 120px;
+    }
+}
+
+/* 768px — compact stats row */
+@media (max-width: 768px) {
+    .profile-header {
+        gap: 14px;
+        padding: 0 20px 20px;
+        margin-top: -44px;
+    }
+
+    .profile-avatar,
+    .profile-avatar-placeholder {
+        width: 80px;
+        height: 80px;
+    }
+
+    .profile-name {
+        font-size: 1.3rem;
+    }
+
+    .profile-stats-row {
+        padding: 14px 20px 16px;
+        gap: 0;
+    }
+
+    .profile-stat-item {
+        min-width: 80px;
+    }
+
+    .profile-post-text {
+        margin: 0 20px 16px;
+    }
+
+    .profile-left {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-update-left {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-actions {
+        width: 100%;
+        padding-top: 12px;
+        justify-content: flex-start;
+    }
+
+    .avatar-preview,
+    .avatar-preview-placeholder {
+        width: 90px;
+        height: 90px;
+    }
+}
+
+/* 560px — mobile adjustments */
+@media (max-width: 560px) {
+    .profile-header {
+        flex-direction: row;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 0 16px 18px;
+        margin-top: -40px;
+    }
+
+    .profile-info {
+        padding-top: 44px;
+    }
+
+    .profile-actions {
+        padding-top: 0;
+        width: 100%;
+    }
+
+    .profile-name {
+        font-size: 1.15rem;
+    }
+
+    .profile-stats-row {
+        padding: 12px 16px 14px;
+        flex-wrap: wrap;
+        row-gap: 8px;
+    }
+
+    .profile-stat-divider {
+        display: none;
+    }
+
+    .profile-stat-item {
+        min-width: 80px;
+        flex: unset;
+    }
+
+    .profile-post-text {
+        margin: 0 16px 14px;
+        padding: 12px 14px;
+    }
+
+    .profile-quick-link {
+        padding: 10px 10px;
+    }
+
+    .notif-item {
+        padding: 12px 14px;
+    }
+
+    .status-options {
+        gap: 5px;
+    }
+
+    .status-option {
+        padding: 9px 12px;
+        font-size: 0.82rem;
+    }
+}
+
+/* 480px — smallest screens */
+@media (max-width: 480px) {
+    .profile-cover {
+        height: 100px;
+    }
+
+    .profile-avatar,
+    .profile-avatar-placeholder {
+        width: 72px;
+        height: 72px;
+    }
+
+    .profile-avatar-placeholder {
+        font-size: 1.6rem;
+    }
+
+    .profile-name-row {
+        gap: 6px;
+    }
+
+    .profile-name {
+        font-size: 1.05rem;
+    }
+
+    .profile-detail-item:hover {
+        padding-left: 4px;
+        padding-right: 4px;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .avatar-preview,
+    .avatar-preview-placeholder {
+        width: 80px;
+        height: 80px;
+    }
+
+    #avatarLetter {
+        font-size: 1.8rem;
+    }
+
+    .profile-quick-links {
+        gap: 1px;
+    }
+
+    .form-label-badge {
+        display: none;
+    }
+}
+
+
+/* ─── Точка статуса на аватарке ─────────────────────────── */
+.profile-status-dot {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2.5px solid var(--bg-2);
+    transition: transform 0.2s;
+    z-index: 1;
+}
+
+.profile-avatar-wrap:hover .profile-status-dot {
+    transform: scale(1.1);
+}
+
+/* Цвета точки на аватарке */
+.profile-status-active  { background: var(--success); }
+.profile-status-busy    { background: var(--danger);  }
+.profile-status-away    { background: #f59e0b;        }
+.profile-status-offline { background: #64748b;        }
+
+
+/* ─── Бейдж статуса под именем (было: сырой цветной блок) ── */
+.profile-status-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 6px;
+    padding: 3px 10px 3px 8px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    width: fit-content;
+}
+
+/* Маленькая точка внутри бейджа */
+.profile-status-dot-inline {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Active / Online */
+.profile-status-label.profile-status-active {
+    color: var(--success);
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.25);
+}
+.profile-status-label.profile-status-active .profile-status-dot-inline {
+    background: var(--success);
+}
+
+/* Busy */
+.profile-status-label.profile-status-busy {
+    color: var(--danger);
+    background: rgba(248, 113, 113, 0.12);
+    border-color: rgba(248, 113, 113, 0.25);
+}
+.profile-status-label.profile-status-busy .profile-status-dot-inline {
+    background: var(--danger);
+}
+
+/* Away */
+.profile-status-label.profile-status-away {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.25);
+}
+.profile-status-label.profile-status-away .profile-status-dot-inline {
+    background: #f59e0b;
+}
+
+/* Offline — был невидим (#555b6e), теперь читаемый */
+.profile-status-label.profile-status-offline {
+    color: #94a3b8;
+    background: rgba(100, 116, 139, 0.12);
+    border-color: rgba(100, 116, 139, 0.25);
+}
+.profile-status-label.profile-status-offline .profile-status-dot-inline {
+    background: #64748b;
+}

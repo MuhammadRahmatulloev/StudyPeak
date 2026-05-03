@@ -1,152 +1,452 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static crm_extras %}
 
-{% block title %}Weekly Journal — StudyPeak{% endblock %}
+{% block title %}Journal — {{ period.course.name }}{% endblock %}
 {% block nav_crm %}active{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/crm.css' %}">
+<style>
+.journal-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--bg-2);
+}
+
+.journal-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 860px;
+}
+
+.journal-table th,
+.journal-table td {
+    border: 1px solid var(--border);
+    padding: 0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.journal-table th {
+    background: var(--bg-3);
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.th-week-group {
+    background: var(--bg-3);
+    border-bottom: 2px solid var(--border-2);
+    font-size: 0.82rem;
+    color: var(--text);
+    padding: 10px 16px;
+}
+
+.th-eop-group {
+    background: rgba(99,102,241,0.08);
+    border-bottom: 2px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.82rem;
+    padding: 10px 16px;
+}
+
+.th-student {
+    text-align: left;
+    min-width: 200px;
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: var(--bg-3);
+    padding: 10px 16px;
+}
+
+.td-student {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--bg-2);
+    padding: 10px 14px;
+    min-width: 200px;
+}
+
+.journal-table tbody tr:hover .td-student,
+.journal-table tbody tr:hover td {
+    background: var(--bg-3);
+}
+
+.td-score { padding: 8px 10px; }
+.td-cmt   { padding: 4px 6px; width: 36px; }
+.td-eop   { padding: 8px 10px; background: rgba(99,102,241,0.03); }
+.td-sum   { padding: 8px 12px; background: rgba(99,102,241,0.06); }
+
+.student-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.s-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; overflow: hidden;
+}
+
+.s-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.s-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.score-inp {
+    width: 58px;
+    text-align: center;
+    padding: 5px 6px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    transition: border-color var(--transition);
+}
+
+.score-inp:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.cmt-btn {
+    width: 28px; height: 28px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-3);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+    transition: all var(--transition);
+}
+
+.cmt-btn:hover, .cmt-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.sum-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 46px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    font-family: var(--font-display);
+}
+
+.sum-green  { background: var(--success-soft); color: var(--success); }
+.sum-blue   { background: var(--accent-soft);  color: var(--accent); }
+.sum-yellow { background: var(--warning-soft); color: var(--warning); }
+.sum-red    { background: var(--danger-soft);  color: var(--danger); }
+
+/* Modal */
+.cmt-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+}
+
+.cmt-box {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: 100%; max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    overflow: hidden;
+}
+
+.cmt-box-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cmt-box-title {
+    font-size: 0.95rem; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+}
+
+.cmt-close {
+    width: 30px; height: 30px;
+    border: none; background: none; cursor: pointer;
+    color: var(--text-3); border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--transition);
+}
+
+.cmt-close:hover { background: var(--bg-3); color: var(--text); }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" style="max-width:100%; padding:0 24px;">
 
     <div class="page-header">
         <div>
-            <h1 class="page-title">Weekly Journal</h1>
-            <p class="page-subtitle">{{ period.name }} — {{ period.course.name }}</p>
+            <h1 class="page-title">Journal</h1>
+            <p class="page-subtitle">{{ period.course.name }} — {{ period.name }}</p>
         </div>
         <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
             <i class="fa-solid fa-arrow-left"></i> Back
         </a>
     </div>
 
-    <!-- Week selector -->
-    <div class="card mb-16">
-        <form method="get" class="week-selector-form">
-            <div class="flex gap-12" style="align-items:flex-end">
-                <div class="form-group" style="margin-bottom:0; flex:1">
-                    <label class="form-label">Week Number</label>
-                    <input
-                        type="number"
-                        name="week"
-                        class="form-input"
-                        value="{{ week }}"
-                        min="1"
-                        placeholder="e.g. 1"
-                    >
-                </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fa-solid fa-magnifying-glass"></i> Load Week
-                </button>
-            </div>
-        </form>
-    </div>
+    {% if students %}
+    <form method="post" id="jform">
+        {% csrf_token %}
 
-    <!-- Journal table -->
-    <div class="card">
-        <div class="card-title">
-            <i class="fa-solid fa-book-open"></i> Week {{ week }} — Scores
-        </div>
-
-        {% if students %}
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="week" value="{{ week }}">
-
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>Base Score <span class="text-muted">(0–100)</span></th>
-                            <th>Bonus <span class="text-muted">(0–10)</span></th>
-                            <th>Total</th>
-                            <th>Comment</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for student in students %}
-                        {% with j=journal_map|default:'' %}
-                        <input type="hidden" name="student_ids" value="{{ student.id }}">
-                        <tr>
-                            <td>
-                                <div class="journal-student">
-                                    <div class="journal-student-avatar">
-                                        {% if student.profile.avatar %}
-                                            <img src="{{ student.profile.avatar.url }}" alt="{{ student.username }}">
-                                        {% else %}
-                                            <span>{{ student.username|first|upper }}</span>
-                                        {% endif %}
-                                    </div>
-                                    <span>{{ student.username }}</span>
+        <div class="journal-wrap">
+            <table class="journal-table">
+                <thead>
+                    <tr>
+                        <th class="th-student" rowspan="2">STUDENTS</th>
+                        {% for week in weeks %}
+                        <th class="th-week-group" colspan="2">Week {{ week }}</th>
+                        {% endfor %}
+                        <th class="th-eop-group" colspan="3">END OF PERIOD</th>
+                    </tr>
+                    <tr>
+                        {% for week in weeks %}
+                        <th>Score</th>
+                        <th style="font-size:0.7rem;opacity:.6;">Cmt</th>
+                        {% endfor %}
+                        <th>Bonus</th>
+                        <th>Exam</th>
+                        <th>Sum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    {% with sid=student.id %}
+                    {% with s_weeks=journal_map|get_item:sid %}
+                    {% with s_summary=summary_map|get_item:sid %}
+                    <tr>
+                        <td class="td-student">
+                            <div class="student-cell">
+                                <div class="s-avatar">
+                                    {% if student.profile.avatar %}
+                                        <img src="{{ student.profile.avatar.url }}" alt="">
+                                    {% else %}{{ student.username|first|upper }}{% endif %}
                                 </div>
-                            </td>
-                            <td>
-                                <input
-                                    type="number"
-                                    name="base_{{ student.id }}"
-                                    class="form-input journal-score-input"
-                                    value="{% if journal_map %}{% if student.id in journal_map %}{{ journal_map|default:''}}{% endif %}{% endif %}0"
-                                    min="0"
-                                    max="100"
-                                >
-                            </td>
-                            <td>
-                                <input
-                                    type="number"
-                                    name="bonus_{{ student.id }}"
-                                    class="form-input journal-score-input"
-                                    value="0"
-                                    min="0"
-                                    max="10"
-                                >
-                            </td>
-                            <td>
-                                <span class="badge badge-blue journal-total">—</span>
-                            </td>
-                            <td>
-                                <input
-                                    type="text"
-                                    name="comment_{{ student.id }}"
-                                    class="form-input"
-                                    placeholder="Optional..."
-                                >
-                            </td>
-                        </tr>
+                                <span class="s-name">{{ forloop.counter }}. {{ student.username }}</span>
+                            </div>
+                            <input type="hidden" name="student_ids" value="{{ sid }}">
+                        </td>
+
+                        {% for week in weeks %}
+                        {% with week_entry=s_weeks|get_item:week %}
+                        <td class="td-score">
+                            <input
+                                type="number"
+                                name="score_{{ sid }}_{{ week }}"
+                                class="score-inp"
+                                value="{{ week_entry.base_score|default:0 }}"
+                                min="0" max="100"
+                                data-sid="{{ sid }}"
+                            >
+                        </td>
+                        <td class="td-cmt">
+                            <button
+                                type="button"
+                                class="cmt-btn {% if week_entry.teacher_comment %}active{% endif %}"
+                                data-sid="{{ sid }}"
+                                data-week="{{ week }}"
+                                data-comment="{{ week_entry.teacher_comment|default:''|escapejs }}"
+                                onclick="openCmt(this)"
+                                title="Comment for Week {{ week }}"
+                            >
+                                <i class="fa-solid fa-comment-dots"></i>
+                            </button>
+                            <input type="hidden"
+                                id="ch-{{ sid }}-{{ week }}"
+                                name="comment_{{ sid }}_{{ week }}"
+                                value="{{ week_entry.teacher_comment|default:'' }}"
+                            >
+                        </td>
                         {% endwith %}
                         {% endfor %}
-                    </tbody>
-                </table>
-            </div>
 
-            <div class="form-actions mt-16">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fa-solid fa-floppy-disk"></i> Save Week {{ week }}
-                </button>
-            </div>
-        </form>
-        {% else %}
+                        <!-- Bonus -->
+                        <td class="td-eop">
+                            <input
+                                type="number"
+                                name="bonus_{{ sid }}"
+                                class="score-inp"
+                                value="{{ s_summary.bonus_score|default:0 }}"
+                                min="0" max="20"
+                                data-sid="{{ sid }}"
+                                style="width:52px;"
+                            >
+                        </td>
+
+                        <!-- Exam -->
+                        <td class="td-eop">
+                            <input
+                                type="number"
+                                name="exam_{{ sid }}"
+                                class="score-inp"
+                                value="{{ s_summary.exam_score|default:0 }}"
+                                min="0" max="100"
+                                data-sid="{{ sid }}"
+                            >
+                        </td>
+
+                        <!-- Sum -->
+                        <td class="td-sum">
+                            <span class="sum-badge" id="sum-{{ sid }}">—</span>
+                        </td>
+                    </tr>
+                    {% endwith %}{% endwith %}{% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-floppy-disk"></i> Save Journal
+            </button>
+        </div>
+    </form>
+
+    {% else %}
+    <div class="card">
         <div class="empty-state">
             <i class="fa-solid fa-users-slash"></i>
             <p>No students enrolled in this course</p>
         </div>
-        {% endif %}
     </div>
+    {% endif %}
 
+</div>
+
+<!-- Comment Modal -->
+<div class="cmt-overlay" id="cmt-modal" style="display:none;" onclick="if(event.target===this)closeCmt()">
+    <div class="cmt-box">
+        <div class="cmt-box-header">
+            <div class="cmt-box-title">
+                <i class="fa-solid fa-comment-dots" style="color:var(--accent);"></i>
+                <span id="cmt-title">Comment</span>
+            </div>
+            <button class="cmt-close" onclick="closeCmt()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="padding:20px;">
+            <textarea
+                id="cmt-area"
+                class="form-input form-textarea"
+                rows="4"
+                placeholder="Write a comment for this student..."
+                style="resize:vertical;"
+            ></textarea>
+        </div>
+        <div style="padding:0 20px 20px; display:flex; gap:8px; justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="closeCmt()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveCmt()">
+                <i class="fa-solid fa-check"></i> Save
+            </button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.querySelectorAll('input[name^="base_"], input[name^="bonus_"]').forEach(input => {
-    input.addEventListener('input', function() {
-        const row = this.closest('tr');
-        const base = parseInt(row.querySelector('input[name^="base_"]').value) || 0;
-        const bonus = parseInt(row.querySelector('input[name^="bonus_"]').value) || 0;
-        const total = row.querySelector('.journal-total');
-        if (total) total.textContent = base + bonus;
+
+// ── Sum calculation ──────────────────────────────────────
+function calcSum(sid) {
+    let total = 0;
+    WEEKS.forEach(w => {
+        const el = document.querySelector(`input[name="score_${sid}_${w}"]`);
+        if (el) total += parseInt(el.value) || 0;
     });
+    const bonus = document.querySelector(`input[name="bonus_${sid}"]`);
+    const exam  = document.querySelector(`input[name="exam_${sid}"]`);
+    if (bonus) total += parseInt(bonus.value) || 0;
+    if (exam)  total += parseInt(exam.value)  || 0;
+
+    const badge = document.getElementById(`sum-${sid}`);
+    if (!badge) return;
+    badge.textContent = total;
+    badge.className = 'sum-badge';
+
+    // Color thresholds (adjust to your scoring system)
+    if      (total >= 300) badge.classList.add('sum-green');
+    else if (total >= 200) badge.classList.add('sum-blue');
+    else if (total >= 100) badge.classList.add('sum-yellow');
+    else                   badge.classList.add('sum-red');
+}
+
+// Attach input listeners
+document.querySelectorAll('.score-inp').forEach(inp => {
+    inp.addEventListener('input', () => calcSum(inp.dataset.sid));
 });
+
+// Initial calculation
+// СТАЛО — чистый JS, берём student IDs прямо из DOM:
+const seen = new Set();
+document.querySelectorAll('[data-sid]').forEach(el => {
+    const sid = el.dataset.sid;
+    if (!seen.has(sid)) {
+        seen.add(sid);
+        calcSum(sid);
+    }
+});
+
+
+// ── Comment modal ────────────────────────────────────────
+let _cmtSid = null, _cmtWeek = null, _cmtBtn = null;
+
+function openCmt(btn) {
+    _cmtSid = btn.dataset.sid;
+    _cmtWeek = btn.dataset.week;
+    _cmtBtn  = btn;
+    document.getElementById('cmt-title').textContent = `Comment — Week ${_cmtWeek}`;
+    document.getElementById('cmt-area').value = btn.dataset.comment || '';
+    document.getElementById('cmt-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('cmt-area').focus(), 50);
+}
+
+function saveCmt() {
+    if (_cmtSid === null) return;
+    const val = document.getElementById('cmt-area').value.trim();
+    const hidden = document.getElementById(`ch-${_cmtSid}-${_cmtWeek}`);
+    if (hidden) hidden.value = val;
+    if (_cmtBtn) _cmtBtn.classList.toggle('active', val.length > 0);
+    closeCmt();
+}
+
+function closeCmt() {
+    document.getElementById('cmt-modal').style.display = 'none';
+    _cmtSid = _cmtWeek = _cmtBtn = null;
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCmt(); });
 </script>
 {% endblock %}

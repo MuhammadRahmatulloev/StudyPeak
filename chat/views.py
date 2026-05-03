@@ -4,7 +4,67 @@ from django.contrib import messages
 from accounts.models import UserModel, Profile
 from accounts.permissions import SessionLoginRequiredMixin, get_current_user
 from .models import Friendship, Conversation, Group, GroupMember, GroupInvitation, Message
+import json
+from django.http import JsonResponse
 
+
+def get_chat_sidebar(user):
+    sidebar_groups = []
+    for g in Group.objects.filter(memberships__user=user).order_by('-created_at'):
+        last_msg = g.messages.filter(is_deleted=False).order_by('created_at').last()
+        sidebar_groups.append({'group': g, 'last_msg': last_msg})
+
+    sidebar_convs = []
+    for conv in user.conversations.all().order_by('-created_at'):
+        other = conv.participants.exclude(id=user.id).first()
+        if other:
+            last_msg = conv.messages.filter(is_deleted=False).order_by('created_at').last()
+            sidebar_convs.append({'conv': conv, 'other': other, 'last_msg': last_msg})
+
+    return sidebar_groups, sidebar_convs
+
+
+class ChatHomeView(SessionLoginRequiredMixin, View):
+    def get(self, request):
+        user = get_current_user(request)
+        first_group = Group.objects.filter(memberships__user=user).order_by('-created_at').first()
+        if first_group:
+            return redirect('group_detail', group_id=first_group.id)
+        first_conv = user.conversations.order_by('-created_at').first()
+        if first_conv:
+            return redirect('conversation_detail', conversation_id=first_conv.id)
+        return redirect('group_create')
+
+
+class SearchUsersView(SessionLoginRequiredMixin, View):
+    def get(self, request, group_id):
+        group = get_object_or_404(Group, id=group_id)
+        q = request.GET.get('q', '').strip()
+        
+        if len(q) < 2:
+            return JsonResponse({'users': []})
+        
+        existing_ids = group.memberships.values_list('user_id', flat=True)
+        users = UserModel.objects.filter(
+            username__icontains=q
+        ).exclude(id__in=existing_ids)[:8]
+        
+        data = [{'id': u.id, 'username': u.username, 'role': u.role} for u in users]
+        return JsonResponse({'users': data})
+
+
+class EditMessageView(SessionLoginRequiredMixin, View):
+    def post(self, request, message_id):
+        user = get_current_user(request)
+        message = get_object_or_404(Message, id=message_id, sender=user)
+        content = request.POST.get('content', '').strip()
+        if content:
+            message.content = content
+            message.save()
+        if message.group:
+            return redirect('group_detail', group_id=message.group.id)
+        return redirect('conversation_detail', conversation_id=message.conversation.id)
+    
 
 class FriendListView(SessionLoginRequiredMixin, View):
     def get(self, request):
@@ -111,21 +171,38 @@ class ConversationDetailView(SessionLoginRequiredMixin, View):
     def get(self, request, conversation_id):
         user = get_current_user(request)
         conversation = get_object_or_404(Conversation, id=conversation_id, participants=user)
+        other_user = conversation.participants.exclude(id=user.id).first()
         messages_qs = conversation.messages.filter(is_deleted=False).order_by('created_at')
+        sidebar_groups, sidebar_convs = get_chat_sidebar(user)
+
+        friendship = None
+        is_friend = False
+        if other_user:
+            friendship = Friendship.objects.filter(
+                sender=user, receiver=other_user, status=Friendship.ACCEPTED
+            ).first() or Friendship.objects.filter(
+                sender=other_user, receiver=user, status=Friendship.ACCEPTED
+            ).first()
+            is_friend = bool(friendship)
+
         return render(request, 'chat/conversation_detail.html', {
             'conversation': conversation,
             'messages': messages_qs,
+            'other_user': other_user,
+            'is_friend': is_friend,
+            'friendship': friendship,
+            'sidebar_groups': sidebar_groups,
+            'sidebar_convs': sidebar_convs,
+            'user': user,
         })
 
     def post(self, request, conversation_id):
         user = get_current_user(request)
         conversation = get_object_or_404(Conversation, id=conversation_id, participants=user)
         content = request.POST.get('content', '').strip()
-
         if not content:
             messages.error(request, 'Message cannot be empty.')
             return redirect('conversation_detail', conversation_id=conversation_id)
-
         Message.objects.create(conversation=conversation, sender=user, content=content)
         return redirect('conversation_detail', conversation_id=conversation_id)
 
@@ -191,7 +268,6 @@ class GroupDetailView(SessionLoginRequiredMixin, View):
     def get(self, request, group_id):
         user = get_current_user(request)
         group = get_object_or_404(Group, id=group_id)
-
         membership = GroupMember.objects.filter(group=group, user=user).first()
         if not membership:
             messages.error(request, 'You are not a member of this group.')
@@ -199,7 +275,9 @@ class GroupDetailView(SessionLoginRequiredMixin, View):
 
         messages_qs = group.messages.filter(is_deleted=False).order_by('created_at')
         pinned = group.messages.filter(is_pinned=True, is_deleted=False)
-        members = group.memberships.select_related('user').all()
+        members = group.memberships.select_related('user', 'user__profile').all()
+        sidebar_groups, sidebar_convs = get_chat_sidebar(user)
+        linked_subject = group.subjects.first()
 
         return render(request, 'chat/group_detail.html', {
             'group': group,
@@ -207,22 +285,23 @@ class GroupDetailView(SessionLoginRequiredMixin, View):
             'pinned': pinned,
             'members': members,
             'membership': membership,
+            'sidebar_groups': sidebar_groups,
+            'sidebar_convs': sidebar_convs,
+            'linked_subject': linked_subject,
+            'user': user,
         })
 
     def post(self, request, group_id):
         user = get_current_user(request)
         group = get_object_or_404(Group, id=group_id)
-
         membership = GroupMember.objects.filter(group=group, user=user).first()
         if not membership:
             messages.error(request, 'You are not a member of this group.')
             return redirect('group_list')
-
         content = request.POST.get('content', '').strip()
         if not content:
             messages.error(request, 'Message cannot be empty.')
             return redirect('group_detail', group_id=group_id)
-
         Message.objects.create(group=group, sender=user, content=content)
         return redirect('group_detail', group_id=group_id)
 
@@ -325,14 +404,16 @@ class GroupChangeMemberRoleView(SessionLoginRequiredMixin, View):
         messages.success(request, f'{target.username} role updated to {new_role}.')
         return redirect('group_detail', group_id=group_id)
 
-
 class SendGroupInvitationView(SessionLoginRequiredMixin, View):
     def post(self, request, group_id):
         user = get_current_user(request)
         group = get_object_or_404(Group, id=group_id)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
         membership = GroupMember.objects.filter(group=group, user=user, role=GroupMember.ADMIN).first()
         if not membership:
+            if is_ajax:
+                return JsonResponse({'status': 'error', 'message': 'Admin access required.'})
             messages.error(request, 'Admin access required.')
             return redirect('group_detail', group_id=group_id)
 
@@ -340,14 +421,21 @@ class SendGroupInvitationView(SessionLoginRequiredMixin, View):
         receiver = get_object_or_404(UserModel, id=receiver_id)
 
         if GroupMember.objects.filter(group=group, user=receiver).exists():
+            if is_ajax:
+                return JsonResponse({'status': 'already', 'message': f'{receiver.username} is already a member.'})
             messages.warning(request, f'{receiver.username} is already a member.')
             return redirect('group_detail', group_id=group_id)
 
         if GroupInvitation.objects.filter(group=group, receiver=receiver, status=GroupInvitation.PENDING).exists():
+            if is_ajax:
+                return JsonResponse({'status': 'already', 'message': f'Invitation already sent to {receiver.username}.'})
             messages.warning(request, f'Invitation already sent to {receiver.username}.')
             return redirect('group_detail', group_id=group_id)
 
         GroupInvitation.objects.create(group=group, sender=user, receiver=receiver)
+
+        if is_ajax:
+            return JsonResponse({'status': 'ok', 'message': f'Invitation sent to {receiver.username}!'})
         messages.success(request, f'Invitation sent to {receiver.username}.')
         return redirect('group_detail', group_id=group_id)
 
@@ -428,3 +516,99 @@ class DeleteMessageView(SessionLoginRequiredMixin, View):
 
         messages.error(request, 'Message not found.')
         return redirect('group_list')
+
+
+class UserProfileApiView(SessionLoginRequiredMixin, View):
+    def get(self, request, user_id):
+        current_user = get_current_user(request)
+        target = get_object_or_404(UserModel, id=user_id)
+        profile = getattr(target, 'profile', None)
+
+        friendship = Friendship.objects.filter(
+            sender=current_user, receiver=target, status=Friendship.ACCEPTED
+        ).first() or Friendship.objects.filter(
+            sender=target, receiver=current_user, status=Friendship.ACCEPTED
+        ).first()
+
+        conv_id = None
+        for conv in current_user.conversations.all():
+            if conv.participants.count() == 2 and conv.participants.filter(id=target.id).exists():
+                conv_id = conv.id
+                break
+
+        return JsonResponse({
+            'id': target.id,
+            'username': target.username,
+            'role': target.role,
+            'avatar': profile.avatar.url if profile and profile.avatar else None,
+            'bio': profile.bio or '' if profile else '',
+            'phone': profile.phone or '' if profile else '',
+            'status': profile.status if profile else 'offline',
+            'coins': profile.coins if profile else 0,
+            'is_friend': bool(friendship),
+            'friendship_id': friendship.id if friendship else None,
+            'conversation_id': conv_id,
+            'is_self': target.id == current_user.id,
+        })
+    
+
+class SearchGlobalUsersView(SessionLoginRequiredMixin, View):
+    def get(self, request):
+        user = get_current_user(request)
+        q = request.GET.get('q', '').strip()
+
+        if len(q) < 2:
+            return JsonResponse({'users': []})
+
+        users = UserModel.objects.filter(
+            username__icontains=q
+        ).exclude(id=user.id)[:8]
+
+        result = []
+        for u in users:
+            friendship = Friendship.objects.filter(
+                sender=user, receiver=u
+            ).first() or Friendship.objects.filter(
+                sender=u, receiver=user
+            ).first()
+
+            if friendship:
+                if friendship.status == Friendship.ACCEPTED:
+                    status = 'friends'
+                elif friendship.status == Friendship.PENDING:
+                    status = 'pending'
+                else:
+                    status = 'none'
+            else:
+                status = 'none'
+
+            result.append({
+                'id': u.id,
+                'username': u.username,
+                'role': u.role,
+                'avatar': u.profile.avatar.url if hasattr(u, 'profile') and u.profile.avatar else None,
+                'friendship_status': status,
+            })
+
+        return JsonResponse({'users': result})
+
+
+class SendFriendRequestAjaxView(SessionLoginRequiredMixin, View):
+    def post(self, request, user_id):
+        user = get_current_user(request)
+        target = get_object_or_404(UserModel, id=user_id)
+
+        if target == user:
+            return JsonResponse({'status': 'error', 'message': 'You cannot add yourself.'})
+
+        exists = Friendship.objects.filter(
+            sender=user, receiver=target
+        ).exists() or Friendship.objects.filter(
+            sender=target, receiver=user
+        ).exists()
+
+        if exists:
+            return JsonResponse({'status': 'already', 'message': f'Request to {target.username} already exists.'})
+
+        Friendship.objects.create(sender=user, receiver=target)
+        return JsonResponse({'status': 'ok', 'message': f'Friend request sent to {target.username}!'})

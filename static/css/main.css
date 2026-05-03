@@ -1483,6 +1483,275 @@ tr:hover td { background: var(--bg-3); }
     color: var(--accent);
     min-width: 48px;
 }
+.nav-notif-btn {
+    position: relative;
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+.nav-notif-btn:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+.nav-notif-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px; height: 16px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px;
+    border: 2px solid var(--bg);
+}
+
+.notif-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+.notif-row:last-child { border-bottom: none; }
+.notif-unread { background: var(--accent-soft); border-radius: 10px; padding: 14px; }
+.notif-icon {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+}
+.notif-body { flex: 1; min-width: 0; }
+.notif-text { font-size: 0.875rem; color: var(--text); margin: 0 0 3px; }
+.notif-time { font-size: 0.75rem; color: var(--text-3); margin: 0; }
+.notif-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════════
+   FRIENDS DROPDOWN (Navbar)
+   Добавь в конец main.css
+═══════════════════════════════════════════════════ */
+
+.nav-friends-wrap {
+    position: relative;
+}
+
+/* Dropdown panel */
+.friends-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 320px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    z-index: 200;
+    overflow: hidden;
+
+    /* Скрыт по умолчанию */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+
+.friends-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Header */
+.friends-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.friends-dropdown-title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.friends-dropdown-link {
+    font-size: 0.78rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: opacity 0.15s;
+}
+
+.friends-dropdown-link:hover { opacity: 0.75; }
+
+/* Search input */
+.friends-search-wrap {
+    position: relative;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.friends-search-icon {
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-3);
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+.friends-search-input {
+    width: 100%;
+    padding: 8px 12px 8px 34px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.875rem;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.friends-search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.friends-search-input::placeholder { color: var(--text-3); }
+
+/* Results list */
+.friends-search-results {
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 6px 0;
+}
+
+.friends-search-results::-webkit-scrollbar { width: 3px; }
+.friends-search-results::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+/* Hint (empty / loading) */
+.friends-search-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 28px 16px;
+    color: var(--text-3);
+    font-size: 0.82rem;
+    text-align: center;
+}
+
+.friends-search-hint i { font-size: 1.4rem; opacity: 0.5; }
+.friends-search-hint p { margin: 0; }
+
+/* Each result row */
+.friends-result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    transition: background 0.15s;
+}
+
+.friends-result-item:hover { background: var(--bg-3); }
+
+/* Avatar */
+.friends-result-av {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent);
+    overflow: hidden;
+}
+
+.friends-result-av img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Info */
+.friends-result-info { flex: 1; min-width: 0; }
+
+.friends-result-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.friends-result-role {
+    font-size: 0.72rem;
+    color: var(--text-3);
+    text-transform: capitalize;
+    margin: 0;
+}
+
+/* Add button */
+.friends-add-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.friends-add-btn:hover:not(:disabled) {
+    background: var(--accent);
+    color: #fff;
+}
+
+.friends-add-btn--pending {
+    border-color: var(--border);
+    background: var(--bg-3);
+    color: var(--text-3);
+    cursor: default;
+}
+
+.friends-add-btn--done {
+    border-color: rgba(52,211,153,0.3);
+    background: rgba(52,211,153,0.1);
+    color: #34d399;
+    cursor: default;
+}
 
 /* ─────────────────────────────────────────
    RESPONSIVE

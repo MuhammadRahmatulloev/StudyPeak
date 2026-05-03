@@ -39,9 +39,13 @@
                 <i class="fa-solid fa-graduation-cap"></i>
                 <span>Courses</span>
             </a>
-            <a href="{% url 'group_list' %}" class="nav-link {% block nav_chat %}{% endblock %}">
+            <a href="{% url 'chat_home' %}" class="nav-link {% block nav_chat %}{% endblock %}">
                 <i class="fa-solid fa-comments"></i>
                 <span>Chat</span>
+            </a>
+            <a href="{% url 'friend_list' %}" class="nav-link {% block nav_friends %}{% endblock %}">
+                <i class="fa-solid fa-user-group"></i>
+                <span>Friends</span>
             </a>
             <a href="{% url 'dashboard' %}" class="nav-link {% block nav_dashboard %}{% endblock %}">
                 <i class="fa-solid fa-chart-line"></i>
@@ -57,6 +61,15 @@
             <button class="theme-toggle" id="themeToggle" title="Toggle theme">
                 <i class="fa-solid fa-moon" id="themeIcon"></i>
             </button>
+
+
+            <!-- Notifications -->
+            <a href="{% url 'notification_list' %}" class="nav-notif-btn" title="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                {% if unread_notifications_count %}
+                <span class="nav-notif-badge">{{ unread_notifications_count }}</span>
+                {% endif %}
+            </a>
 
             <div class="nav-dropdown">
                 <button class="nav-avatar-btn">
@@ -83,24 +96,181 @@
 </nav>
 {% endif %}
 
-{% if messages %}
-<div class="messages-container">
-    {% for message in messages %}
-    <div class="message message-{{ message.tags }}">
-        <span>{{ message }}</span>
-        <button class="message-close" onclick="this.parentElement.remove()">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    </div>
-    {% endfor %}
+<!-- ── TOAST CONTAINER ── -->
+<div id="toastContainer" class="messages-container">
+    {% if messages %}
+        {% for message in messages %}
+        {% if 'error' in message.tags or 'warning' in message.tags %}
+        <div class="message message-{{ message.tags }}">
+            <span>{{ message }}</span>
+            <button class="message-close" onclick="this.parentElement.remove()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        {% endif %}
+        {% endfor %}
+    {% endif %}
 </div>
-{% endif %}
 
 <main class="main-content {% if not request.session.user_id %}no-nav{% endif %}">
     {% block content %}{% endblock %}
 </main>
 
 <script src="{% static 'js/main.js' %}"></script>
+
+<script>
+// ── TOAST FUNCTION (глобальная) ──────────────────────────
+function showToast(message, type) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `message message-${type}`;
+    toast.innerHTML = `
+        <span>${message}</span>
+        <button class="message-close" onclick="this.parentElement.remove()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+// ── FRIENDS DROPDOWN ────────────────────────────────────
+const friendsBtn      = document.getElementById('navFriendsBtn');
+const friendsDropdown = document.getElementById('friendsDropdown');
+const friendsInput    = document.getElementById('friendsSearchInput');
+const friendsResults  = document.getElementById('friendsSearchResults');
+const CSRF_TOKEN      = '{{ csrf_token }}';
+
+if (friendsBtn) {
+    // Открыть/закрыть dropdown
+    friendsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = friendsDropdown.classList.contains('active');
+        friendsDropdown.classList.toggle('active');
+        if (!isOpen) {
+            setTimeout(() => friendsInput.focus(), 100);
+        }
+    });
+
+    // Закрыть при клике вне
+    document.addEventListener('click', function(e) {
+        if (!document.getElementById('navFriendsWrap').contains(e.target)) {
+            friendsDropdown.classList.remove('active');
+        }
+    });
+
+    // Поиск пользователей
+    let searchTimer;
+    friendsInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        const q = this.value.trim();
+
+        if (q.length < 2) {
+            friendsResults.innerHTML = `
+                <div class="friends-search-hint">
+                    <i class="fa-solid fa-search"></i>
+                    <p>Type at least 2 characters</p>
+                </div>`;
+            return;
+        }
+
+        friendsResults.innerHTML = `
+            <div class="friends-search-hint">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Searching...</p>
+            </div>`;
+
+        searchTimer = setTimeout(() => {
+            fetch(`/chat/friends/search/?q=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(data => renderFriendsResults(data.users, q));
+        }, 300);
+    });
+}
+
+function renderFriendsResults(users, q) {
+    if (!users.length) {
+        friendsResults.innerHTML = `
+            <div class="friends-search-hint">
+                <i class="fa-solid fa-user-slash"></i>
+                <p>No users found for "${q}"</p>
+            </div>`;
+        return;
+    }
+
+    friendsResults.innerHTML = '';
+    users.forEach(u => {
+        const item = document.createElement('div');
+        item.className = 'friends-result-item';
+        item.dataset.userId = u.id;
+
+        const avatarHtml = u.avatar
+            ? `<img src="${u.avatar}" alt="${u.username}">`
+            : `<span>${u.username[0].toUpperCase()}</span>`;
+
+        let btnHtml = '';
+        if (u.friendship_status === 'friends') {
+            btnHtml = `<button class="friends-add-btn friends-add-btn--done" disabled>
+                <i class="fa-solid fa-user-check"></i> Friends
+            </button>`;
+        } else if (u.friendship_status === 'pending') {
+            btnHtml = `<button class="friends-add-btn friends-add-btn--pending" disabled>
+                <i class="fa-solid fa-clock"></i> Pending
+            </button>`;
+        } else {
+            btnHtml = `<button class="friends-add-btn" onclick="sendFriendReq(${u.id}, this)">
+                <i class="fa-solid fa-user-plus"></i> Add
+            </button>`;
+        }
+
+        item.innerHTML = `
+            <div class="friends-result-av">${avatarHtml}</div>
+            <div class="friends-result-info">
+                <p class="friends-result-name">${u.username}</p>
+                <p class="friends-result-role">${u.role}</p>
+            </div>
+            ${btnHtml}
+        `;
+        friendsResults.appendChild(item);
+    });
+}
+
+function sendFriendReq(userId, btn) {
+    // Сразу меняем кнопку — не выходим из поиска
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    fetch(`/chat/friends/ajax/add/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': CSRF_TOKEN,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            btn.className = 'friends-add-btn friends-add-btn--pending';
+            btn.innerHTML = '<i class="fa-solid fa-clock"></i> Pending';
+            showToast(data.message, 'success');
+        } else if (data.status === 'already') {
+            btn.className = 'friends-add-btn friends-add-btn--pending';
+            btn.innerHTML = '<i class="fa-solid fa-clock"></i> Pending';
+            showToast(data.message, 'warning');
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Add';
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Add';
+        showToast('Something went wrong. Try again.', 'error');
+    });
+}
+</script>
+
 {% block extra_js %}{% endblock %}
 </body>
 </html>
