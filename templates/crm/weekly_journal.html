@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static crm_extras %}
+{% load static %}
 
 {% block title %}Journal — {{ period.course.name }}{% endblock %}
 {% block nav_crm %}active{% endblock %}
@@ -7,208 +7,186 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/crm.css' %}">
 <style>
-.journal-wrap {
-    overflow-x: auto;
-    border-radius: var(--radius-lg);
+.jnl-page { max-width: 100%; padding: 0 24px 48px; }
+
+/* ── Summary (шапка) ── */
+.summary-block {
     border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 16px;
     background: var(--bg-2);
 }
-
-.journal-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 860px;
-}
-
-.journal-table th,
-.journal-table td {
-    border: 1px solid var(--border);
-    padding: 0;
-    text-align: center;
-    vertical-align: middle;
-}
-
-.journal-table th {
+.summary-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 20px;
     background: var(--bg-3);
-    padding: 10px 14px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--text-2);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+}
+.summary-title {
+    font-family: var(--font-display);
+    font-size: .9rem; font-weight: 700; color: var(--text);
+}
+
+/* ── Week block ── */
+.week-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: visible;
+    margin-bottom: 10px;
+    background: var(--bg-2);
+}
+.week-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px; cursor: pointer; user-select: none;
+    background: var(--bg-3);
+    border-radius: var(--radius-lg);
+    transition: background var(--transition);
+}
+.week-block:has(.week-body:not(.collapsed)) .week-header {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.week-header:hover { background: var(--bg-4); }
+.week-header-left { display: flex; align-items: center; gap: 12px; }
+
+.week-num-badge {
+    width: 34px; height: 34px; border-radius: var(--radius);
+    background: var(--accent-soft); border: 1px solid rgba(79,142,247,.2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-size: .88rem; font-weight: 800;
+    color: var(--accent); flex-shrink: 0;
+}
+.week-label {
+    font-family: var(--font-display);
+    font-size: .95rem; font-weight: 700; color: var(--text);
+}
+.week-chip {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px;
+    background: rgba(99,102,241,.08); border: 1px solid rgba(99,102,241,.2);
+    border-radius: 20px; font-size: .72rem; font-weight: 700; color: var(--accent);
+}
+.week-chevron { color: var(--text-3); font-size: .82rem; transition: transform .25s ease; }
+.week-chevron.open { transform: rotate(180deg); }
+.week-body { overflow-x: auto; }
+.week-body.collapsed { display: none; }
+
+/* ── Table ── */
+.j-table { width: 100%; border-collapse: collapse; min-width: 780px; }
+.j-table th {
+    background: var(--bg-3); padding: 9px 12px;
+    font-size: .68rem; font-weight: 700; color: var(--text-2);
+    letter-spacing: .05em; text-transform: uppercase;
+    text-align: center; border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }
-
-.th-week-group {
-    background: var(--bg-3);
-    border-bottom: 2px solid var(--border-2);
-    font-size: 0.82rem;
-    color: var(--text);
-    padding: 10px 16px;
+.j-table th.th-l { text-align: left; padding-left: 16px; }
+.j-table td {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 6px; text-align: center; vertical-align: middle;
 }
+.j-table tbody tr:last-child td { border-bottom: none; }
+.j-table tbody tr:hover td { background: rgba(255,255,255,.015); }
 
-.th-eop-group {
-    background: rgba(99,102,241,0.08);
-    border-bottom: 2px solid var(--accent);
-    color: var(--accent);
-    font-size: 0.82rem;
-    padding: 10px 16px;
+.td-stu {
+    text-align: left; padding: 10px 16px;
+    min-width: 170px; background: var(--bg-2);
 }
-
-.th-student {
-    text-align: left;
-    min-width: 200px;
-    position: sticky;
-    left: 0;
-    z-index: 3;
-    background: var(--bg-3);
-    padding: 10px 16px;
-}
-
-.td-student {
-    text-align: left;
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    background: var(--bg-2);
-    padding: 10px 14px;
-    min-width: 200px;
-}
-
-.journal-table tbody tr:hover .td-student,
-.journal-table tbody tr:hover td {
-    background: var(--bg-3);
-}
-
-.td-score { padding: 8px 10px; }
-.td-cmt   { padding: 4px 6px; width: 36px; }
-.td-eop   { padding: 8px 10px; background: rgba(99,102,241,0.03); }
-.td-sum   { padding: 8px 12px; background: rgba(99,102,241,0.06); }
-
-.student-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.s-avatar {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 0.78rem;
-    font-weight: 700;
+.j-table tbody tr:hover .td-stu { background: var(--bg-3); }
+.s-cell { display: flex; align-items: center; gap: 10px; }
+.s-ava {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    font-size: .75rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; overflow: hidden;
 }
+.s-ava img { width: 100%; height: 100%; object-fit: cover; }
+.s-nm { font-size: .85rem; font-weight: 600; color: var(--text); }
 
-.s-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.s-name {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text);
+/* ── Score pill + dropdown ── */
+.score-select-wrap { position: relative; display: inline-block; }
+.score-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 30px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--bg-3);
+    font-size: .85rem; font-weight: 700; font-family: var(--font-display);
+    color: var(--text-2); cursor: pointer;
+    transition: all .15s ease; user-select: none;
 }
+.score-pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.score-pill[data-val="1"] { border-color:rgba(239,68,68,.5);  color:#ef4444; background:rgba(239,68,68,.08); }
+.score-pill[data-val="2"] { border-color:rgba(249,115,22,.5); color:#f97316; background:rgba(249,115,22,.08); }
+.score-pill[data-val="3"] { border-color:rgba(234,179,8,.5);  color:#eab308; background:rgba(234,179,8,.08); }
+.score-pill[data-val="4"] { border-color:rgba(59,130,246,.5); color:#3b82f6; background:rgba(59,130,246,.08); }
+.score-pill[data-val="5"] { border-color:rgba(34,197,94,.5);  color:#22c55e; background:rgba(34,197,94,.08); }
 
-.score-inp {
-    width: 58px;
-    text-align: center;
-    padding: 5px 6px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    font-size: 0.88rem;
-    font-weight: 700;
-    font-family: var(--font-display);
+.score-dropdown {
+    position: absolute; top: calc(100% + 4px);
+    left: 50%; transform: translateX(-50%);
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    z-index: 9999; overflow: hidden; min-width: 46px;
+    display: none; flex-direction: column;
+    animation: dropIn .12s ease;
+}
+.score-dropdown.open { display: flex; }
+@keyframes dropIn {
+    from { opacity:0; transform: translateX(-50%) translateY(-4px); }
+    to   { opacity:1; transform: translateX(-50%) translateY(0); }
+}
+.sc-opt {
+    padding: 7px 14px; font-size: .85rem; font-weight: 700;
+    font-family: var(--font-display); cursor: pointer; text-align: center;
+    transition: background .1s; border-bottom: 1px solid var(--border);
+}
+.sc-opt:last-child { border-bottom: none; }
+.sc-opt:hover { background: var(--bg-3); }
+.sc-opt[data-v="0"] { color: var(--text-3); font-size: .75rem; font-weight: 400; }
+.sc-opt[data-v="1"] { color: #ef4444; }
+.sc-opt[data-v="2"] { color: #f97316; }
+.sc-opt[data-v="3"] { color: #eab308; }
+.sc-opt[data-v="4"] { color: #3b82f6; }
+.sc-opt[data-v="5"] { color: #22c55e; }
+
+/* ── Bonus / Exam inputs ── */
+.num-inp {
+    width: 56px; text-align: center; padding: 6px 6px;
+    border-radius: var(--radius); border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+    font-size: .85rem; font-weight: 700; font-family: var(--font-display);
     transition: border-color var(--transition);
 }
+.num-inp:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 
-.score-inp:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-.cmt-btn {
-    width: 28px; height: 28px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-3);
-    cursor: pointer;
+/* ── Totals ── */
+.wk-total-badge {
     display: inline-flex; align-items: center; justify-content: center;
-    font-size: 0.7rem;
-    transition: all var(--transition);
+    min-width: 46px; padding: 4px 10px; border-radius: 20px;
+    font-size: .85rem; font-weight: 800; font-family: var(--font-display);
 }
-
-.cmt-btn:hover, .cmt-btn.active {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-soft);
-}
-
-.sum-badge {
+.gt {
     display: inline-flex; align-items: center; justify-content: center;
-    min-width: 46px;
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 0.88rem;
-    font-weight: 800;
-    font-family: var(--font-display);
+    min-width: 52px; padding: 5px 12px; border-radius: 20px;
+    font-size: .9rem; font-weight: 800; font-family: var(--font-display);
 }
+.gt-green  { background: var(--success-soft); color: var(--success); }
+.gt-blue   { background: var(--accent-soft);  color: var(--accent);  }
+.gt-yellow { background: var(--warning-soft); color: var(--warning); }
+.gt-red    { background: var(--danger-soft);  color: var(--danger);  }
 
-.sum-green  { background: var(--success-soft); color: var(--success); }
-.sum-blue   { background: var(--accent-soft);  color: var(--accent); }
-.sum-yellow { background: var(--warning-soft); color: var(--warning); }
-.sum-red    { background: var(--danger-soft);  color: var(--danger); }
-
-/* Modal */
-.cmt-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 9999;
-}
-
-.cmt-box {
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    width: 100%; max-width: 420px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    overflow: hidden;
-}
-
-.cmt-box-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-}
-
-.cmt-box-title {
-    font-size: 0.95rem; font-weight: 700; color: var(--text);
-    display: flex; align-items: center; gap: 8px;
-}
-
-.cmt-close {
-    width: 30px; height: 30px;
-    border: none; background: none; cursor: pointer;
-    color: var(--text-3); border-radius: var(--radius);
-    display: flex; align-items: center; justify-content: center;
-    transition: all var(--transition);
-}
-
-.cmt-close:hover { background: var(--bg-3); color: var(--text); }
+/* Separator между днями и bonus/exam */
+.td-sep { border-left: 2px solid var(--border-2) !important; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:100%; padding:0 24px;">
+<div class="jnl-page container">
 
     <div class="page-header">
         <div>
-            <h1 class="page-title">Journal</h1>
+            <h1 class="page-title"><i class="fa-solid fa-book-open"></i> Journal</h1>
             <p class="page-subtitle">{{ period.course.name }} — {{ period.name }}</p>
         </div>
         <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
@@ -219,115 +197,163 @@
     {% if students %}
     <form method="post" id="jform">
         {% csrf_token %}
+        {% for student in students %}
+        <input type="hidden" name="student_ids" value="{{ student.id }}">
+        {% endfor %}
 
-        <div class="journal-wrap">
-            <table class="journal-table">
-                <thead>
-                    <tr>
-                        <th class="th-student" rowspan="2">STUDENTS</th>
-                        {% for week in weeks %}
-                        <th class="th-week-group" colspan="2">Week {{ week }}</th>
-                        {% endfor %}
-                        <th class="th-eop-group" colspan="3">END OF PERIOD</th>
-                    </tr>
-                    <tr>
-                        {% for week in weeks %}
-                        <th>Score</th>
-                        <th style="font-size:0.7rem;opacity:.6;">Cmt</th>
-                        {% endfor %}
-                        <th>Bonus</th>
-                        <th>Exam</th>
-                        <th>Sum</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for student in students %}
-                    {% with sid=student.id %}
-                    {% with s_weeks=journal_map|get_item:sid %}
-                    {% with s_summary=summary_map|get_item:sid %}
-                    <tr>
-                        <td class="td-student">
-                            <div class="student-cell">
-                                <div class="s-avatar">
-                                    {% if student.profile.avatar %}
-                                        <img src="{{ student.profile.avatar.url }}" alt="">
-                                    {% else %}{{ student.username|first|upper }}{% endif %}
+        {# ── SUMMARY (статистика) ── #}
+        <div class="summary-block">
+            <div class="summary-header">
+                <i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i>
+                <span class="summary-title">Summary — all weeks</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="j-table">
+                    <thead>
+                        <tr>
+                            <th class="th-l">Student</th>
+                            <th>Week 1</th>
+                            <th>Week 2</th>
+                            <th>Week 3</th>
+                            <th>Week 4</th>
+                            <th>Grand Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in summary_rows %}
+                        <tr>
+                            <td class="td-stu">
+                                <div class="s-cell">
+                                    <div class="s-ava">
+                                        {% if row.student.profile.avatar %}
+                                            <img src="{{ row.student.profile.avatar.url }}" alt="">
+                                        {% else %}{{ row.student.username|first|upper }}{% endif %}
+                                    </div>
+                                    <span class="s-nm">{{ forloop.counter }}. {{ row.student.username }}</span>
                                 </div>
-                                <span class="s-name">{{ forloop.counter }}. {{ student.username }}</span>
-                            </div>
-                            <input type="hidden" name="student_ids" value="{{ sid }}">
-                        </td>
-
-                        {% for week in weeks %}
-                        {% with week_entry=s_weeks|get_item:week %}
-                        <td class="td-score">
-                            <input
-                                type="number"
-                                name="score_{{ sid }}_{{ week }}"
-                                class="score-inp"
-                                value="{{ week_entry.base_score|default:0 }}"
-                                min="0" max="100"
-                                data-sid="{{ sid }}"
-                            >
-                        </td>
-                        <td class="td-cmt">
-                            <button
-                                type="button"
-                                class="cmt-btn {% if week_entry.teacher_comment %}active{% endif %}"
-                                data-sid="{{ sid }}"
-                                data-week="{{ week }}"
-                                data-comment="{{ week_entry.teacher_comment|default:''|escapejs }}"
-                                onclick="openCmt(this)"
-                                title="Comment for Week {{ week }}"
-                            >
-                                <i class="fa-solid fa-comment-dots"></i>
-                            </button>
-                            <input type="hidden"
-                                id="ch-{{ sid }}-{{ week }}"
-                                name="comment_{{ sid }}_{{ week }}"
-                                value="{{ week_entry.teacher_comment|default:'' }}"
-                            >
-                        </td>
-                        {% endwith %}
+                            </td>
+                            {% for w in "1234" %}
+                            <td>
+                                <span class="gt gt-blue"
+                                      id="sw-{{ row.student.id }}-{{ w }}">0</span>
+                            </td>
+                            {% endfor %}
+                            <td>
+                                <span class="gt" id="gt-{{ row.student.id }}">{{ row.grand_total }}</span>
+                            </td>
+                        </tr>
                         {% endfor %}
-
-                        <!-- Bonus -->
-                        <td class="td-eop">
-                            <input
-                                type="number"
-                                name="bonus_{{ sid }}"
-                                class="score-inp"
-                                value="{{ s_summary.bonus_score|default:0 }}"
-                                min="0" max="20"
-                                data-sid="{{ sid }}"
-                                style="width:52px;"
-                            >
-                        </td>
-
-                        <!-- Exam -->
-                        <td class="td-eop">
-                            <input
-                                type="number"
-                                name="exam_{{ sid }}"
-                                class="score-inp"
-                                value="{{ s_summary.exam_score|default:0 }}"
-                                min="0" max="100"
-                                data-sid="{{ sid }}"
-                            >
-                        </td>
-
-                        <!-- Sum -->
-                        <td class="td-sum">
-                            <span class="sum-badge" id="sum-{{ sid }}">—</span>
-                        </td>
-                    </tr>
-                    {% endwith %}{% endwith %}{% endwith %}
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+        {# ── WEEK BLOCKS ── #}
+        {% for week in week_rows %}
+        <div class="week-block">
+            <div class="week-header" onclick="toggleWeek({{ week.num }})">
+                <div class="week-header-left">
+                    <div class="week-num-badge">{{ week.num }}</div>
+                    <span class="week-label">Week {{ week.num }}</span>
+                    <span class="week-chip" id="chip-{{ week.num }}">0 pts</span>
+                </div>
+                <i class="fa-solid fa-chevron-down week-chevron {% if forloop.first %}open{% endif %}"
+                   id="chevron-{{ week.num }}"></i>
+            </div>
+
+            <div class="week-body {% if not forloop.first %}collapsed{% endif %}"
+                 id="week-body-{{ week.num }}">
+                <table class="j-table">
+                    <thead>
+                        <tr>
+                            <th class="th-l">Student</th>
+                            <th>Day 1</th>
+                            <th>Day 2</th>
+                            <th>Day 3</th>
+                            <th>Day 4</th>
+                            <th>Day 5</th>
+                            <th class="td-sep">Bonus <span style="opacity:.4;font-weight:400;">/10</span></th>
+                            <th>Exam <span style="opacity:.4;font-weight:400;">/70</span></th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sdata in week.students %}
+                        {% with sid=sdata.student.id wn=week.num %}
+                        <tr>
+                            <td class="td-stu">
+                                <div class="s-cell">
+                                    <div class="s-ava">
+                                        {% if sdata.student.profile.avatar %}
+                                            <img src="{{ sdata.student.profile.avatar.url }}" alt="">
+                                        {% else %}{{ sdata.student.username|first|upper }}{% endif %}
+                                    </div>
+                                    <span class="s-nm">{{ forloop.counter }}. {{ sdata.student.username }}</span>
+                                </div>
+                            </td>
+
+                            {% for day_score in sdata.days %}
+                            {% with dn=forloop.counter %}
+                            <td>
+                                <div class="score-select-wrap">
+                                    <div class="score-pill"
+                                         data-val="{{ day_score|default:'0' }}"
+                                         onclick="toggleDrop(this)"
+                                         id="pill-{{ sid }}-{{ wn }}-{{ dn }}">
+                                        {{ day_score|default:"—" }}
+                                    </div>
+                                    <div class="score-dropdown" id="drop-{{ sid }}-{{ wn }}-{{ dn }}">
+                                        <div class="sc-opt" data-v="0"
+                                             onclick="setScore('{{ sid }}','{{ wn }}','{{ dn }}',0)">—</div>
+                                        {% for v in "12345" %}
+                                        <div class="sc-opt" data-v="{{ v }}"
+                                             onclick="setScore('{{ sid }}','{{ wn }}','{{ dn }}',{{ v }})">{{ v }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    <input type="hidden"
+                                           id="sc-{{ sid }}-{{ wn }}-{{ dn }}"
+                                           name="score_{{ sid }}_{{ wn }}_{{ dn }}"
+                                           value="{{ day_score|default:'' }}">
+                                </div>
+                            </td>
+                            {% endwith %}
+                            {% endfor %}
+
+                            {# Bonus #}
+                            <td class="td-sep">
+                                <input type="number" class="num-inp"
+                                       name="bonus_{{ sid }}_{{ wn }}"
+                                       id="bonus-{{ sid }}-{{ wn }}"
+                                       value="{{ sdata.bonus }}"
+                                       min="0" max="10"
+                                       oninput="clamp(this,0,10);recalcWeek('{{ sid }}','{{ wn }}')">
+                            </td>
+
+                            {# Exam #}
+                            <td>
+                                <input type="number" class="num-inp"
+                                       name="exam_{{ sid }}_{{ wn }}"
+                                       id="exam-{{ sid }}-{{ wn }}"
+                                       value="{{ sdata.exam }}"
+                                       min="0" max="70"
+                                       oninput="clamp(this,0,70);recalcWeek('{{ sid }}','{{ wn }}')">
+                            </td>
+
+                            {# Week Total #}
+                            <td>
+                                <span class="wk-total-badge gt"
+                                      id="wkt-{{ sid }}-{{ wn }}">{{ sdata.week_total }}</span>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div style="display:flex;justify-content:flex-end;margin-top:20px;">
             <button type="submit" class="btn btn-primary btn-lg">
                 <i class="fa-solid fa-floppy-disk"></i> Save Journal
             </button>
@@ -342,111 +368,106 @@
         </div>
     </div>
     {% endif %}
-
-</div>
-
-<!-- Comment Modal -->
-<div class="cmt-overlay" id="cmt-modal" style="display:none;" onclick="if(event.target===this)closeCmt()">
-    <div class="cmt-box">
-        <div class="cmt-box-header">
-            <div class="cmt-box-title">
-                <i class="fa-solid fa-comment-dots" style="color:var(--accent);"></i>
-                <span id="cmt-title">Comment</span>
-            </div>
-            <button class="cmt-close" onclick="closeCmt()">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div style="padding:20px;">
-            <textarea
-                id="cmt-area"
-                class="form-input form-textarea"
-                rows="4"
-                placeholder="Write a comment for this student..."
-                style="resize:vertical;"
-            ></textarea>
-        </div>
-        <div style="padding:0 20px 20px; display:flex; gap:8px; justify-content:flex-end;">
-            <button class="btn btn-secondary" onclick="closeCmt()">Cancel</button>
-            <button class="btn btn-primary" onclick="saveCmt()">
-                <i class="fa-solid fa-check"></i> Save
-            </button>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// ── Dropdown ──────────────────────────────────────────────
+let openDrop = null;
 
-// ── Sum calculation ──────────────────────────────────────
-function calcSum(sid) {
-    let total = 0;
-    WEEKS.forEach(w => {
-        const el = document.querySelector(`input[name="score_${sid}_${w}"]`);
-        if (el) total += parseInt(el.value) || 0;
-    });
-    const bonus = document.querySelector(`input[name="bonus_${sid}"]`);
-    const exam  = document.querySelector(`input[name="exam_${sid}"]`);
-    if (bonus) total += parseInt(bonus.value) || 0;
-    if (exam)  total += parseInt(exam.value)  || 0;
-
-    const badge = document.getElementById(`sum-${sid}`);
-    if (!badge) return;
-    badge.textContent = total;
-    badge.className = 'sum-badge';
-
-    // Color thresholds (adjust to your scoring system)
-    if      (total >= 300) badge.classList.add('sum-green');
-    else if (total >= 200) badge.classList.add('sum-blue');
-    else if (total >= 100) badge.classList.add('sum-yellow');
-    else                   badge.classList.add('sum-red');
+function toggleDrop(pill) {
+    const drop = pill.nextElementSibling;
+    if (openDrop && openDrop !== drop) openDrop.classList.remove('open');
+    drop.classList.toggle('open');
+    openDrop = drop.classList.contains('open') ? drop : null;
 }
 
-// Attach input listeners
-document.querySelectorAll('.score-inp').forEach(inp => {
-    inp.addEventListener('input', () => calcSum(inp.dataset.sid));
-});
-
-// Initial calculation
-// СТАЛО — чистый JS, берём student IDs прямо из DOM:
-const seen = new Set();
-document.querySelectorAll('[data-sid]').forEach(el => {
-    const sid = el.dataset.sid;
-    if (!seen.has(sid)) {
-        seen.add(sid);
-        calcSum(sid);
+document.addEventListener('click', e => {
+    if (!e.target.closest('.score-select-wrap') && openDrop) {
+        openDrop.classList.remove('open');
+        openDrop = null;
     }
 });
 
-
-// ── Comment modal ────────────────────────────────────────
-let _cmtSid = null, _cmtWeek = null, _cmtBtn = null;
-
-function openCmt(btn) {
-    _cmtSid = btn.dataset.sid;
-    _cmtWeek = btn.dataset.week;
-    _cmtBtn  = btn;
-    document.getElementById('cmt-title').textContent = `Comment — Week ${_cmtWeek}`;
-    document.getElementById('cmt-area').value = btn.dataset.comment || '';
-    document.getElementById('cmt-modal').style.display = 'flex';
-    setTimeout(() => document.getElementById('cmt-area').focus(), 50);
+function setScore(sid, week, day, val) {
+    const inp  = document.getElementById(`sc-${sid}-${week}-${day}`);
+    const pill = document.getElementById(`pill-${sid}-${week}-${day}`);
+    const drop = document.getElementById(`drop-${sid}-${week}-${day}`);
+    inp.value        = val || '';
+    pill.textContent = val || '—';
+    pill.dataset.val = val || '0';
+    drop.classList.remove('open');
+    openDrop = null;
+    recalcWeek(sid, week);
 }
 
-function saveCmt() {
-    if (_cmtSid === null) return;
-    const val = document.getElementById('cmt-area').value.trim();
-    const hidden = document.getElementById(`ch-${_cmtSid}-${_cmtWeek}`);
-    if (hidden) hidden.value = val;
-    if (_cmtBtn) _cmtBtn.classList.toggle('active', val.length > 0);
-    closeCmt();
+// ── Week total ────────────────────────────────────────────
+function recalcWeek(sid, week) {
+    let daily = 0;
+    for (let d = 1; d <= 5; d++)
+        daily += parseInt(document.getElementById(`sc-${sid}-${week}-${d}`)?.value) || 0;
+
+    const bonus = parseInt(document.getElementById(`bonus-${sid}-${week}`)?.value) || 0;
+    const exam  = parseInt(document.getElementById(`exam-${sid}-${week}`)?.value)  || 0;
+    const total = daily + bonus + exam;
+
+    // Week total badge
+    const wkt = document.getElementById(`wkt-${sid}-${week}`);
+    if (wkt) {
+        wkt.textContent = total;
+        wkt.className = 'wk-total-badge gt ' +
+            (total >= 80 ? 'gt-green' : total >= 50 ? 'gt-blue' : total >= 25 ? 'gt-yellow' : 'gt-red');
+    }
+
+    // Summary week cell
+    const sw = document.getElementById(`sw-${sid}-${week}`);
+    if (sw) sw.textContent = total;
+
+    // Chip в заголовке
+    updateChip(week);
+    recalcGrand(sid);
 }
 
-function closeCmt() {
-    document.getElementById('cmt-modal').style.display = 'none';
-    _cmtSid = _cmtWeek = _cmtBtn = null;
+function updateChip(week) {
+    let t = 0;
+    document.querySelectorAll(`[id^="wkt-"][id$="-${week}"]`).forEach(e => {
+        t += parseInt(e.textContent) || 0;
+    });
+    const chip = document.getElementById(`chip-${week}`);
+    if (chip) chip.textContent = `${t} pts`;
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCmt(); });
+function recalcGrand(sid) {
+    let t = 0;
+    for (let w = 1; w <= 4; w++) {
+        const el = document.getElementById(`wkt-${sid}-${w}`);
+        if (el) t += parseInt(el.textContent) || 0;
+    }
+    const gt = document.getElementById(`gt-${sid}`);
+    if (!gt) return;
+    gt.textContent = t;
+    gt.className = 'gt ' +
+        (t >= 320 ? 'gt-green' : t >= 200 ? 'gt-blue' : t >= 100 ? 'gt-yellow' : 'gt-red');
+}
+
+function clamp(inp, mn, mx) {
+    let v = parseInt(inp.value);
+    inp.value = isNaN(v) ? mn : Math.min(Math.max(v, mn), mx);
+}
+
+function toggleWeek(num) {
+    document.getElementById(`week-body-${num}`).classList.toggle('collapsed');
+    document.getElementById(`chevron-${num}`).classList.toggle('open');
+}
+
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    {% for week in week_rows %}
+    {% for sdata in week.students %}
+    recalcWeek('{{ sdata.student.id }}', {{ week.num }});
+    {% endfor %}
+    {% endfor %}
+});
 </script>
 {% endblock %}

@@ -13,6 +13,8 @@ urlpatterns = [
     path('enrollment/<int:enrollment_id>/approve/', EnrollApproveView.as_view(), name='enroll_approve'),
     path('enrollment/<int:enrollment_id>/reject/', EnrollRejectView.as_view(), name='enroll_reject'),
     path('enrollment/<int:enrollment_id>/remove/', EnrollRemoveView.as_view(), name='enroll_remove'),
+    path('enrollment/<int:enrollment_id>/accept-invite/', EnrollAcceptInviteView.as_view(), name='enroll_accept_invite'),
+    path('enrollment/<int:enrollment_id>/reject-invite/', EnrollRejectInviteView.as_view(), name='enroll_reject_invite'),
 
     path('<int:course_id>/period/create/', CoursePeriodCreateView.as_view(), name='period_create'),
     path('period/<int:period_id>/update/', CoursePeriodUpdateView.as_view(), name='period_update'),
@@ -26,4 +28,8 @@ urlpatterns = [
 
     path('period/<int:period_id>/attendance/', AttendanceView.as_view(), name='attendance'),
     path('period/<int:period_id>/my-attendance/', StudentAttendanceView.as_view(), name='student_attendance'),
+
+    path('admin-invitation/<int:invitation_id>/accept/', AcceptCourseAdminInvitationView.as_view(), name='course_admin_invite_accept'),
+    path('admin-invitation/<int:invitation_id>/reject/', RejectCourseAdminInvitationView.as_view(), name='course_admin_invite_reject'),
+    path('<int:course_id>/search-students/', SearchStudentsView.as_view(), name='search_students'),
 ]

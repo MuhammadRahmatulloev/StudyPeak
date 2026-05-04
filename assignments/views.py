@@ -21,7 +21,7 @@ class AssignmentListView(SessionLoginRequiredMixin, View):
             ).select_related('subject', 'group')
         else:
             assignments = Assignment.objects.all().select_related('subject', 'group')
-        return render(request, 'assignments/assignment_list.html', {'assignments': assignments})
+        return render(request, 'assignments/assignment_list.html', {'assignments': assignments, 'user': user,})
 
 
 class AssignmentCreateView(AssignmentTeacherRequiredMixin, View):

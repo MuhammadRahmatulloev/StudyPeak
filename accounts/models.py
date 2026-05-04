@@ -85,12 +85,16 @@ class Notification(models.Model):
     ENROLLMENT_INVITE = 'enrollment_invite'
     ENROLLMENT_APPROVED = 'enrollment_approved'
     ENROLLMENT_REJECTED = 'enrollment_rejected'
-
+    COURSE_ADMIN_ASSIGNED = 'course_admin_assigned'
+    COURSE_ADMIN_INVITE = 'course_admin_invite'
+    
     TYPE_CHOICES = [
         (ENROLLMENT_REQUEST, 'Enrollment Request'),
         (ENROLLMENT_INVITE, 'Enrollment Invite'),
         (ENROLLMENT_APPROVED, 'Enrollment Approved'),
         (ENROLLMENT_REJECTED, 'Enrollment Rejected'),
+        (COURSE_ADMIN_ASSIGNED, 'Course Admin Assigned'),
+        (COURSE_ADMIN_INVITE, 'Course Admin Invite'),
     ]
 
     user = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='notifications')

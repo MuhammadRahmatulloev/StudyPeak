@@ -15,4 +15,5 @@ urlpatterns = [
     path('profile/', ProfileView.as_view(), name='profile'),
     path('profile/edit/', ProfileUpdateView.as_view(), name='profile_update'),
     path('profile/password/', ChangePasswordView.as_view(), name='change_password'),
+    path('profile/<int:user_id>/', UserProfileView.as_view(), name='user_profile'),
 ]

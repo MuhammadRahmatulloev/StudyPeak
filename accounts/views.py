@@ -6,7 +6,42 @@ from django.conf import settings
 from django.utils import timezone
 import random
 from .models import UserModel, Profile, Notification
+from .permissions import *
+from crm.models import CourseAdminInvitation 
 
+
+class NotificationListView(SessionLoginRequiredMixin, View):
+    def get(self, request):
+        user = get_current_user(request)
+        notifications = user.notifications.all().order_by('-created_at')
+        notifications.filter(is_read=False).update(is_read=True)
+
+        from chat.models import Friendship, GroupInvitation
+        from crm.models import Enrollment
+
+        friend_requests = Friendship.objects.filter(
+            receiver=user, status=Friendship.PENDING
+        ).order_by('-id')
+        group_invitations = GroupInvitation.objects.filter(
+            receiver=user, status=GroupInvitation.PENDING
+        ).order_by('-id')
+        course_admin_invitations = CourseAdminInvitation.objects.filter(
+            receiver=user, status=CourseAdminInvitation.PENDING
+        ).order_by('-id')
+        enrollment_invitations = Enrollment.objects.filter(
+            student=user,
+            status=Enrollment.PENDING,
+            type=Enrollment.ADMIN_INVITE
+        ).select_related('course', 'course__teacher').order_by('-enrolled_at')
+
+        return render(request, 'accounts/notifications.html', {
+            'notifications': notifications,
+            'friend_requests': friend_requests,
+            'group_invitations': group_invitations,
+            'course_admin_invitations': course_admin_invitations,
+            'enrollment_invitations': enrollment_invitations,
+        })
+    
 
 # ─────────────────────────────────────────
 #  HELPERS
@@ -255,31 +290,6 @@ def reset_new_password_view(request):
 
 
 # ─────────────────────────────────────────
-#  NOTIFICATION VIEW
-# ─────────────────────────────────────────
-
-class NotificationListView(SessionLoginRequiredMixin, View):
-    def get(self, request):
-        user = get_current_user(request)
-        notifications = user.notifications.all().order_by('-created_at')
-        notifications.filter(is_read=False).update(is_read=True)
-
-        from chat.models import Friendship, GroupInvitation
-        friend_requests = Friendship.objects.filter(
-            receiver=user, status=Friendship.PENDING
-        ).order_by('-id')
-        group_invitations = GroupInvitation.objects.filter(
-            receiver=user, status=GroupInvitation.PENDING
-        ).order_by('-id')
-
-        return render(request, 'accounts/notifications.html', {
-            'notifications': notifications,
-            'friend_requests': friend_requests,
-            'group_invitations': group_invitations,
-        })
-
-
-# ─────────────────────────────────────────
 #  PROFILE VIEWS
 # ─────────────────────────────────────────
 
@@ -351,3 +361,16 @@ class ChangePasswordView(SessionLoginRequiredMixin, View):
         request.session.flush()
         messages.success(request, 'Password updated! Please log in again.')
         return redirect('login')
+    
+
+class UserProfileView(SessionLoginRequiredMixin, View):
+    def get(self, request, user_id):
+        user = get_current_user(request)
+        other_user = get_object_or_404(UserModel, id=user_id)
+        profile = Profile.objects.filter(user=other_user).first()
+
+        return render(request, 'accounts/profile.html', {
+            'user': user,
+            'profile_user': other_user,
+            'profile': profile,
+        })

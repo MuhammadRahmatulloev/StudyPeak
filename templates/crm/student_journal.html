@@ -11,128 +11,89 @@
 {% block content %}
 <div class="container">
 
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">My Journal</h1>
-            <p class="page-subtitle">{{ period.name }} — {{ period.course.name }}</p>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-book-open"></i> My Journal</h1>
+      <p class="page-subtitle">{{ period.name }} — {{ period.course.name }}</p>
+    </div>
+    <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  {% if has_data %}
+
+  <div class="card mb-16" style="display:flex;align-items:center;gap:16px;padding:18px 24px;">
+    <div class="stat-icon stat-icon-blue"><i class="fa-solid fa-trophy"></i></div>
+    <div>
+      <p class="stat-label text-muted text-sm">Grand Total (all weeks)</p>
+      <p class="stat-value">{{ grand_total }} pts</p>
+    </div>
+  </div>
+
+  {% for w in week_data %}
+  <div class="card mb-16">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:34px;height:34px;border-radius:var(--radius);background:var(--accent-soft);
+                    display:flex;align-items:center;justify-content:center;
+                    font-weight:800;color:var(--accent);font-size:.88rem;">
+          {{ w.week_number }}
         </div>
-        <a href="{% url 'course_detail' period.course.id %}" class="btn btn-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
+        <span style="font-weight:700;font-size:.95rem;">Week {{ w.week_number }}</span>
+      </div>
+      <span class="badge {% if w.week_total >= 80 %}badge-green{% elif w.week_total >= 40 %}badge-blue{% elif w.week_total > 0 %}badge-yellow{% else %}badge-red{% endif %}">
+        {{ w.week_total }} pts
+      </span>
     </div>
 
-    {% if journals %}
-    <div class="card">
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Week</th>
-                        <th>Base Score</th>
-                        <th>Bonus</th>
-                        <th>Total</th>
-                        <th>Comment</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for j in journals %}
-                    <tr>
-                        <td>
-                            <span class="badge badge-blue">Week {{ j.week_number }}</span>
-                        </td>
-                        <td>
-                            <div class="score-bar-wrap">
-                                <span class="score-value">{{ j.base_score }}</span>
-                                <div class="score-bar">
-                                </div>
-                                <span class="text-muted text-sm">/100</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge badge-green">+{{ j.bonus_score }}</span>
-                        </td>
-                        <td>
-                            <span class="journal-total-badge
-                                {% if j.total_score >= 90 %}badge-green
-                                {% elif j.total_score >= 60 %}badge-blue
-                                {% elif j.total_score >= 40 %}badge-yellow
-                                {% else %}badge-red{% endif %} badge">
-                                {{ j.total_score }}/110
-                            </span>
-                        </td>
-                        <td>
-                            {% if j.teacher_comment %}
-                            <p class="text-sm text-muted">{{ j.teacher_comment }}</p>
-                            {% else %}
-                            <span class="text-muted text-sm">—</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="text-sm text-muted">{{ j.updated_at|date:"M d, Y" }}</span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Day 1</th><th>Day 2</th><th>Day 3</th><th>Day 4</th><th>Day 5</th>
+            <th>Daily</th>
+            <th>Bonus</th>
+            <th>Exam</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {% for score in w.days %}
+            <td style="text-align:center;">
+              {% if score %}
+                <span class="badge {% if score == 5 %}badge-green{% elif score == 4 %}badge-blue{% elif score == 3 %}badge-yellow{% else %}badge-red{% endif %}">{{ score }}</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            {% endfor %}
+            <td style="text-align:center;font-weight:700;">{{ w.daily_total }}</td>
+            <td style="text-align:center;"><span class="badge badge-green">+{{ w.bonus }}</span></td>
+            <td style="text-align:center;"><span class="badge badge-blue">{{ w.exam }}</span></td>
+            <td style="text-align:center;">
+              <span class="badge {% if w.week_total >= 80 %}badge-green{% elif w.week_total >= 40 %}badge-blue{% elif w.week_total > 0 %}badge-yellow{% else %}badge-red{% endif %}">
+                {{ w.week_total }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+  </div>
+  {% endfor %}
 
-    <!-- Summary -->
-    <div class="grid-3 mt-16">
-        <div class="card">
-            <div class="stat-card-inner">
-                <div class="stat-icon stat-icon-blue">
-                    <i class="fa-solid fa-list-ol"></i>
-                </div>
-                <div>
-                    <p class="stat-value">{{ journals|length }}</p>
-                    <p class="stat-label text-muted text-sm">Total Weeks</p>
-                </div>
-            </div>
-        </div>
-        <div class="card">
-            <div class="stat-card-inner">
-                <div class="stat-icon stat-icon-green">
-                    <i class="fa-solid fa-chart-line"></i>
-                </div>
-                <div>
-                    <p class="stat-value">
-                        {% with total=0 %}
-                        {% for j in journals %}
-                        {% endfor %}
-                        —
-                        {% endwith %}
-                    </p>
-                    <p class="stat-label text-muted text-sm">Avg Score</p>
-                </div>
-            </div>
-        </div>
-        <div class="card">
-            <div class="stat-card-inner">
-                <div class="stat-icon stat-icon-yellow">
-                    <i class="fa-solid fa-coins"></i>
-                </div>
-                <div>
-                    <p class="stat-value">
-                        {% for j in journals %}{% if j.coins_awarded %}<i class="fa-solid fa-check text-success"></i>{% endif %}{% endfor %}
-                        {{ journals.count }}
-                    </p>
-                    <p class="stat-label text-muted text-sm">Weeks Recorded</p>
-                </div>
-            </div>
-        </div>
+  {% else %}
+  <div class="card">
+    <div class="empty-state">
+      <i class="fa-solid fa-book-open"></i>
+      <p>No journal entries yet</p>
+      <p class="text-muted text-sm">Your teacher hasn't recorded any scores yet</p>
     </div>
-
-    {% else %}
-    <div class="card">
-        <div class="empty-state">
-            <i class="fa-solid fa-book-open"></i>
-            <p>No journal entries yet</p>
-            <p class="text-muted text-sm">Your teacher hasn't recorded any scores yet</p>
-        </div>
-    </div>
-    {% endif %}
+  </div>
+  {% endif %}
 
 </div>
 {% endblock %}

@@ -16,6 +16,10 @@ class CourseTeacherRequiredMixin:
             messages.error(request, 'Please login first!')
             return redirect('login')
 
+        # Superuser (createsuperuser) bypasses all course checks
+        if user.is_superuser:
+            return super().dispatch(request, *args, **kwargs)
+
         course_id = kwargs.get('course_id')
         if course_id:
             course = Course.objects.filter(id=course_id).first()
@@ -23,13 +27,13 @@ class CourseTeacherRequiredMixin:
                 messages.error(request, 'Course not found.')
                 return redirect('course_list')
 
-            if user.is_teacher and course.teacher != user:
-                messages.error(request, 'You are not the teacher of this course.')
-                return redirect('course_detail', course_id=course_id)
-
             if not (user.is_teacher or user.is_admin_role):
                 messages.error(request, 'Teacher or admin access required.')
                 return redirect('course_list')
+
+            if user.is_teacher and course.teacher != user:
+                messages.error(request, 'You are not the teacher of this course.')
+                return redirect('course_detail', course_id=course_id)
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -45,6 +49,10 @@ class EnrolledStudentRequiredMixin:
         if not user:
             messages.error(request, 'Please login first!')
             return redirect('login')
+
+        # Superuser bypasses enrollment check
+        if user.is_superuser:
+            return super().dispatch(request, *args, **kwargs)
 
         course_id = kwargs.get('course_id')
         if course_id and user.is_student:
@@ -72,6 +80,10 @@ class PeriodAccessMixin:
         if not user:
             messages.error(request, 'Please login first!')
             return redirect('login')
+
+        # Superuser bypasses all period checks
+        if user.is_superuser:
+            return super().dispatch(request, *args, **kwargs)
 
         from .models import CoursePeriod
         period_id = kwargs.get('period_id')

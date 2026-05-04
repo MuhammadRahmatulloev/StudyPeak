@@ -8,25 +8,24 @@
 {% endblock %}
 
 {% block content %}
+{% with viewed_user=profile_user|default:user %}
+
 <div class="container">
     <div class="profile-page">
 
         <!-- TOP CARD -->
         <div class="profile-top card">
-
-            <!-- Cover -->
             <div class="profile-cover">
                 <div class="profile-cover-overlay"></div>
             </div>
 
-            <!-- Avatar + basic info -->
             <div class="profile-header">
                 <div class="profile-avatar-wrap">
                     {% if profile and profile.avatar %}
-                        <img src="{{ profile.avatar.url }}" alt="{{ user.username }}" class="profile-avatar">
+                        <img src="{{ profile.avatar.url }}" alt="{{ viewed_user.username }}" class="profile-avatar">
                     {% else %}
                         <div class="profile-avatar profile-avatar-placeholder">
-                            <span>{{ user.username|first|upper }}</span>
+                            <span>{{ viewed_user.username|first|upper }}</span>
                         </div>
                     {% endif %}
                     <span class="profile-status-dot profile-status-{{ profile.status|default:'offline' }}"></span>
@@ -35,20 +34,20 @@
                 <div class="profile-info">
                     <div class="profile-name-row">
                         <h1 class="profile-name">
-                            {% if user.first_name or user.last_name %}
-                                {{ user.first_name }} {{ user.last_name }}
+                            {% if viewed_user.first_name or viewed_user.last_name %}
+                                {{ viewed_user.first_name }} {{ viewed_user.last_name }}
                             {% else %}
-                                {{ user.username }}
+                                {{ viewed_user.username }}
                             {% endif %}
                         </h1>
                         <span class="badge
-                            {% if user.is_teacher %}badge-blue
-                            {% elif user.is_student %}badge-green
+                            {% if viewed_user.is_teacher %}badge-blue
+                            {% elif viewed_user.is_student %}badge-green
                             {% else %}badge-yellow{% endif %}">
-                            {{ user.role|capfirst }}
+                            {{ viewed_user.role|capfirst }}
                         </span>
                     </div>
-                    <p class="profile-username">@{{ user.username }}</p>
+                    <p class="profile-username">@{{ viewed_user.username }}</p>
                     {% if profile and profile.status %}
                     <p class="profile-status-label profile-status-{{ profile.status }}">
                         <span class="profile-status-dot-inline"></span>
@@ -58,16 +57,17 @@
                 </div>
 
                 <div class="profile-actions">
-                    <a href="{% url 'profile_update' %}" class="btn btn-primary">
-                        <i class="fa-solid fa-pen"></i> Edit profile
-                    </a>
-                    <a href="{% url 'change_password' %}" class="btn btn-secondary">
-                        <i class="fa-solid fa-key"></i> Password
-                    </a>
+                    {% if not profile_user %}
+                        <a href="{% url 'profile_update' %}" class="btn btn-primary">
+                            <i class="fa-solid fa-pen"></i> Edit profile
+                        </a>
+                        <a href="{% url 'change_password' %}" class="btn btn-secondary">
+                            <i class="fa-solid fa-key"></i> Password
+                        </a>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Post text (instagram-like) -->
             {% if profile and profile.post_text %}
             <div class="profile-post-text">
                 <i class="fa-solid fa-quote-left profile-quote-icon"></i>
@@ -75,7 +75,6 @@
             </div>
             {% endif %}
 
-            <!-- Stats row -->
             <div class="profile-stats-row">
                 <div class="profile-stat-item">
                     <span class="profile-stat-value">
@@ -86,13 +85,13 @@
                 </div>
                 <div class="profile-stat-divider"></div>
                 <div class="profile-stat-item">
-                    <span class="profile-stat-value">{{ user.date_joined|date:"M Y" }}</span>
+                    <span class="profile-stat-value">{{ viewed_user.date_joined|date:"M Y" }}</span>
                     <span class="profile-stat-label">Joined</span>
                 </div>
                 <div class="profile-stat-divider"></div>
                 <div class="profile-stat-item">
                     <span class="profile-stat-value">
-                        {% if user.is_verified %}
+                        {% if viewed_user.is_verified %}
                             <i class="fa-solid fa-circle-check text-success"></i> Verified
                         {% else %}
                             <i class="fa-solid fa-circle-xmark text-danger"></i> Unverified
@@ -101,44 +100,38 @@
                     <span class="profile-stat-label">Email</span>
                 </div>
             </div>
-
         </div>
 
         <!-- BODY GRID -->
         <div class="profile-body">
 
-            <!-- LEFT — Details -->
+            <!-- LEFT -->
             <div class="profile-left">
-
                 <div class="card">
                     <div class="card-title">
                         <i class="fa-solid fa-circle-info"></i> About
                     </div>
-
                     <div class="profile-detail-list">
-
                         <div class="profile-detail-item">
                             <span class="profile-detail-icon"><i class="fa-solid fa-user"></i></span>
                             <div class="profile-detail-content">
                                 <span class="profile-detail-label">Full name</span>
                                 <span class="profile-detail-value">
-                                    {% if user.first_name or user.last_name %}
-                                        {{ user.first_name }} {{ user.last_name }}
+                                    {% if viewed_user.first_name or viewed_user.last_name %}
+                                        {{ viewed_user.first_name }} {{ viewed_user.last_name }}
                                     {% else %}
                                         <span class="text-muted">Not set</span>
                                     {% endif %}
                                 </span>
                             </div>
                         </div>
-
                         <div class="profile-detail-item">
                             <span class="profile-detail-icon"><i class="fa-solid fa-envelope"></i></span>
                             <div class="profile-detail-content">
                                 <span class="profile-detail-label">Email</span>
-                                <span class="profile-detail-value">{{ user.email }}</span>
+                                <span class="profile-detail-value">{{ viewed_user.email }}</span>
                             </div>
                         </div>
-
                         {% if profile and profile.phone %}
                         <div class="profile-detail-item">
                             <span class="profile-detail-icon"><i class="fa-solid fa-phone"></i></span>
@@ -148,7 +141,6 @@
                             </div>
                         </div>
                         {% endif %}
-
                         {% if profile and profile.bio %}
                         <div class="profile-detail-item profile-detail-bio">
                             <span class="profile-detail-icon"><i class="fa-solid fa-align-left"></i></span>
@@ -158,57 +150,49 @@
                             </div>
                         </div>
                         {% endif %}
-
                     </div>
                 </div>
 
-                <!-- Quick links -->
+                {% if not profile_user %}
                 <div class="card mt-16">
                     <div class="card-title">
                         <i class="fa-solid fa-bolt"></i> Quick links
                     </div>
                     <div class="profile-quick-links">
                         <a href="{% url 'dashboard' %}" class="profile-quick-link">
-                            <i class="fa-solid fa-chart-line"></i>
-                            <span>Dashboard</span>
+                            <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
                             <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
                         </a>
                         <a href="{% url 'student_progress' %}" class="profile-quick-link">
-                            <i class="fa-solid fa-trophy"></i>
-                            <span>My progress</span>
+                            <i class="fa-solid fa-trophy"></i><span>My progress</span>
                             <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
                         </a>
                         <a href="{% url 'purchase_list' %}" class="profile-quick-link">
-                            <i class="fa-solid fa-bag-shopping"></i>
-                            <span>My purchases</span>
+                            <i class="fa-solid fa-bag-shopping"></i><span>My purchases</span>
                             <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
                         </a>
                         <a href="{% url 'user_achievement_list' %}" class="profile-quick-link">
-                            <i class="fa-solid fa-medal"></i>
-                            <span>Achievements</span>
+                            <i class="fa-solid fa-medal"></i><span>Achievements</span>
                             <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
                         </a>
                         <a href="{% url 'coin_transaction_list' %}" class="profile-quick-link">
-                            <i class="fa-solid fa-coins"></i>
-                            <span>Coin history</span>
+                            <i class="fa-solid fa-coins"></i><span>Coin history</span>
                             <i class="fa-solid fa-chevron-right profile-quick-arrow"></i>
                         </a>
                     </div>
                 </div>
-
+                {% endif %}
             </div>
 
-            <!-- RIGHT — Notifications -->
+            <!-- RIGHT -->
             <div class="profile-right">
-
                 <div class="card">
+                    {% if not profile_user %}
                     <div class="flex-between mb-16">
                         <div class="card-title" style="margin-bottom:0">
                             <i class="fa-solid fa-bell"></i> Notifications
                             {% if notifications %}
-                            <span class="badge badge-red" style="margin-left:6px">
-                                {{ notifications|length }}
-                            </span>
+                            <span class="badge badge-red" style="margin-left:6px">{{ notifications|length }}</span>
                             {% endif %}
                         </div>
                         {% if notifications %}
@@ -218,7 +202,6 @@
                         </form>
                         {% endif %}
                     </div>
-
                     {% if notifications %}
                     <div class="notif-list">
                         {% for notif in notifications %}
@@ -228,28 +211,19 @@
                                 {% elif notif.type == 'enrollment_rejected' %}notif-icon-danger
                                 {% elif notif.type == 'enrollment_invite' %}notif-icon-accent
                                 {% else %}notif-icon-default{% endif %}">
-                                {% if notif.type == 'enrollment_approved' %}
-                                    <i class="fa-solid fa-circle-check"></i>
-                                {% elif notif.type == 'enrollment_rejected' %}
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                {% elif notif.type == 'enrollment_invite' %}
-                                    <i class="fa-solid fa-envelope"></i>
-                                {% else %}
-                                    <i class="fa-solid fa-bell"></i>
-                                {% endif %}
+                                {% if notif.type == 'enrollment_approved' %}<i class="fa-solid fa-circle-check"></i>
+                                {% elif notif.type == 'enrollment_rejected' %}<i class="fa-solid fa-circle-xmark"></i>
+                                {% elif notif.type == 'enrollment_invite' %}<i class="fa-solid fa-envelope"></i>
+                                {% else %}<i class="fa-solid fa-bell"></i>{% endif %}
                             </div>
                             <div class="notif-body">
                                 <p class="notif-message">{{ notif.message }}</p>
-                                <p class="notif-time text-sm text-muted">
-                                    {{ notif.created_at|timesince }} ago
-                                </p>
+                                <p class="notif-time text-sm text-muted">{{ notif.created_at|timesince }} ago</p>
                             </div>
                             {% if not notif.is_read %}
                             <form method="post" action="{% url 'notification_read' notif.id %}">
                                 {% csrf_token %}
-                                <button class="notif-read-btn" title="Mark as read">
-                                    <i class="fa-solid fa-check"></i>
-                                </button>
+                                <button class="notif-read-btn" title="Mark as read"><i class="fa-solid fa-check"></i></button>
                             </form>
                             {% endif %}
                         </div>
@@ -261,12 +235,20 @@
                         <p>No notifications</p>
                     </div>
                     {% endif %}
-                </div>
 
+                    {% else %}
+                    {# Чужой профиль — показываем заглушку вместо уведомлений #}
+                    <div class="card-title"><i class="fa-solid fa-circle-info"></i> Info</div>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <p>This user's notifications are private</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
 
         </div>
-
     </div>
 </div>
+{% endwith %}
 {% endblock %}

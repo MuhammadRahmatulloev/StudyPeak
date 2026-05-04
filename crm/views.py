@@ -3,28 +3,56 @@ from django.views.generic import View
 from django.contrib import messages
 from accounts.permissions import SessionLoginRequiredMixin, TeacherRequiredMixin, AdminRequiredMixin, TeacherOrAdminRequiredMixin, get_current_user
 from accounts.models import UserModel
-from .models import Course, CoursePeriod, Enrollment, WeeklyJournal, Grade, Attendance, StudentPeriodSummary
+from .models import *
+import json
+from django.http import JsonResponse
+
+
+class SearchStudentsView(SessionLoginRequiredMixin, View):
+    def get(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
+        q = request.GET.get('q', '').strip()
+
+        if len(q) < 2:
+            return JsonResponse({'users': []})
+
+        enrolled_ids = course.enrollments.values_list('student_id', flat=True)
+        users = UserModel.objects.filter(
+            username__icontains=q,
+            role=UserModel.STUDENT
+        ).exclude(id__in=enrolled_ids)[:8]
+
+        data = [{'id': u.id, 'username': u.username, 'role': u.role} for u in users]
+        return JsonResponse({'users': data})
 
 
 class CourseListView(SessionLoginRequiredMixin, View):
     def get(self, request):
         user = get_current_user(request)
-        if user.is_teacher:
-            courses = Course.objects.filter(teacher=user)
+        my_teacher_courses = Course.objects.filter(teacher=user)
+
+        if user.is_superuser or user.is_admin_role:
+            courses = Course.objects.all()
             available = None
-        elif user.is_student:
+        elif my_teacher_courses.exists() or user.is_teacher:
+            courses = my_teacher_courses
+            available = None
+        else:
             courses = Course.objects.filter(
                 enrollments__student=user,
                 enrollments__status=Enrollment.APPROVED
             )
-            enrolled_ids = Enrollment.objects.filter(student=user).values_list('course_id', flat=True)
-            available = Course.objects.filter(is_active=True).exclude(id__in=enrolled_ids)
-        else:
-            courses = Course.objects.all()
-            available = None
+            enrolled_ids = Enrollment.objects.filter(
+                student=user
+            ).values_list('course_id', flat=True)
+            available = Course.objects.filter(
+                is_active=True
+            ).exclude(id__in=enrolled_ids)
+
         return render(request, 'crm/course_list.html', {
             'courses': courses,
             'available': available,
+            'user': user,
         })
 
 
@@ -33,16 +61,71 @@ class CourseCreateView(TeacherOrAdminRequiredMixin, View):
         return render(request, 'crm/course_create.html')
 
     def post(self, request):
+        from accounts.models import Notification
+
         user = get_current_user(request)
         name = request.POST.get('name', '').strip()
         description = request.POST.get('description', '').strip()
+        become_self = request.POST.get('become_self')
+        admin_identifier = request.POST.get('admin_identifier', '').strip()
 
         if not name:
             messages.error(request, 'Course name is required.')
             return render(request, 'crm/course_create.html')
 
-        course = Course.objects.create(name=name, description=description, teacher=user)
-        messages.success(request, f'Course "{course.name}" created.')
+        course = Course.objects.create(
+            name=name,
+            description=description,
+            teacher=user,
+        )
+
+        if not become_self and admin_identifier:
+            admin_user = (
+                UserModel.objects.filter(email=admin_identifier).first()
+                or UserModel.objects.filter(username=admin_identifier).first()
+            )
+
+            if not admin_user:
+                course.delete()
+                messages.error(request, 'User not found. Check the username or email.')
+                return render(request, 'crm/course_create.html')
+
+            if admin_user.is_student:
+                course.delete()
+                messages.error(
+                    request,
+                    f'"{admin_user.username}" is a student and cannot be assigned as course admin.'
+                )
+                return render(request, 'crm/course_create.html')
+
+            if admin_user == user:
+                messages.success(request, f'Course "{course.name}" created. You are the admin. ✓')
+                return redirect('course_detail', course_id=course.id)
+
+            # Создаём приглашение
+            CourseAdminInvitation.objects.create(
+                course=course,
+                sender=user,
+                receiver=admin_user,
+            )
+
+            Notification.objects.create(
+                user=admin_user,
+                type=Notification.COURSE_ADMIN_INVITE,
+                message=(
+                    f'{user.username} invited you to become the administrator '
+                    f'of the course "{course.name}".'
+                )
+            )
+
+            messages.success(
+                request,
+                f'Course "{course.name}" created. '
+                f'Invitation sent to {admin_user.username} — waiting for their response.'
+            )
+        else:
+            messages.success(request, f'Course "{course.name}" created. You are the admin. ✓')
+
         return redirect('course_detail', course_id=course.id)
 
 
@@ -61,11 +144,25 @@ class CourseDetailView(SessionLoginRequiredMixin, View):
         enrollments = course.enrollments.filter(status=Enrollment.APPROVED).select_related('student')
         pending = course.enrollments.filter(status=Enrollment.PENDING).select_related('student')
 
+        pending_admin_invitation = CourseAdminInvitation.objects.filter(
+            course=course,
+            status=CourseAdminInvitation.PENDING
+        ).select_related('receiver', 'sender').first()
+
+        my_admin_invitation = CourseAdminInvitation.objects.filter(
+            course=course,
+            receiver=user,
+            status=CourseAdminInvitation.PENDING
+        ).first()
+
         return render(request, 'crm/course_detail.html', {
             'course': course,
             'periods': periods,
             'enrollments': enrollments,
             'pending': pending,
+            'user': user,
+            'pending_admin_invitation': pending_admin_invitation,
+            'my_admin_invitation': my_admin_invitation,
         })
 
 
@@ -131,23 +228,35 @@ class EnrollRequestView(SessionLoginRequiredMixin, View):
 
 class EnrollInviteView(TeacherOrAdminRequiredMixin, View):
     def post(self, request, course_id):
+        from accounts.models import Notification
         user = get_current_user(request)
         course = get_object_or_404(Course, id=course_id)
 
         if user.is_teacher and course.teacher != user:
-            messages.error(request, 'Access denied.')
-            return redirect('course_detail', course_id=course_id)
+            return JsonResponse({'status': 'error', 'message': 'Access denied.'})
 
         student_id = request.POST.get('student_id')
-        student = get_object_or_404(UserModel, id=student_id, role=UserModel.STUDENT)
+        student = UserModel.objects.filter(id=student_id, role=UserModel.STUDENT).first()
+        if not student:
+            return JsonResponse({'status': 'error', 'message': 'Student not found.'})
 
         if Enrollment.objects.filter(student=student, course=course).exists():
-            messages.warning(request, f'{student.username} already enrolled or invited.')
-            return redirect('course_detail', course_id=course_id)
+            return JsonResponse({'status': 'error', 'message': f'{student.username} already enrolled or invited.'})
 
-        Enrollment.objects.create(student=student, course=course, type=Enrollment.ADMIN_INVITE, status=Enrollment.APPROVED)
-        messages.success(request, f'{student.username} added to course.')
-        return redirect('course_detail', course_id=course_id)
+        Enrollment.objects.create(
+            student=student,
+            course=course,
+            type=Enrollment.ADMIN_INVITE,
+            status=Enrollment.PENDING  
+        )
+
+        Notification.objects.create(
+            user=student,
+            type=Notification.ENROLLMENT_INVITE,
+            message=f'{user.username} invited you to join the course "{course.name}".'
+        )
+
+        return JsonResponse({'status': 'ok', 'message': f'Invitation sent to {student.username}!'})
 
 
 class EnrollApproveView(TeacherOrAdminRequiredMixin, View):
@@ -192,6 +301,36 @@ class EnrollRemoveView(TeacherOrAdminRequiredMixin, View):
         enrollment.delete()
         messages.success(request, f'{enrollment.student.username} removed from course.')
         return redirect('course_detail', course_id=enrollment.course.id)
+    
+
+class EnrollAcceptInviteView(SessionLoginRequiredMixin, View):
+    def post(self, request, enrollment_id):
+        user = get_current_user(request)
+        enrollment = get_object_or_404(
+            Enrollment, id=enrollment_id,
+            student=user,
+            status=Enrollment.PENDING,
+            type=Enrollment.ADMIN_INVITE
+        )
+        enrollment.status = Enrollment.APPROVED
+        enrollment.save()
+        messages.success(request, f'You joined "{enrollment.course.name}"! 🎉')
+        return redirect('course_detail', course_id=enrollment.course.id)
+
+
+class EnrollRejectInviteView(SessionLoginRequiredMixin, View):
+    def post(self, request, enrollment_id):
+        user = get_current_user(request)
+        enrollment = get_object_or_404(
+            Enrollment, id=enrollment_id,
+            student=user,
+            status=Enrollment.PENDING,
+            type=Enrollment.ADMIN_INVITE
+        )
+        enrollment.status = Enrollment.REJECTED
+        enrollment.save()
+        messages.info(request, f'You declined the invitation to "{enrollment.course.name}".')
+        return redirect('notification_list')
 
 
 class CoursePeriodCreateView(TeacherOrAdminRequiredMixin, View):
@@ -260,76 +399,101 @@ class CoursePeriodDeleteView(TeacherOrAdminRequiredMixin, View):
 
 
 JOURNAL_WEEKS = [1, 2, 3, 4]
+JOURNAL_DAYS  = [1, 2, 3, 4, 5]
+
 
 class WeeklyJournalView(TeacherOrAdminRequiredMixin, View):
-    def get(self, request, period_id):
-        user = get_current_user(request)
-        period = get_object_or_404(CoursePeriod, id=period_id)
 
+    def _build_data(self, period):
+        students = list(UserModel.objects.filter(
+            enrollments__course=period.course,
+            enrollments__status=Enrollment.APPROVED
+        ).select_related('profile'))
+
+        # DailyScore map: {student_id: {week: {day: score}}}
+        score_map = {}
+        for ds in DailyScore.objects.filter(period=period):
+            score_map.setdefault(ds.student_id, {})\
+                     .setdefault(ds.week_number, {})[ds.day_number] = ds.score
+
+        # WeekSummary map: {student_id: {week: WeekSummary}}
+        ws_map = {}
+        for ws in WeekSummary.objects.filter(period=period):
+            ws_map.setdefault(ws.student_id, {})[ws.week_number] = ws
+
+        # Week блоки (4 → 1)
+        week_rows = []
+        for w in reversed(JOURNAL_WEEKS):
+            s_data = []
+            for student in students:
+                days = [score_map.get(student.id, {}).get(w, {}).get(d) for d in JOURNAL_DAYS]
+                daily_total = sum(x or 0 for x in days)
+                ws_obj = ws_map.get(student.id, {}).get(w)
+                bonus = ws_obj.bonus_score if ws_obj else 0
+                exam  = ws_obj.exam_score  if ws_obj else 0
+                s_data.append({
+                    'student':     student,
+                    'days':        days,
+                    'daily_total': daily_total,
+                    'bonus':       bonus,
+                    'exam':        exam,
+                    'week_total':  daily_total + bonus + exam,
+                })
+            week_rows.append({'num': w, 'students': s_data})
+
+        # Статистика для шапки
+        summary_rows = []
+        for student in students:
+            grand = 0
+            for w in JOURNAL_WEEKS:
+                daily = sum(score_map.get(student.id, {}).get(w, {}).get(d, 0) or 0 for d in JOURNAL_DAYS)
+                ws_obj = ws_map.get(student.id, {}).get(w)
+                grand += daily + (ws_obj.bonus_score if ws_obj else 0) + (ws_obj.exam_score if ws_obj else 0)
+            summary_rows.append({'student': student, 'grand_total': grand})
+
+        return students, week_rows, summary_rows
+
+    def get(self, request, period_id):
+        user   = get_current_user(request)
+        period = get_object_or_404(CoursePeriod, id=period_id)
         if user.is_teacher and period.course.teacher != user:
             messages.error(request, 'Access denied.')
             return redirect('course_list')
-
-        students = UserModel.objects.filter(
-            enrollments__course=period.course,
-            enrollments__status=Enrollment.APPROVED
-        )
-
-        journals = WeeklyJournal.objects.filter(period=period)
-        journal_map = {}
-        for j in journals:
-            if j.student_id not in journal_map:
-                journal_map[j.student_id] = {}
-            journal_map[j.student_id][j.week_number] = j
-
-        summaries = StudentPeriodSummary.objects.filter(period=period)
-        summary_map = {s.student_id: s for s in summaries}
-
+        students, week_rows, summary_rows = self._build_data(period)
         return render(request, 'crm/weekly_journal.html', {
-            'period': period,
-            'students': students,
-            'journal_map': journal_map,
-            'summary_map': summary_map,
-            'weeks': JOURNAL_WEEKS,
+            'period': period, 'students': students,
+            'week_rows': week_rows, 'summary_rows': summary_rows,
         })
 
     def post(self, request, period_id):
-        user = get_current_user(request)
+        user   = get_current_user(request)
         period = get_object_or_404(CoursePeriod, id=period_id)
-
         if user.is_teacher and period.course.teacher != user:
             messages.error(request, 'Access denied.')
             return redirect('course_list')
 
-        student_ids = request.POST.getlist('student_ids')
-
-        for student_id in student_ids:
-            student = UserModel.objects.filter(id=student_id).first()
+        for sid in request.POST.getlist('student_ids'):
+            student = UserModel.objects.filter(id=sid).first()
             if not student:
                 continue
+            for w in JOURNAL_WEEKS:
+                for d in JOURNAL_DAYS:
+                    raw = request.POST.get(f'score_{sid}_{w}_{d}', '').strip()
+                    sc  = max(1, min(5, int(raw))) if raw else None
+                    DailyScore.objects.update_or_create(
+                        student=student, period=period,
+                        week_number=w, day_number=d,
+                        defaults={'score': sc},
+                    )
+                bonus = min(int(request.POST.get(f'bonus_{sid}_{w}') or 0), 10)
+                exam  = min(int(request.POST.get(f'exam_{sid}_{w}')  or 0), 70)
+                ws, _ = WeekSummary.objects.get_or_create(
+                    student=student, period=period, week_number=w)
+                ws.bonus_score = bonus
+                ws.exam_score  = exam
+                ws.save()
 
-            for week in JOURNAL_WEEKS:
-                score = int(request.POST.get(f'score_{student_id}_{week}') or 0)
-                comment = request.POST.get(f'comment_{student_id}_{week}', '')
-
-                journal, _ = WeeklyJournal.objects.get_or_create(
-                    student=student, period=period, week_number=week
-                )
-                journal.base_score = min(score, 100)
-                journal.teacher_comment = comment
-                journal.save()
-
-            bonus = int(request.POST.get(f'bonus_{student_id}') or 0)
-            exam = int(request.POST.get(f'exam_{student_id}') or 0)
-
-            summary, _ = StudentPeriodSummary.objects.get_or_create(
-                student=student, period=period
-            )
-            summary.bonus_score = min(bonus, 20)
-            summary.exam_score = min(exam, 100)
-            summary.save()
-
-        messages.success(request, 'Journal saved.')
+        messages.success(request, 'Journal saved. ✓')
         return redirect('weekly_journal', period_id=period_id)
 
 
@@ -339,17 +503,53 @@ class StudentJournalView(SessionLoginRequiredMixin, View):
         period = get_object_or_404(CoursePeriod, id=period_id)
 
         if user.is_student:
-            enrollment = Enrollment.objects.filter(student=user, course=period.course, status=Enrollment.APPROVED).first()
+            enrollment = Enrollment.objects.filter(
+                student=user, course=period.course, status=Enrollment.APPROVED
+            ).first()
             if not enrollment:
                 messages.error(request, 'Access denied.')
                 return redirect('course_list')
-            journals = WeeklyJournal.objects.filter(student=user, period=period).order_by('week_number')
+            student = user
         else:
-            journals = WeeklyJournal.objects.filter(period=period).order_by('week_number')
+            student = user
+
+        WEEKS = [1, 2, 3, 4]
+        DAYS  = [1, 2, 3, 4, 5]
+
+        score_map = {}
+        for ds in DailyScore.objects.filter(period=period, student=student):
+            score_map.setdefault(ds.week_number, {})[ds.day_number] = ds.score
+
+        ws_map = {}
+        for ws in WeekSummary.objects.filter(period=period, student=student):
+            ws_map[ws.week_number] = ws
+
+        week_data = []
+        grand_total = 0
+        for w in WEEKS:
+            days = [score_map.get(w, {}).get(d) for d in DAYS]
+            daily_total = sum(x or 0 for x in days)
+            ws_obj      = ws_map.get(w)
+            bonus       = ws_obj.bonus_score if ws_obj else 0
+            exam        = ws_obj.exam_score  if ws_obj else 0
+            week_total  = daily_total + bonus + exam
+            grand_total += week_total
+            week_data.append({
+                'week_number': w,
+                'days':        days,
+                'daily_total': daily_total,
+                'bonus':       bonus,
+                'exam':        exam,
+                'week_total':  week_total,
+            })
+
+        has_data = any(w['week_total'] > 0 for w in week_data)
 
         return render(request, 'crm/student_journal.html', {
-            'period': period,
-            'journals': journals,
+            'period':      period,
+            'week_data':   week_data,
+            'grand_total': grand_total,
+            'has_data':    has_data,
         })
 
 
@@ -493,3 +693,41 @@ class StudentAttendanceView(SessionLoginRequiredMixin, View):
             'period': period,
             'records': records,
         })
+    
+
+class AcceptCourseAdminInvitationView(SessionLoginRequiredMixin, View):
+    def post(self, request, invitation_id):
+        user = get_current_user(request)
+        invitation = get_object_or_404(
+            CourseAdminInvitation,
+            id=invitation_id,
+            receiver=user,
+            status=CourseAdminInvitation.PENDING
+        )
+
+        course = invitation.course
+        course.teacher = user
+        course.save()
+
+        invitation.status = CourseAdminInvitation.ACCEPTED
+        invitation.save()
+
+        messages.success(request, f'You are now the administrator of "{course.name}". ✓')
+        return redirect('course_detail', course_id=course.id)
+
+
+class RejectCourseAdminInvitationView(SessionLoginRequiredMixin, View):
+    def post(self, request, invitation_id):
+        user = get_current_user(request)
+        invitation = get_object_or_404(
+            CourseAdminInvitation,
+            id=invitation_id,
+            receiver=user,
+            status=CourseAdminInvitation.PENDING
+        )
+
+        invitation.status = CourseAdminInvitation.REJECTED
+        invitation.save()
+
+        messages.info(request, f'You declined the admin invitation for "{invitation.course.name}".')
+        return redirect('course_list')

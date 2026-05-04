@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}StudyPeak{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -62,8 +63,6 @@
                 <i class="fa-solid fa-moon" id="themeIcon"></i>
             </button>
 
-
-            <!-- Notifications -->
             <a href="{% url 'notification_list' %}" class="nav-notif-btn" title="Notifications">
                 <i class="fa-solid fa-bell"></i>
                 {% if unread_notifications_count %}
@@ -96,30 +95,513 @@
 </nav>
 {% endif %}
 
-<!-- ── TOAST CONTAINER ── -->
-<div id="toastContainer" class="messages-container">
-    {% if messages %}
-        {% for message in messages %}
-        {% if 'error' in message.tags or 'warning' in message.tags %}
-        <div class="message message-{{ message.tags }}">
-            <span>{{ message }}</span>
-            <button class="message-close" onclick="this.parentElement.remove()">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        {% endif %}
-        {% endfor %}
-    {% endif %}
-</div>
-
 <main class="main-content {% if not request.session.user_id %}no-nav{% endif %}">
     {% block content %}{% endblock %}
 </main>
 
+<!-- ═══════════════════════════════════════
+     AI MINI CHAT — floating bottom right
+═══════════════════════════════════════ -->
+{% if request.session.user_id %}
+<div id="aiChatWrap">
+
+    <!-- Toggle button -->
+    <button id="aiChatToggle" title="StudyPeak AI">
+        <i class="fa-solid fa-robot" id="aiChatIcon"></i>
+        <span id="aiChatBadge" style="display:none;"></span>
+    </button>
+
+    <!-- Chat panel -->
+    <div id="aiChatPanel">
+
+        <!-- Header -->
+        <div class="ai-chat-header">
+            <div class="ai-chat-header-left">
+                <div class="ai-chat-avatar">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div>
+                    <p class="ai-chat-title">StudyPeak AI</p>
+                    <p class="ai-chat-subtitle" id="aiRequestsLeft">Loading...</p>
+                </div>
+            </div>
+            <div class="ai-chat-header-right">
+                <button class="ai-chat-clear" id="aiClearBtn" title="Clear chat">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+                <button class="ai-chat-close" id="aiChatClose">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="ai-chat-messages" id="aiChatMessages">
+            <div class="ai-msg ai-msg-bot">
+                <div class="ai-msg-bubble">
+                    👋 Hi! I'm your StudyPeak AI assistant. Ask me anything about your studies — I'll help you <strong>understand</strong> topics, not just give answers!
+                </div>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="ai-chat-input-wrap">
+            <textarea
+                id="aiChatInput"
+                class="ai-chat-input"
+                placeholder="Ask a question..."
+                rows="1"
+            ></textarea>
+            <button id="aiChatSend" class="ai-chat-send">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<style>
+/* ═══════════════════════════════════════
+   AI MINI CHAT STYLES
+═══════════════════════════════════════ */
+
+#aiChatWrap {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    pointer-events: none;
+}
+
+/* Toggle button */
+#aiChatToggle {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px var(--accent-glow);
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    position: relative;
+    flex-shrink: 0;
+    pointer-events: all;
+}
+
+#aiChatToggle:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 28px var(--accent-glow);
+}
+
+#aiChatToggle.active {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    box-shadow: none;
+}
+
+#aiChatBadge {
+    position: absolute;
+    top: -3px; right: -3px;
+    width: 14px; height: 14px;
+    background: var(--danger);
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+}
+
+/* Panel */
+#aiChatPanel {
+    width: 360px;
+    height: 500px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px) scale(0.97);
+    pointer-events: none;
+    transform-origin: bottom right;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+
+#aiChatPanel.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: all;
+}
+
+/* Header */
+.ai-chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-3);
+    flex-shrink: 0;
+}
+
+.ai-chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ai-chat-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(79,142,247,0.25);
+}
+
+.ai-chat-title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.ai-chat-subtitle {
+    font-size: 0.72rem;
+    color: var(--text-2);
+    margin: 0;
+}
+
+.ai-chat-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ai-chat-clear,
+.ai-chat-close {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+}
+
+.ai-chat-clear:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.ai-chat-close:hover {
+    background: var(--bg-4);
+    color: var(--text);
+}
+
+/* Messages */
+.ai-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+}
+
+.ai-chat-messages::-webkit-scrollbar { width: 3px; }
+.ai-chat-messages::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.ai-msg {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-width: 88%;
+}
+
+.ai-msg-user { align-self: flex-end; align-items: flex-end; }
+.ai-msg-bot  { align-self: flex-start; align-items: flex-start; }
+
+.ai-msg-bubble {
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.ai-msg-user .ai-msg-bubble {
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.ai-msg-bot .ai-msg-bubble {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+}
+
+.ai-msg-bot .ai-msg-bubble.blocked {
+    border-color: rgba(248,113,113,0.3);
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+/* Typing indicator */
+.ai-typing-dots {
+    display: flex;
+    gap: 4px;
+    padding: 4px 0;
+    align-items: center;
+}
+
+.ai-typing-dots span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-2);
+    animation: aiDot 1.2s infinite;
+}
+
+.ai-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.ai-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes aiDot {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
+    40%            { transform: scale(1.1); opacity: 1;   }
+}
+
+/* Input */
+.ai-chat-input-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-2);
+    flex-shrink: 0;
+}
+
+.ai-chat-input {
+    flex: 1;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    resize: none;
+    outline: none;
+    line-height: 1.45;
+    max-height: 100px;
+    overflow-y: auto;
+    transition: border-color 0.2s;
+}
+
+.ai-chat-input:focus {
+    border-color: var(--accent);
+}
+
+.ai-chat-input::placeholder { color: var(--text-3); }
+
+.ai-chat-send {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.ai-chat-send:hover { background: var(--accent-hover); transform: scale(1.05); }
+.ai-chat-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+@media (max-width: 480px) {
+    #aiChatPanel { width: calc(100vw - 32px); }
+    #aiChatWrap  { right: 16px; bottom: 16px; }
+}
+</style>
+
+<script>
+(function() {
+    const toggle   = document.getElementById('aiChatToggle');
+    const panel    = document.getElementById('aiChatPanel');
+    const closeBtn = document.getElementById('aiChatClose');
+    const clearBtn = document.getElementById('aiClearBtn');
+    const input    = document.getElementById('aiChatInput');
+    const sendBtn  = document.getElementById('aiChatSend');
+    const messages = document.getElementById('aiChatMessages');
+    const subtitle = document.getElementById('aiRequestsLeft');
+    const CSRF     = '{{ csrf_token }}';
+    let isOpen     = false;
+    let isLoading  = false;
+    let requestsLeft = 20;
+
+    // ── Open / Close ──
+    function openChat() {
+        isOpen = true;
+        panel.classList.add('open');
+        toggle.classList.add('active');
+        toggle.querySelector('#aiChatIcon').className = 'fa-solid fa-xmark';
+        setTimeout(() => input.focus(), 200);
+        scrollBottom();
+    }
+
+    function closeChat() {
+        isOpen = false;
+        panel.classList.remove('open');
+        toggle.classList.remove('active');
+        toggle.querySelector('#aiChatIcon').className = 'fa-solid fa-robot';
+    }
+
+    toggle.addEventListener('click', () => isOpen ? closeChat() : openChat());
+    closeBtn.addEventListener('click', closeChat);
+
+    // ── Clear ──
+    clearBtn.addEventListener('click', () => {
+        messages.innerHTML = `
+            <div class="ai-msg ai-msg-bot">
+                <div class="ai-msg-bubble">
+                    👋 Hi! I'm your StudyPeak AI assistant. Ask me anything about your studies!
+                </div>
+            </div>`;
+    });
+
+    // ── Auto resize textarea ──
+    input.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+
+    // ── Send on Enter (Shift+Enter = newline) ──
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    // ── Scroll to bottom ──
+    function scrollBottom() {
+        setTimeout(() => messages.scrollTop = messages.scrollHeight, 50);
+    }
+
+    // ── Add message bubble ──
+    function addMessage(text, role, blocked=false) {
+        const div = document.createElement('div');
+        div.className = `ai-msg ai-msg-${role}`;
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-msg-bubble' + (blocked ? ' blocked' : '');
+        bubble.innerHTML = text.replace(/\n/g, '<br>');
+        div.appendChild(bubble);
+        messages.appendChild(div);
+        scrollBottom();
+        return bubble;
+    }
+
+    // ── Typing indicator ──
+    function showTyping() {
+        const div = document.createElement('div');
+        div.className = 'ai-msg ai-msg-bot';
+        div.id = 'aiTyping';
+        div.innerHTML = `<div class="ai-msg-bubble"><div class="ai-typing-dots"><span></span><span></span><span></span></div></div>`;
+        messages.appendChild(div);
+        scrollBottom();
+    }
+
+    function removeTyping() {
+        const t = document.getElementById('aiTyping');
+        if (t) t.remove();
+    }
+
+    // ── Send message ──
+    function sendMessage() {
+        const q = input.value.trim();
+        if (!q || isLoading) return;
+
+        addMessage(q, 'user');
+        input.value = '';
+        input.style.height = 'auto';
+        isLoading = true;
+        sendBtn.disabled = true;
+        showTyping();
+
+        fetch('/ai/ask/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': CSRF,
+            },
+            body: JSON.stringify({ question: q, context: 'general' }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            removeTyping();
+            if (data.error) {
+                addMessage('⚠️ ' + data.error, 'bot', true);
+            } else {
+                addMessage(data.response, 'bot', data.blocked);
+                if (data.requests_left !== undefined) {
+                    requestsLeft = data.requests_left;
+                    subtitle.textContent = `${requestsLeft} questions left today`;
+                }
+            }
+        })
+        .catch(() => {
+            removeTyping();
+            addMessage('⚠️ Connection error. Try again.', 'bot', true);
+        })
+        .finally(() => {
+            isLoading = false;
+            sendBtn.disabled = false;
+            input.focus();
+        });
+    }
+
+    // ── Init subtitle ──
+    subtitle.textContent = '20 questions left today';
+})();
+</script>
+{% endif %}
+
 <script src="{% static 'js/main.js' %}"></script>
 
 <script>
-// ── TOAST FUNCTION (глобальная) ──────────────────────────
 function showToast(message, type) {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
@@ -134,7 +616,6 @@ function showToast(message, type) {
     setTimeout(() => toast.remove(), 4000);
 }
 
-// ── FRIENDS DROPDOWN ────────────────────────────────────
 const friendsBtn      = document.getElementById('navFriendsBtn');
 const friendsDropdown = document.getElementById('friendsDropdown');
 const friendsInput    = document.getElementById('friendsSearchInput');
@@ -142,44 +623,28 @@ const friendsResults  = document.getElementById('friendsSearchResults');
 const CSRF_TOKEN      = '{{ csrf_token }}';
 
 if (friendsBtn) {
-    // Открыть/закрыть dropdown
     friendsBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         const isOpen = friendsDropdown.classList.contains('active');
         friendsDropdown.classList.toggle('active');
-        if (!isOpen) {
-            setTimeout(() => friendsInput.focus(), 100);
-        }
+        if (!isOpen) setTimeout(() => friendsInput.focus(), 100);
     });
 
-    // Закрыть при клике вне
     document.addEventListener('click', function(e) {
         if (!document.getElementById('navFriendsWrap').contains(e.target)) {
             friendsDropdown.classList.remove('active');
         }
     });
 
-    // Поиск пользователей
     let searchTimer;
     friendsInput.addEventListener('input', function() {
         clearTimeout(searchTimer);
         const q = this.value.trim();
-
         if (q.length < 2) {
-            friendsResults.innerHTML = `
-                <div class="friends-search-hint">
-                    <i class="fa-solid fa-search"></i>
-                    <p>Type at least 2 characters</p>
-                </div>`;
+            friendsResults.innerHTML = `<div class="friends-search-hint"><i class="fa-solid fa-search"></i><p>Type at least 2 characters</p></div>`;
             return;
         }
-
-        friendsResults.innerHTML = `
-            <div class="friends-search-hint">
-                <i class="fa-solid fa-spinner fa-spin"></i>
-                <p>Searching...</p>
-            </div>`;
-
+        friendsResults.innerHTML = `<div class="friends-search-hint"><i class="fa-solid fa-spinner fa-spin"></i><p>Searching...</p></div>`;
         searchTimer = setTimeout(() => {
             fetch(`/chat/friends/search/?q=${encodeURIComponent(q)}`)
                 .then(r => r.json())
@@ -190,62 +655,40 @@ if (friendsBtn) {
 
 function renderFriendsResults(users, q) {
     if (!users.length) {
-        friendsResults.innerHTML = `
-            <div class="friends-search-hint">
-                <i class="fa-solid fa-user-slash"></i>
-                <p>No users found for "${q}"</p>
-            </div>`;
+        friendsResults.innerHTML = `<div class="friends-search-hint"><i class="fa-solid fa-user-slash"></i><p>No users found for "${q}"</p></div>`;
         return;
     }
-
     friendsResults.innerHTML = '';
     users.forEach(u => {
         const item = document.createElement('div');
         item.className = 'friends-result-item';
         item.dataset.userId = u.id;
-
-        const avatarHtml = u.avatar
-            ? `<img src="${u.avatar}" alt="${u.username}">`
-            : `<span>${u.username[0].toUpperCase()}</span>`;
-
+        const avatarHtml = u.avatar ? `<img src="${u.avatar}" alt="${u.username}">` : `<span>${u.username[0].toUpperCase()}</span>`;
         let btnHtml = '';
         if (u.friendship_status === 'friends') {
-            btnHtml = `<button class="friends-add-btn friends-add-btn--done" disabled>
-                <i class="fa-solid fa-user-check"></i> Friends
-            </button>`;
+            btnHtml = `<button class="friends-add-btn friends-add-btn--done" disabled><i class="fa-solid fa-user-check"></i> Friends</button>`;
         } else if (u.friendship_status === 'pending') {
-            btnHtml = `<button class="friends-add-btn friends-add-btn--pending" disabled>
-                <i class="fa-solid fa-clock"></i> Pending
-            </button>`;
+            btnHtml = `<button class="friends-add-btn friends-add-btn--pending" disabled><i class="fa-solid fa-clock"></i> Pending</button>`;
         } else {
-            btnHtml = `<button class="friends-add-btn" onclick="sendFriendReq(${u.id}, this)">
-                <i class="fa-solid fa-user-plus"></i> Add
-            </button>`;
+            btnHtml = `<button class="friends-add-btn" onclick="sendFriendReq(${u.id}, this)"><i class="fa-solid fa-user-plus"></i> Add</button>`;
         }
-
         item.innerHTML = `
             <div class="friends-result-av">${avatarHtml}</div>
             <div class="friends-result-info">
                 <p class="friends-result-name">${u.username}</p>
                 <p class="friends-result-role">${u.role}</p>
             </div>
-            ${btnHtml}
-        `;
+            ${btnHtml}`;
         friendsResults.appendChild(item);
     });
 }
 
 function sendFriendReq(userId, btn) {
-    // Сразу меняем кнопку — не выходим из поиска
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
     fetch(`/chat/friends/ajax/add/${userId}/`, {
         method: 'POST',
-        headers: {
-            'X-CSRFToken': CSRF_TOKEN,
-            'Content-Type': 'application/json',
-        },
+        headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
     })
     .then(r => r.json())
     .then(data => {

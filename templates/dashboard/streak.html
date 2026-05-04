@@ -1,66 +1,386 @@
 {% extends 'base.html' %}
-{% block title %}Streak{% endblock %}
+{% load static %}
+{% block title %}Daily Streak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+
+.streak-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── PAGE TITLE ── */
+.streak-page-title {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+/* ── HERO BANNER ── */
+.streak-hero {
+    background: var(--bg-2);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.streak-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #fbbf24, rgba(251,191,36,0.4), transparent);
+}
+
+.streak-hero::after {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.streak-hero-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 32px;
+    position: relative;
+    z-index: 1;
+}
+
+.streak-hero-stat + .streak-hero-stat {
+    border-left: 1px solid var(--border);
+}
+
+.streak-hero-stat:first-child {
+    padding-left: 0;
+}
+
+.streak-hero-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.streak-hero-label i {
+    font-size: 0.7rem;
+    color: var(--text-3);
+}
+
+.streak-hero-value {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: #fbbf24;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.streak-hero-value.value-muted {
+    color: var(--text);
+    font-size: 2rem;
+}
+
+.streak-hero-sub {
+    font-size: 0.8rem;
+    color: var(--text-2);
+    margin-top: 2px;
+}
+
+/* ── LEADERBOARD ── */
+.streak-leaderboard {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.streak-lb-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-3);
+}
+
+.streak-lb-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(251,191,36,0.12);
+    color: #fbbf24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+.streak-lb-title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+/* Table */
+.streak-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.streak-table thead tr {
+    background: var(--bg-3);
+}
+
+.streak-table th {
+    padding: 10px 24px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.streak-table td {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.streak-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.streak-table tbody tr {
+    transition: background 0.15s;
+}
+
+.streak-table tbody tr:hover td {
+    background: var(--bg-3);
+}
+
+/* Rank badge */
+.rank-badge {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.rank-1 { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+.rank-2 { background: rgba(209,213,219,0.12); color: #d1d5db; border: 1px solid rgba(209,213,219,0.2); }
+.rank-3 { background: rgba(217,119,6,0.12);  color: #d97706; border: 1px solid rgba(217,119,6,0.2);  }
+.rank-n { background: var(--bg-4); color: var(--text-2); border: 1px solid var(--border); }
+
+/* User cell */
+.streak-user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.streak-user-av {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(79,142,247,0.2);
+}
+
+.streak-user-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Streak value */
+.streak-val {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.streak-val-fire { font-size: 1rem; }
+
+.streak-val-hot { color: #fbbf24; }
+
+/* ── EMPTY ── */
+.streak-empty {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-2);
+    font-size: 0.9rem;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+    .streak-page { padding: 16px; gap: 16px; }
+    .streak-hero { grid-template-columns: 1fr; gap: 20px; }
+    .streak-hero-stat + .streak-hero-stat {
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding-left: 0;
+        padding-top: 20px;
+    }
+    .streak-table th,
+    .streak-table td { padding: 10px 14px; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-wrapper">
-    <div class="page-header">
-        <h2 class="page-title">🔥 Daily Streak</h2>
+<div class="streak-page">
+
+{# ── TITLE ── #}
+<div style="display:flex; align-items:center; justify-content:space-between;">
+    <h1 class="streak-page-title">🔥 Daily Streak</h1>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+</div>
+
+  {# ── ALERTS ── #}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {# ── HERO STATS ── #}
+  <div class="streak-hero">
+    <div class="streak-hero-stat">
+      <span class="streak-hero-label">
+        <i class="fa-solid fa-bolt"></i> Current Streak
+      </span>
+      <div class="streak-hero-value">
+        {{ streak.current_streak }}
+        <span style="font-size:1.4rem;line-height:1;">🔥</span>
+      </div>
+      <span class="streak-hero-sub">days in a row</span>
     </div>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-
-    <div class="streak-card">
-        <div class="streak-stat">
-            <span class="streak-stat-label">Current Streak</span>
-            <span class="streak-stat-value">{{ streak.current_streak }} days</span>
-        </div>
-        <div class="streak-stat">
-            <span class="streak-stat-label">Longest Streak</span>
-            <span class="streak-stat-value">{{ streak.longest_streak }} days</span>
-        </div>
-        <div class="streak-stat">
-            <span class="streak-stat-label">Last Active</span>
-            <span class="streak-stat-value">
-                {% if streak.last_active_date %}
-                    {{ streak.last_active_date|date:"d M Y" }}
-                {% else %}
-                    —
-                {% endif %}
-            </span>
-        </div>
+    <div class="streak-hero-stat">
+      <span class="streak-hero-label">
+        <i class="fa-solid fa-trophy"></i> Longest Streak
+      </span>
+      <div class="streak-hero-value">
+        {{ streak.longest_streak }}
+        <span style="font-size:1.2rem;line-height:1;opacity:.6;">🏆</span>
+      </div>
+      <span class="streak-hero-sub">personal best</span>
     </div>
 
-    <div class="section">
-        <h3 class="section-title">Top Streaks</h3>
-        {% if top_streaks %}
-            <div class="table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>User</th>
-                            <th>Current Streak</th>
-                            <th>Longest Streak</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for s in top_streaks %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ s.user.username }}</td>
-                                <td>🔥 {{ s.current_streak }} days</td>
-                                <td>{{ s.longest_streak }} days</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <div class="streak-hero-stat">
+      <span class="streak-hero-label">
+        <i class="fa-regular fa-calendar"></i> Last Active
+      </span>
+      <div class="streak-hero-value value-muted" style="font-size:1.5rem;">
+        {% if streak.last_active_date %}
+          {{ streak.last_active_date|date:"d M Y" }}
         {% else %}
-            <p class="empty-text">No streak data found.</p>
+          —
         {% endif %}
+      </div>
+      <span class="streak-hero-sub">keep it going!</span>
     </div>
+  </div>
+
+  {# ── LEADERBOARD ── #}
+  <div class="streak-leaderboard">
+    <div class="streak-lb-header">
+      <div class="streak-lb-icon"><i class="fa-solid fa-ranking-star"></i></div>
+      <h3 class="streak-lb-title">Top Streaks</h3>
+    </div>
+
+    {% if top_streaks %}
+    <table class="streak-table">
+      <thead>
+        <tr>
+          <th style="width:60px;">Rank</th>
+          <th>User</th>
+          <th>Current Streak</th>
+          <th>Longest Streak</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in top_streaks %}
+        <tr>
+          <td>
+            <div class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-n{% endif %}">
+              {{ forloop.counter }}
+            </div>
+          </td>
+          <td>
+            <div class="streak-user-cell">
+              <div class="streak-user-av">{{ s.user.username|first|upper }}</div>
+              <span class="streak-user-name">{{ s.user.username }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="streak-val {% if s.current_streak >= 3 %}streak-val-hot{% endif %}">
+              <span class="streak-val-fire">🔥</span>
+              {{ s.current_streak }} days
+            </span>
+          </td>
+          <td>
+            <span class="streak-val">
+              {{ s.longest_streak }} days
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="streak-empty">No streak data found.</div>
+    {% endif %}
+  </div>
+
 </div>
 {% endblock %}

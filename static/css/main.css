@@ -122,6 +122,14 @@ input, textarea, select { font-family: var(--font-body); }
     transition: opacity var(--transition);
 }
 
+.nav-logo-img {
+    height: 32px;
+    width: 32px;
+    object-fit: contain;
+    border-radius: 6px;
+    filter: brightness(1.05);
+}
+
 .nav-logo:hover { opacity: 0.85; }
 .logo-icon { font-size: 1.3rem; }
 

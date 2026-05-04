@@ -94,6 +94,87 @@
   </div>
   {% endif %}
 
+
+{# ── COURSE ENROLLMENT INVITATIONS ── #}
+{% if enrollment_invitations %}
+<div class="card mb-16">
+    <p class="card-title">
+        <i class="fa-solid fa-graduation-cap"></i> Course Invitations
+        <span class="badge badge-blue" style="margin-left: 6px;">{{ enrollment_invitations.count }}</span>
+    </p>
+    {% for inv in enrollment_invitations %}
+    <div class="notif-row">
+        <div class="notif-icon stat-icon-blue">
+            <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="notif-body">
+            <p class="notif-text">
+                <strong>{{ inv.course.teacher.username }}</strong> invited you to join
+                <strong>{{ inv.course.name }}</strong>
+            </p>
+            <p class="notif-time">
+                <i class="fa-regular fa-clock"></i> {{ inv.enrolled_at|date:"d M Y, H:i" }}
+            </p>
+        </div>
+        <div class="notif-actions">
+            <form method="post" action="{% url 'enroll_accept_invite' inv.id %}">
+                {% csrf_token %}
+                <button class="btn btn-success btn-sm">
+                    <i class="fa-solid fa-check"></i> Join
+                </button>
+            </form>
+            <form method="post" action="{% url 'enroll_reject_invite' inv.id %}">
+                {% csrf_token %}
+                <button class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-xmark"></i> Decline
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# ── COURSE ADMIN INVITATIONS ── #}
+{% if course_admin_invitations %}
+<div class="card mb-16">
+    <p class="card-title">
+        <i class="fa-solid fa-user-shield"></i> Course Admin Invitations
+        <span class="badge badge-yellow" style="margin-left: 6px;">{{ course_admin_invitations.count }}</span>
+    </p>
+    {% for inv in course_admin_invitations %}
+    <div class="notif-row">
+        <div class="notif-icon stat-icon-yellow">
+            <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <div class="notif-body">
+            <p class="notif-text">
+                <strong>{{ inv.sender.username }}</strong> invited you to become admin of
+                <strong>{{ inv.course.name }}</strong>
+            </p>
+            <p class="notif-time">
+                <i class="fa-regular fa-clock"></i> {{ inv.created_at|date:"d M Y, H:i" }}
+            </p>
+        </div>
+        <div class="notif-actions">
+            <form method="post" action="{% url 'course_admin_invite_accept' inv.id %}">
+                {% csrf_token %}
+                <button class="btn btn-success btn-sm">
+                    <i class="fa-solid fa-check"></i> Accept
+                </button>
+            </form>
+            <form method="post" action="{% url 'course_admin_invite_reject' inv.id %}">
+                {% csrf_token %}
+                <button class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-xmark"></i> Decline
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
   {# ── SYSTEM NOTIFICATIONS ── #}
   {% if notifications %}
   <div class="card">
@@ -120,6 +201,10 @@
         <div class="notif-icon stat-icon-blue">
           <i class="fa-solid fa-envelope-open-text"></i>
         </div>
+      {% elif notif.type == 'course_admin_assigned' %}
+        <div class="notif-icon stat-icon-blue">
+          <i class="fa-solid fa-chalkboard-teacher"></i>
+        </div>
       {% else %}
         <div class="notif-icon stat-icon-blue">
           <i class="fa-solid fa-bell"></i>
@@ -142,7 +227,7 @@
   {% endif %}
 
   {# ── EMPTY STATE ── #}
-  {% if not notifications and not friend_requests and not group_invitations %}
+  {% if not notifications and not friend_requests and not group_invitations and not enrollment_invitations and not course_admin_invitations %}
   <div class="empty-state">
     <i class="fa-solid fa-bell-slash"></i>
     <p>No notifications yet</p>

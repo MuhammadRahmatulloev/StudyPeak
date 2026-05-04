@@ -14,19 +14,22 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">New Course</h1>
-            <p class="page-subtitle">Create a course for your students</p>
+            <p class="page-subtitle">Create a course and choose its administrator</p>
         </div>
         <a href="{% url 'course_list' %}" class="btn btn-secondary">
             <i class="fa-solid fa-arrow-left"></i> Back
         </a>
     </div>
 
-    <div class="card">
-        <form method="post">
+    <div class="card course-form-wrap">
+        <form method="post" id="courseCreateForm">
             {% csrf_token %}
 
+            {# ── Course Info ── #}
             <div class="form-group">
-                <label class="form-label">Course Name <span class="text-danger">*</span></label>
+                <label class="form-label">
+                    Course Name <span class="text-danger">*</span>
+                </label>
                 <input
                     type="text"
                     name="name"
@@ -48,15 +51,70 @@
                 >{{ request.POST.description }}</textarea>
             </div>
 
+            {# ── Admin Assignment ── #}
+            <div class="course-active-toggle mb-16" style="flex-direction: column; align-items: flex-start; gap: 14px;">
+                <div class="course-active-toggle-info">
+                    <span class="course-active-toggle-title">
+                        <i class="fa-solid fa-user-shield" style="color: var(--accent); margin-right: 6px;"></i>
+                        Course Administrator
+                    </span>
+                    <span class="course-active-toggle-desc">
+                        By default you become the admin. Or invite another teacher/admin by entering their username or email — they will receive an invitation to accept.
+                    </span>
+                </div>
+            
+                <div style="width: 100%;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Username or Email</label>
+                        <input
+                            type="text"
+                            name="admin_identifier"
+                            class="form-input"
+                            placeholder="Leave empty to become admin yourself"
+                            value="{{ request.POST.admin_identifier }}"
+                            autocomplete="off"
+                        >
+                        <p class="text-muted" style="font-size: 0.78rem; margin-top: 5px;">
+                            <i class="fa-solid fa-circle-info"></i>
+                            An invitation will be sent — they must accept to become admin.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Actions ── #}
             <div class="form-actions mt-24">
+                {# Main submit — uses admin_identifier + admin_password if filled #}
                 <button type="submit" class="btn btn-primary btn-lg">
                     <i class="fa-solid fa-plus"></i> Create Course
                 </button>
-                <a href="{% url 'course_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+
+                {# Become admin myself — ignores the identifier/password fields #}
+                <button type="submit" name="become_self" value="1" class="btn btn-secondary btn-lg">
+                    <i class="fa-solid fa-user-check"></i> Become Admin Myself
+                </button>
+
+                <a href="{% url 'course_list' %}" class="btn btn-ghost btn-lg">
+                    <i class="fa-solid fa-xmark"></i> Cancel
+                </a>
             </div>
 
         </form>
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const identifierInput = document.getElementById('adminIdentifier');
+    const passwordWrap    = document.getElementById('adminPasswordWrap');
+
+    function togglePasswordField() {
+        passwordWrap.style.display = identifierInput.value.trim() ? 'block' : 'none';
+    }
+
+    togglePasswordField();
+    identifierInput.addEventListener('input', togglePasswordField);
+</script>
 {% endblock %}

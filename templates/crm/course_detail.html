@@ -6,6 +6,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/crm.css' %}">
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -14,12 +15,25 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">{{ course.name }}</h1>
-            <p class="page-subtitle">
+            <p class="page-subtitle" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 <i class="fa-solid fa-user-tie"></i> {{ course.teacher.username }}
-                {% if course.is_active %}
-                <span class="badge badge-green" style="margin-left:8px">Active</span>
+                <span class="badge {% if course.teacher.is_admin_role %}badge-yellow{% elif course.teacher.is_teacher %}badge-blue{% else %}badge-gray{% endif %}">
+                    {% if course.teacher.is_admin_role %}Admin{% elif course.teacher.is_teacher %}Teacher{% else %}Student{% endif %}
+                </span>
+                {% if course.teacher.profile.status == 'active' %}
+                    <span class="badge badge-green">Active</span>
+                {% elif course.teacher.profile.status == 'busy' %}
+                    <span class="badge badge-red">Busy</span>
+                {% elif course.teacher.profile.status == 'away' %}
+                    <span class="badge badge-yellow">Away</span>
                 {% else %}
-                <span class="badge badge-gray" style="margin-left:8px">Inactive</span>
+                    <span class="badge badge-gray">Offline</span>
+                {% endif %}
+                <span style="color:var(--border-2);">|</span>
+                {% if course.is_active %}
+                    <span class="badge badge-green">Course Active</span>
+                {% else %}
+                    <span class="badge badge-gray">Course Inactive</span>
                 {% endif %}
             </p>
         </div>
@@ -34,6 +48,51 @@
             </a>
         </div>
     </div>
+
+    <!-- My admin invitation banner -->
+    {% if my_admin_invitation %}
+    <div class="card mb-16" style="border-left: 4px solid var(--accent);">
+        <div class="flex-between">
+            <div>
+                <p style="font-weight: 600; margin-bottom: 4px;">
+                    <i class="fa-solid fa-user-shield" style="color: var(--accent);"></i>
+                    Admin Invitation
+                </p>
+                <p class="text-muted text-sm">
+                    {{ my_admin_invitation.sender.username }} invited you to become the administrator of this course.
+                </p>
+            </div>
+            <div class="flex gap-8">
+                <form method="post" action="{% url 'course_admin_invite_accept' my_admin_invitation.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-success btn-sm">
+                        <i class="fa-solid fa-check"></i> Accept
+                    </button>
+                </form>
+                <form method="post" action="{% url 'course_admin_invite_reject' my_admin_invitation.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-danger btn-sm">
+                        <i class="fa-solid fa-xmark"></i> Decline
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pending admin invitation (visible to course creator) -->
+    {% if pending_admin_invitation and course.teacher == user %}
+    <div class="card mb-16" style="border-left: 4px solid var(--warning, #f59e0b);">
+        <p style="font-weight: 600; margin-bottom: 4px;">
+            <i class="fa-solid fa-clock" style="color: var(--warning, #f59e0b);"></i>
+            Waiting for Admin Confirmation
+        </p>
+        <p class="text-muted text-sm">
+            Invitation sent to <strong>{{ pending_admin_invitation.receiver.username }}</strong> — 
+            waiting for them to accept or decline.
+        </p>
+    </div>
+    {% endif %}
 
     <div class="course-detail-grid">
 
@@ -189,25 +248,23 @@
 
             <!-- Invite student -->
             {% if user.is_teacher and course.teacher == user or user.is_admin_role %}
-            <div class="card mb-16">
+            <div class="card mb-16" style="overflow: visible;">
                 <div class="card-title">
-                    <i class="fa-solid fa-user-plus"></i> Invite Student
+                    <i class="fa-solid fa-user-plus"></i> Add Student
                 </div>
-                <form method="post" action="{% url 'enroll_invite' course.id %}">
+                <div style="position: relative;">
+                    <input
+                        type="text"
+                        id="studentSearch"
+                        class="form-input"
+                        placeholder="Search by username..."
+                        autocomplete="off"
+                    >
+                    <div id="studentDropdown" class="tg-invite-dropdown" style="display:none;"></div>
+                </div>
+                <form method="post" action="{% url 'enroll_invite' course.id %}" id="enrollInviteForm" style="display:none;">
                     {% csrf_token %}
-                    <div class="form-group">
-                        <input
-                            type="number"
-                            name="student_id"
-                            class="form-input"
-                            placeholder="Enter student ID"
-                            min="1"
-                            required
-                        >
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">
-                        <i class="fa-solid fa-user-plus"></i> Add Student
-                    </button>
+                    <input type="hidden" name="student_id" id="enrollStudentId">
                 </form>
             </div>
             {% endif %}
@@ -261,4 +318,96 @@
 
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const SEARCH_URL = "{% url 'search_students' course.id %}";
+    const INVITE_URL = "{% url 'enroll_invite' course.id %}";
+
+    const studentSearch   = document.getElementById('studentSearch');
+    const studentDropdown = document.getElementById('studentDropdown');
+
+    if (studentSearch) {
+        let timer;
+        studentSearch.addEventListener('input', function () {
+            clearTimeout(timer);
+            const q = this.value.trim();
+            if (q.length < 2) {
+                studentDropdown.style.display = 'none';
+                return;
+            }
+            timer = setTimeout(() => {
+                fetch(`${SEARCH_URL}?q=${encodeURIComponent(q)}`)
+                    .then(r => {
+                        if (!r.ok) throw new Error('Status: ' + r.status);
+                        return r.json();
+                    })
+                    .then(data => {
+                        studentDropdown.innerHTML = '';
+                        if (!data.users.length) {
+                            studentDropdown.innerHTML = '<div class="tg-invite-empty">No students found</div>';
+                        } else {
+                            data.users.forEach(u => {
+                                const el = document.createElement('div');
+                                el.className = 'tg-invite-item';
+                                el.innerHTML = `
+                                    <div class="tg-invite-av">${u.username[0].toUpperCase()}</div>
+                                    <div>
+                                        <div class="tg-invite-name">${u.username}</div>
+                                        <div class="tg-invite-role">${u.role}</div>
+                                    </div>
+                                    <button class="btn btn-primary btn-xs" style="margin-left:auto" id="add-btn-${u.id}">
+                                        <i class="fa-solid fa-user-plus"></i> Invite
+                                    </button>`;
+
+                                el.querySelector(`#add-btn-${u.id}`).addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                    const btn = this;
+                                    btn.disabled = true;
+                                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+                                    const formData = new FormData();
+                                    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+                                    formData.append('student_id', u.id);
+
+                                    fetch(INVITE_URL, { method: 'POST', body: formData })
+                                        .then(r => r.json())
+                                        .then(data => {
+                                            if (data.status === 'ok') {
+                                                // Кнопка зеленеет, дропдаун НЕ закрывается
+                                                btn.style.cssText = 'margin-left:auto;background:rgba(52,211,153,0.1);color:#34d399;border:1px solid rgba(52,211,153,0.3);cursor:default';
+                                                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Sent';
+                                                showToast(data.message, 'success');
+                                            } else {
+                                                btn.style.cssText = 'margin-left:auto;background:rgba(248,113,113,0.1);color:#f87171;border:1px solid rgba(248,113,113,0.3);cursor:default';
+                                                btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Error';
+                                                showToast(data.message, 'error');
+                                            }
+                                        })
+                                        .catch(() => {
+                                            btn.disabled = false;
+                                            btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Invite';
+                                            showToast('Connection error. Try again.', 'error');
+                                        });
+                                });
+                                studentDropdown.appendChild(el);
+                            });
+                        }
+                        studentDropdown.style.display = 'block';
+                    })
+                    .catch(err => {
+                        studentDropdown.innerHTML = '<div class="tg-invite-empty">Error: ' + err.message + '</div>';
+                        studentDropdown.style.display = 'block';
+                    });
+            }, 300);
+        });
+
+        document.addEventListener('click', e => {
+            if (!studentSearch.contains(e.target) && !studentDropdown.contains(e.target)) {
+                studentDropdown.style.display = 'none';
+            }
+        });
+    }
+</script>
 {% endblock %}

@@ -82,7 +82,7 @@
 
         <!-- Header -->
         <div class="chat-header">
-            <div class="chat-header-user">
+            <div class="chat-header-user" id="openUserModal" style="cursor:pointer;">
                 {% if other_user %}
                 <div class="conv-avatar conv-avatar-sm">
                     {% if other_user.profile.avatar %}
@@ -175,10 +175,96 @@
 
     </div>
 </div>
+
+{% if other_user %}
+<div class="tg-overlay" id="userOverlay" onclick="closeUserModal()"></div>
+<div class="tg-user-modal" id="userModal">
+  <button class="tg-modal-x" onclick="closeUserModal()"><i class="fa-solid fa-xmark"></i></button>
+
+  <div class="tg-modal-hero">
+    <div class="tg-modal-avatar">
+      {% if other_user.profile.avatar %}
+        <img src="{{ other_user.profile.avatar.url }}" alt="{{ other_user.username }}">
+      {% else %}
+        {{ other_user.username|first|upper }}
+      {% endif %}
+    </div>
+    <p class="tg-modal-name">{{ other_user.username }}</p>
+    <p class="tg-modal-status">
+      <span class="tg-dot tg-dot-{{ other_user.profile.status|default:'offline' }}" style="display:inline-block;vertical-align:middle;margin-right:4px;"></span>
+      {{ other_user.profile.get_status_display|default:'Offline' }}
+    </p>
+  </div>
+
+  <div class="tg-modal-btns">
+    <a href="/accounts/profile/{{ other_user.id }}/" class="tg-modal-btn">
+      <div class="tg-modal-btn-icon tg-icon-blue"><i class="fa-solid fa-user"></i></div>
+      <span>Profile</span>
+    </a>
+    {% if not is_friend %}
+    <form method="post" action="{% url 'send_friend_request' other_user.id %}">
+      {% csrf_token %}
+      <button type="submit" class="tg-modal-btn">
+        <div class="tg-modal-btn-icon tg-icon-green"><i class="fa-solid fa-user-plus"></i></div>
+        <span>Add Friend</span>
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="tg-modal-info">
+    <div class="tg-modal-info-row">
+      <i class="fa-solid fa-graduation-cap"></i>
+      <div>
+        <p>{{ other_user.get_role_display }}</p>
+        <p class="tg-modal-info-label">Role</p>
+      </div>
+    </div>
+    <div class="tg-modal-info-row">
+      <i class="fa-solid fa-coins"></i>
+      <div>
+        <p>{{ other_user.profile.coins }} coins</p>
+        <p class="tg-modal-info-label">Balance</p>
+      </div>
+    </div>
+    {% if other_user.profile.phone %}
+    <div class="tg-modal-info-row">
+      <i class="fa-solid fa-phone"></i>
+      <div>
+        <p>{{ other_user.profile.phone }}</p>
+        <p class="tg-modal-info-label">Phone</p>
+      </div>
+    </div>
+    {% endif %}
+    <div class="tg-modal-info-row">
+      <i class="fa-solid fa-envelope"></i>
+      <div>
+        <p>{{ other_user.email }}</p>
+        <p class="tg-modal-info-label">Email</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
+
+// User modal
+function closeUserModal() {
+    document.getElementById('userModal').classList.remove('active');
+    document.getElementById('userOverlay').classList.remove('active');
+}
+const openBtn = document.getElementById('openUserModal');
+if (openBtn) {
+    openBtn.addEventListener('click', () => {
+        document.getElementById('userModal').classList.add('active');
+        document.getElementById('userOverlay').classList.add('active');
+    });
+}
+
 const CSRF = '{{ csrf_token }}';
 
 const chatMessages = document.getElementById('chatMessages');

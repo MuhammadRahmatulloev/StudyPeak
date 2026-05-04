@@ -1168,3 +1168,16 @@
         font-size: 0.78rem;
     }
 }
+
+/* ── Student search dropdown fix ── */
+.course-detail-side {
+    overflow: visible !important;
+}
+
+.course-detail-side .card {
+    overflow: visible !important;
+}
+
+.tg-invite-dropdown {
+    z-index: 9999 !important;
+}

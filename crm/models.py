@@ -88,6 +88,25 @@ class WeeklyJournal(models.Model):
 
     def __str__(self):
         return f'{self.student.username} | Week {self.week_number} | {self.total_score}/110'
+    
+
+class WeekSummary(models.Model):
+    student     = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='week_summaries')
+    period      = models.ForeignKey(CoursePeriod, on_delete=models.CASCADE, related_name='week_summaries')
+    week_number = models.PositiveIntegerField()
+    bonus_score = models.PositiveIntegerField(default=0)  # макс 10
+    exam_score  = models.PositiveIntegerField(default=0)  # макс 70
+
+    class Meta:
+        unique_together = ('student', 'period', 'week_number')
+
+    def save(self, *args, **kwargs):
+        self.bonus_score = min(self.bonus_score, 10)
+        self.exam_score  = min(self.exam_score, 70)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.student.username} | W{self.week_number} | bonus:{self.bonus_score} exam:{self.exam_score}'
 
 
 class Grade(models.Model):
@@ -138,3 +157,46 @@ class StudentPeriodSummary(models.Model):
 
     def __str__(self):
         return f'{self.student.username} | {self.period.name} | exam: {self.exam_score}'
+    
+    def save(self, *args, **kwargs):
+        self.bonus_score = min(self.bonus_score, 10)
+        self.exam_score  = min(self.exam_score, 70)
+        super().save(*args, **kwargs)
+    
+
+class CourseAdminInvitation(models.Model):
+    PENDING = 'pending'
+    ACCEPTED = 'accepted'
+    REJECTED = 'rejected'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (ACCEPTED, 'Accepted'),
+        (REJECTED, 'Rejected'),
+    ]
+
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='admin_invitations')
+    sender = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='sent_admin_invitations')
+    receiver = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='received_admin_invitations')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('course', 'receiver')
+
+    def __str__(self):
+        return f'{self.receiver.username} → {self.course.name} [{self.status}]'
+    
+
+class DailyScore(models.Model):
+    student     = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='daily_scores')
+    period      = models.ForeignKey(CoursePeriod, on_delete=models.CASCADE, related_name='daily_scores')
+    week_number = models.PositiveIntegerField()   # 1–4
+    day_number  = models.PositiveIntegerField()   # 1–5
+    score       = models.PositiveIntegerField(null=True, blank=True)  # 1–5 или None
+
+    class Meta:
+        unique_together = ('student', 'period', 'week_number', 'day_number')
+
+    def __str__(self):
+        return f'{self.student.username} | W{self.week_number}D{self.day_number} | {self.score}'

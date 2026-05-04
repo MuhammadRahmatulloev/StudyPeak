@@ -1,135 +1,631 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Student Progress{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+/* ── PROGRESS PAGE OVERRIDES ── */
+
+.progress-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── HEADER ROW ── */
+.progress-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.progress-topbar-title {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress-topbar-title i {
+    color: var(--accent);
+    font-size: 1.4rem;
+}
+
+/* Filter form */
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ── HERO PROFILE CARD ── */
+.progress-hero {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), rgba(79,142,247,0.2), transparent);
+}
+
+.progress-hero::after {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.progress-hero-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 1;
+}
+
+.progress-hero-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 0 5px var(--accent-soft);
+}
+
+.progress-hero-avatar-placeholder {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 0 5px var(--accent-soft);
+    flex-shrink: 0;
+}
+
+.progress-hero-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.progress-hero-name {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.progress-hero-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(79,142,247,0.2);
+    text-transform: capitalize;
+    width: fit-content;
+}
+
+.progress-hero-streak {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 12px;
+    padding: 12px 20px;
+    z-index: 1;
+}
+
+.progress-hero-streak-num {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fbbf24;
+    line-height: 1;
+}
+
+.progress-hero-streak-label {
+    font-size: 0.78rem;
+    color: rgba(251,191,36,0.7);
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+/* ── STAT CARDS ROW ── */
+.progress-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.pstat-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.pstat-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.pstat-icon {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.pstat-icon-blue   { background: var(--accent-soft);  color: var(--accent);  }
+.pstat-icon-green  { background: var(--success-soft); color: var(--success); }
+.pstat-icon-yellow { background: var(--warning-soft); color: var(--warning); }
+.pstat-icon-red    { background: var(--danger-soft);  color: var(--danger);  }
+
+.pstat-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.pstat-value {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+}
+
+.pstat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* ── ATTENDANCE ── */
+.attendance-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.card-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.card-header-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+.card-header-title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.attendance-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.att-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+}
+
+.att-item-present {
+    border-color: rgba(52,211,153,0.3);
+    background: rgba(52,211,153,0.05);
+}
+
+.att-item-absent {
+    border-color: rgba(248,113,113,0.3);
+    background: rgba(248,113,113,0.05);
+}
+
+.att-item-excused {
+    border-color: rgba(251,191,36,0.3);
+    background: rgba(251,191,36,0.05);
+}
+
+.att-item-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-bottom: 2px;
+}
+
+.att-item-present .att-item-dot  { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.att-item-absent .att-item-dot   { background: var(--danger);  box-shadow: 0 0 8px var(--danger);  }
+.att-item-excused .att-item-dot  { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
+
+.att-item-num {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.att-item-present .att-item-num  { color: var(--success); }
+.att-item-absent .att-item-num   { color: var(--danger);  }
+.att-item-excused .att-item-num  { color: var(--warning); }
+
+.att-item-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.att-item-present .att-item-label  { color: rgba(52,211,153,0.7);  }
+.att-item-absent .att-item-label   { color: rgba(248,113,113,0.7); }
+.att-item-excused .att-item-label  { color: rgba(251,191,36,0.7);  }
+
+/* ── PROGRESS GRID ── */
+.progress-content-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.p-section {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ── LIST ITEMS ── */
+.p-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.p-list-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.84rem;
+    transition: border-color 0.15s;
+}
+
+.p-list-item:hover {
+    border-color: var(--accent);
+}
+
+.p-list-link {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    flex: 1;
+    transition: color 0.2s;
+    font-size: 0.84rem;
+}
+
+a.p-list-link:hover { color: var(--accent); }
+
+.p-list-meta {
+    color: var(--text-2);
+    font-size: 0.75rem;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.p-list-comment {
+    width: 100%;
+    color: var(--text-2);
+    font-size: 0.78rem;
+    font-style: italic;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+    .progress-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .progress-content-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+    .progress-page { padding: 16px; gap: 16px; }
+    .progress-hero { padding: 20px; }
+    .progress-stats-grid { grid-template-columns: 1fr 1fr; }
+    .attendance-grid { grid-template-columns: 1fr; }
+    .progress-topbar { flex-direction: column; align-items: flex-start; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-wrapper">
-    <div class="page-header">
-        <h2 class="page-title">Student Progress</h2>
-        {% if students %}
-            <form method="get" class="filter-form">
-                <select name="student_id" class="form-input">
-                    <option value="">Select student</option>
-                    {% for s in students %}
-                        <option value="{{ s.id }}" {% if target.id == s.id %}selected{% endif %}>
-                            {{ s.username }}
-                        </option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-primary">View</button>
-            </form>
-        {% endif %}
-    </div>
+<div class="progress-page">
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {# ── TOP BAR ── #}
+    <div class="progress-topbar">
+        <h1 class="progress-topbar-title">
+          <i class="fa-solid fa-chart-line"></i>
+          Student Progress
+        </h1>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    {% if students %}
+    <form method="get" class="filter-form">
+      <select name="student_id" class="form-input" style="width:200px;">
+        <option value="">Select student</option>
+        {% for s in students %}
+          <option value="{{ s.id }}" {% if target.id == s.id %}selected{% endif %}>
+            {{ s.username }}
+          </option>
         {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-eye"></i> View
+      </button>
+    </form>
     {% endif %}
+  </div>
 
-    <div class="progress-header">
-        {% if profile and profile.avatar %}
-            <img src="{{ profile.avatar.url }}" alt="avatar" class="progress-avatar">
-        {% else %}
-            <div class="progress-avatar-placeholder">{{ target.username|first|upper }}</div>
-        {% endif %}
-        <div class="progress-user-info">
-            <h3 class="progress-username">{{ target.username }}</h3>
-            <span class="progress-role">{{ target.role }}</span>
-        </div>
+  {# ── ALERTS ── #}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {# ── HERO PROFILE ── #}
+  <div class="progress-hero">
+    <div class="progress-hero-left">
+      {% if profile and profile.avatar %}
+        <img src="{{ profile.avatar.url }}" alt="avatar" class="progress-hero-avatar">
+      {% else %}
+        <div class="progress-hero-avatar-placeholder">{{ target.username|first|upper }}</div>
+      {% endif %}
+      <div class="progress-hero-info">
+        <h2 class="progress-hero-name">{{ target.username }}</h2>
+        <span class="progress-hero-role">
+          <i class="fa-solid fa-circle-user"></i>
+          {{ target.role }}
+        </span>
+      </div>
     </div>
 
-    <div class="progress-stats">
-        <div class="stat-card">
-            <span class="stat-label">Lessons Viewed</span>
-            <span class="stat-value">{{ total_lessons_viewed }}</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">Submitted</span>
-            <span class="stat-value">{{ total_submitted }}</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">Graded</span>
-            <span class="stat-value">{{ total_graded }}</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">Current Streak</span>
-            <span class="stat-value">🔥 {{ streak.current_streak }}</span>
-        </div>
+    <div class="progress-hero-streak">
+      <span style="font-size:1.8rem;">🔥</span>
+      <div>
+        <div class="progress-hero-streak-num">{{ streak.current_streak }}</div>
+        <div class="progress-hero-streak-label">Day Streak</div>
+      </div>
+    </div>
+  </div>
+
+  {# ── STAT CARDS ── #}
+  <div class="progress-stats-grid">
+    <div class="pstat-card">
+      <div class="pstat-icon pstat-icon-blue">
+        <i class="fa-solid fa-book-open"></i>
+      </div>
+      <div class="pstat-body">
+        <span class="pstat-value">{{ total_lessons_viewed }}</span>
+        <span class="pstat-label">Lessons Viewed</span>
+      </div>
+    </div>
+    <div class="pstat-card">
+      <div class="pstat-icon pstat-icon-yellow">
+        <i class="fa-solid fa-paper-plane"></i>
+      </div>
+      <div class="pstat-body">
+        <span class="pstat-value">{{ total_submitted }}</span>
+        <span class="pstat-label">Submitted</span>
+      </div>
+    </div>
+    <div class="pstat-card">
+      <div class="pstat-icon pstat-icon-green">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div class="pstat-body">
+        <span class="pstat-value">{{ total_graded }}</span>
+        <span class="pstat-label">Graded</span>
+      </div>
+    </div>
+    <div class="pstat-card">
+      <div class="pstat-icon pstat-icon-red">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <div class="pstat-body">
+        <span class="pstat-value">{{ enrollments|length }}</span>
+        <span class="pstat-label">Courses</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── ATTENDANCE ── #}
+  <div class="attendance-card">
+    <div class="card-header-row">
+      <div class="card-header-icon"><i class="fa-solid fa-calendar-check"></i></div>
+      <h3 class="card-header-title">Attendance</h3>
+    </div>
+    <div class="attendance-grid">
+      <div class="att-item att-item-present">
+        <div class="att-item-dot"></div>
+        <span class="att-item-num">{{ present_count }}</span>
+        <span class="att-item-label">Present</span>
+      </div>
+      <div class="att-item att-item-absent">
+        <div class="att-item-dot"></div>
+        <span class="att-item-num">{{ absent_count }}</span>
+        <span class="att-item-label">Absent</span>
+      </div>
+      <div class="att-item att-item-excused">
+        <div class="att-item-dot"></div>
+        <span class="att-item-num">{{ excused_count }}</span>
+        <span class="att-item-label">Excused</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── CONTENT GRID ── #}
+  <div class="progress-content-grid">
+
+    {# Enrolled Courses #}
+    <div class="p-section">
+      <div class="card-header-row">
+        <div class="card-header-icon"><i class="fa-solid fa-layer-group"></i></div>
+        <h3 class="card-header-title">Enrolled Courses</h3>
+      </div>
+      {% if enrollments %}
+        <ul class="p-list">
+          {% for enrollment in enrollments %}
+            <li class="p-list-item">
+              <a href="{% url 'course_detail' enrollment.course.id %}" class="p-list-link">
+                {{ enrollment.course.name }}
+              </a>
+              <span class="p-list-meta">{{ enrollment.course.teacher.username }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-text">No courses found.</p>
+      {% endif %}
     </div>
 
-    <div class="progress-attendance">
-        <h3 class="section-title">Attendance</h3>
-        <div class="attendance-stats">
-            <div class="attendance-stat present">
-                <span class="attendance-label">Present</span>
-                <span class="attendance-value">{{ present_count }}</span>
-            </div>
-            <div class="attendance-stat absent">
-                <span class="attendance-label">Absent</span>
-                <span class="attendance-value">{{ absent_count }}</span>
-            </div>
-            <div class="attendance-stat excused">
-                <span class="attendance-label">Excused</span>
-                <span class="attendance-value">{{ excused_count }}</span>
-            </div>
+    {# Submissions #}
+    <div class="p-section">
+      <div class="card-header-row">
+        <div class="card-header-icon" style="background:var(--warning-soft);color:var(--warning);">
+          <i class="fa-solid fa-file-pen"></i>
         </div>
+        <h3 class="card-header-title">Submissions</h3>
+      </div>
+      {% if submissions %}
+        <ul class="p-list">
+          {% for sub in submissions %}
+            <li class="p-list-item">
+              <a href="{% url 'submission_detail' sub.id %}" class="p-list-link">
+                {{ sub.assignment.title }}
+              </a>
+              <span class="badge badge-blue">{{ sub.get_status_display }}</span>
+              <span class="p-list-meta">{{ sub.total_score }} pts</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-text">No submissions found.</p>
+      {% endif %}
     </div>
 
-    <div class="progress-grid">
-        <div class="progress-section">
-            <h3 class="section-title">Enrolled Courses</h3>
-            {% if enrollments %}
-                <ul class="progress-list">
-                    {% for enrollment in enrollments %}
-                        <li class="progress-list-item">
-                            <a href="{% url 'course_detail' enrollment.course.id %}" class="progress-link">
-                                {{ enrollment.course.name }}
-                            </a>
-                            <span class="progress-meta">{{ enrollment.course.teacher.username }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-text">No courses found.</p>
-            {% endif %}
+    {# Weekly Journals #}
+    <div class="p-section">
+      <div class="card-header-row">
+        <div class="card-header-icon" style="background:var(--success-soft);color:var(--success);">
+          <i class="fa-solid fa-book"></i>
         </div>
-
-        <div class="progress-section">
-            <h3 class="section-title">Submissions</h3>
-            {% if submissions %}
-                <ul class="progress-list">
-                    {% for sub in submissions %}
-                        <li class="progress-list-item">
-                            <a href="{% url 'submission_detail' sub.id %}" class="progress-link">
-                                {{ sub.assignment.title }}
-                            </a>
-                            <span class="badge">{{ sub.get_status_display }}</span>
-                            <span class="progress-meta">Score: {{ sub.total_score }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-text">No submissions found.</p>
-            {% endif %}
-        </div>
-
-        <div class="progress-section">
-            <h3 class="section-title">Weekly Journals</h3>
-            {% if journals %}
-                <ul class="progress-list">
-                    {% for journal in journals %}
-                        <li class="progress-list-item">
-                            <span class="progress-link">Week {{ journal.week_number }} — {{ journal.period.name }}</span>
-                            <span class="progress-meta">Score: {{ journal.total_score }}</span>
-                            {% if journal.teacher_comment %}
-                                <span class="progress-comment">{{ journal.teacher_comment }}</span>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-text">No journal entries found.</p>
-            {% endif %}
-        </div>
+        <h3 class="card-header-title">Weekly Journals</h3>
+      </div>
+      {% if journals %}
+        <ul class="p-list">
+          {% for journal in journals %}
+            <li class="p-list-item">
+              <span class="p-list-link">
+                Week {{ journal.week_number }} — {{ journal.period.name }}
+              </span>
+              <span class="p-list-meta">{{ journal.total_score }} pts</span>
+              {% if journal.teacher_comment %}
+                <span class="p-list-comment">{{ journal.teacher_comment }}</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-text">No journal entries found.</p>
+      {% endif %}
     </div>
-</div>
+
+  </div>{# /progress-content-grid #}
+
+</div>{# /progress-page #}
 {% endblock %}

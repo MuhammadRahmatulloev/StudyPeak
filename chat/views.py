@@ -208,6 +208,9 @@ class ConversationDetailView(SessionLoginRequiredMixin, View):
 
 
 class StartConversationView(SessionLoginRequiredMixin, View):
+    def get(self, request, user_id):
+        return self.post(request, user_id)
+
     def post(self, request, user_id):
         user = get_current_user(request)
         target = get_object_or_404(UserModel, id=user_id)

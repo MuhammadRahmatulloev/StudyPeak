@@ -1,126 +1,81 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
+{% load static %}
+
+{% block title %}Activity Log — StudyPeak{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="dashboard-wrapper">
-    <div class="dashboard-header">
-        <div class="dashboard-user">
-            {% if profile and profile.avatar %}
-                <img src="{{ profile.avatar.url }}" alt="avatar" class="dashboard-avatar">
-            {% else %}
-                <div class="dashboard-avatar-placeholder">{{ user.username|first|upper }}</div>
-            {% endif %}
-            <div class="dashboard-user-info">
-                <h2 class="dashboard-username">{{ user.username }}</h2>
-                <span class="dashboard-role">{{ user.role }}</span>
-            </div>
-        </div>
-        <div class="dashboard-streak">
-            <span class="streak-icon">🔥</span>
-            <span class="streak-count">{{ streak.current_streak }} day streak</span>
-        </div>
+<div class="container">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fa-solid fa-clock-rotate-left"></i> Activity Log</h1>
+      <p class="page-subtitle">Your recent actions on StudyPeak</p>
     </div>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+  </div>
 
-    <div class="dashboard-stats">
-        <div class="stat-card">
-            <span class="stat-label">Submitted</span>
-            <span class="stat-value">{{ total_submitted }}</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">Graded</span>
-            <span class="stat-value">{{ total_graded }}</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">Avg Score</span>
-            <span class="stat-value">{{ avg_score }}</span>
-        </div>
-        {% if profile %}
-        <div class="stat-card">
-            <span class="stat-label">Coins</span>
-            <span class="stat-value">{{ profile.coins }}</span>
-        </div>
-        {% endif %}
-    </div>
-
-    <div class="dashboard-grid">
-        <div class="dashboard-section">
-            <h3 class="section-title">Recent Activity</h3>
-            {% if recent_logs %}
-                <ul class="activity-list">
-                    {% for log in recent_logs %}
-                        <li class="activity-item">
-                            <span class="activity-action">{{ log.get_action_display }}</span>
-                            {% if log.description %}
-                                <span class="activity-desc">{{ log.description }}</span>
-                            {% endif %}
-                            <span class="activity-date">{{ log.created_at|date:"d M, H:i" }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-text">No recent activity.</p>
+  {% if logs %}
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Description</th>
+            {% if user.is_admin_role %}<th>User</th>{% endif %}
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>
+              <span class="badge badge-blue">{{ log.get_action_display }}</span>
+            </td>
+            <td>
+              <span class="text-sm">{{ log.description|default:"—" }}</span>
+            </td>
+            {% if user.is_admin_role %}
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-soft);
+                            color:var(--accent);display:flex;align-items:center;justify-content:center;
+                            font-size:.75rem;font-weight:700;flex-shrink:0;">
+                  {{ log.user.username|first|upper }}
+                </div>
+                <span class="text-sm">{{ log.user.username }}</span>
+              </div>
+            </td>
             {% endif %}
-        </div>
-
-        <div class="dashboard-section">
-            <h3 class="section-title">Recently Viewed Lessons</h3>
-            {% if lesson_views %}
-                <ul class="lesson-view-list">
-                    {% for view in lesson_views %}
-                        <li class="lesson-view-item">
-                            <a href="{% url 'lesson_detail' view.lesson.subject.id view.lesson.id %}" class="lesson-view-link">
-                                {{ view.lesson.title }}
-                            </a>
-                            <span class="lesson-view-date">{{ view.viewed_at|date:"d M" }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-text">No lessons viewed yet.</p>
-            {% endif %}
-        </div>
-
-        <div class="dashboard-section">
-            <h3 class="section-title">Recent Assignments</h3>
-            {% if assignments %}
-                <ul class="assignment-list">
-                    {% for assignment in assignments %}
-                        <li class="assignment-item">
-                            <a href="{% url 'assignment_detail' assignment.id %}" class="assignment-link">
-                                {{ assignment.title }}
-                            </a>
-                            <span class="assignment-type badge">{{ assignment.get_type_display }}</span>
-                            {% if assignment.deadline %}
-                                <span class="assignment-deadline">{{ assignment.deadline|date:"d M" }}</span>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-text">No assignments found.</p>
-            {% endif %}
-        </div>
-
-        {% if enrollments %}
-        <div class="dashboard-section">
-            <h3 class="section-title">My Courses</h3>
-            <ul class="enrollment-list">
-                {% for enrollment in enrollments %}
-                    <li class="enrollment-item">
-                        <a href="{% url 'course_detail' enrollment.course.id %}" class="enrollment-link">
-                            {{ enrollment.course.name }}
-                        </a>
-                        <span class="enrollment-teacher">{{ enrollment.course.teacher.username }}</span>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
+            <td>
+              <span class="text-sm text-muted">
+                <i class="fa-regular fa-clock"></i>
+                {{ log.created_at|date:"d M Y, H:i" }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+  </div>
 
-    <div class="dashboard-actions">
-        <a href="{% url 'student_progress' %}" class="btn btn-primary">My Progress</a>
-        <a href="{% url 'streak' %}" class="btn btn-secondary">Streak</a>
-        <a href="{% url 'activity_log_list' %}" class="btn btn-secondary">Activity Log</a>
+  {% else %}
+  <div class="card">
+    <div class="empty-state">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <p>No activity yet</p>
+      <p class="text-muted text-sm">Your actions will appear here</p>
     </div>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}
